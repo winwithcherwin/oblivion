@@ -1,0 +1,9 @@
+- name: Say hello from Ansible
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Print Hello, world!
+      debug:
+        msg: "Hello, world from Ansible on {{ inventory_hostname }}"
+

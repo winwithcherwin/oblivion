@@ -10,6 +10,11 @@ app = Celery("oblivion",
   redis_backend_use_ssl={"ssl_cert_reqs": ssl.CERT_NONE},
 )
 
+import oblivion.engine.ansible.tasks
+
 app.conf.task_time_limit = 300
-app.autodiscover_tasks(["oblivion.engine"])
+app.autodiscover_tasks([
+    "oblivion.engine",
+    "oblivion.engine.anasible",
+])
 
