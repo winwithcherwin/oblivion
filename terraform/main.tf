@@ -6,17 +6,15 @@ locals {
 module "digitalocean" {
   source       = "./digitalocean"
   count        = contains(var.clouds, "digitalocean") ? 1 : 0
-  my_source_ip = var.my_source_ip
-  ssh_key_name = var.ssh_key_name
   server_count = lookup(var.server_counts, "digitalocean", 0)
   redis_uri    = module.redis.uri
+  ssh_key_name = var.ssh_key_name
 }
 
 module "oblivion" {
-  source = "./modules/oblivion"
-
-  hosts = local.all_hosts
-
+  source        = "./modules/oblivion"
+  hosts         = local.all_hosts
+  redis_uri     = module.redis.uri
   git_repo_url  = var.git_repo_url
   git_clone_dir = var.git_clone_dir
 }

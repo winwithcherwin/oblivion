@@ -12,12 +12,6 @@ resource "digitalocean_droplet" "this" {
   user_data = <<-EOT
 #cloud-config
 write_files:
-  - path: /etc/oblivion.env
-    permissions: "0600"
-    owner: root
-    content: |
-      REDIS_URI="${var.redis_uri}"
-
   - path: /etc/systemd/journald.conf
     owner: root:root
     permissions: "0644"

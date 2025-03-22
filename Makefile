@@ -19,7 +19,10 @@ tfapply: ## terraform apply
 tfdestroy: ## terraform destroy
 	terraform -chdir=terraform destroy -var="ssh_key_name=$(MY_SSH_KEY_NAME)" -var="my_source_ip=$(MY_SOURCE_IP)/32"
 
-ssh:
+tfmt: ## terraform fmt
+	terraform -chdir=terraform fmt
+
+ssh: ## use fzf to ssh into host
 	bash ./utils/ssh.sh
 
 .PHONY: packer

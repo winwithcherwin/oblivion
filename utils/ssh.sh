@@ -6,7 +6,7 @@ set -e
 json=$(terraform -chdir=terraform output -json)
 
 # Parse the object (server name → IP) using jq
-mapfile -t choices < <(echo "$json" | jq -r '.server_ips.value | to_entries[] | "\(.key)\t\(.value)"')
+mapfile -t choices < <(echo "$json" | jq -r '.all_hosts.value | to_entries[] | "\(.key)\t\(.value)"')
 
 if [ ${#choices[@]} -eq 0 ]; then
   echo "❌ No servers found in Terraform output"

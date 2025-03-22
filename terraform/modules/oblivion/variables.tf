@@ -11,3 +11,6 @@ variable "git_clone_dir" {
   type = string
 }
 
+variable "redis_uri" {
+  type = string
+}

@@ -13,6 +13,17 @@ resource "null_resource" "provision" {
   }
 
   provisioner "file" {
+    content     = templatefile("${path.module}/templates/oblivion.env.tpl", { redis_uri = var.redis_uri })
+    destination = "/etc/oblivion.env"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod 600 /etc/oblivion.env"
+    ]
+  }
+
+  provisioner "file" {
     content     = templatefile("${path.module}/templates/oblivion.service.tpl", { queue_name = each.key })
     destination = "/etc/systemd/system/oblivion.service"
   }
