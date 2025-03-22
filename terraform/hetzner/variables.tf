@@ -1,16 +1,9 @@
-variable "server_count" {
-  type        = number
-  description = "Number of Hetzner servers to create"
-}
-
-variable "server_type" {
-  type        = string
-  default     = "cx11"
-}
-
-variable "location" {
-  type        = string
-  default     = "fsn1"
+variable "servers" {
+  description = "Per-server configuration for Hetzner"
+  type = map(object({
+    server_type = string
+    location    = string
+  }))
 }
 
 variable "ssh_key_name" {
