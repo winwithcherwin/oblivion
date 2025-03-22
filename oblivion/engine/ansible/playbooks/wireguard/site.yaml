@@ -10,9 +10,13 @@
         owner: root
         group: root
         mode: '0600'
+      when: wireguard_config is defined
+      notify: Restart WireGuard
 
-    - name: Restart wireguard
+  handlers:
+    - name: Restart WireGuard
       systemd:
         name: wg-quick@wg0
         state: restarted
+        enabled: true
 
