@@ -54,7 +54,7 @@ build {
     inline = [
       "export DEBIAN_FRONTEND=noninteractive",
       "apt-get update -y",
-      "apt-get install -y python3 python3-venv python3-pip redis-tools ansible",
+      "apt-get install -y python3 python3-venv python3-pip redis-tools ansible jina2",
       "python3 -m venv /opt/oblivion-venv",
       "/opt/oblivion-venv/bin/pip install --upgrade pip",
       "/opt/oblivion-venv/bin/pip install celery ansible-runner redis"
@@ -78,7 +78,7 @@ build {
       "apt-get install -y python3 python3-venv python3-pip redis-tools ansible",
       "python3 -m venv /opt/oblivion-venv",
       "/opt/oblivion-venv/bin/pip install --upgrade pip",
-      "/opt/oblivion-venv/bin/pip install celery ansible-runner redis"
+      "/opt/oblivion-venv/bin/pip install celery ansible-runner redis jinja2"
     ]
 
   }
