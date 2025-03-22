@@ -1,5 +1,6 @@
 import click
 from oblivion.engine.ansible import run_playbook_locally
+from oblivion.engine.ansible.utils import list_available_playbooks
 from oblivion.cli.shared import task_command
 
 
@@ -13,4 +14,9 @@ def cli():
 @click.argument("playbook_path", type=str)
 def run_command(playbook_path):
     return (playbook_path,)
+
+@cli.command("list")
+def list_playbooks():
+    for pb in list_available_playbooks():
+        click.echo(pb)
 
