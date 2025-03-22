@@ -1,21 +1,19 @@
-import ansible_runner
 import os
+import ansible_runner
 
 from celery import shared_task
+from oblivion.redis_client import redis_client
 
 
 PLAYBOOK_ROOT = os.path.abspath("oblivion/engine/ansible/playbooks")
 
 @shared_task
-def run_playbook_locally(playbook_path: str):
+def run_playbook_locally(playbook_path: str, stream_id: str = None):
     base_path = os.path.join(PLAYBOOK_ROOT, playbook_path)
     abs_path = os.path.abspath(base_path)
 
-    # default to site.yaml if user only passed the playbook dir
     if os.path.isdir(abs_path):
         abs_path = os.path.join(abs_path, "site.yaml")
-
-    # do not require user to put in extension
     elif not abs_path.endswith((".yaml", ".yml")):
         abs_path += ".yaml"
 
@@ -27,6 +25,10 @@ def run_playbook_locally(playbook_path: str):
 
     private_data_dir = "/tmp/ansible-run"
     os.makedirs(private_data_dir, exist_ok=True)
+
+    def stream_event(event):
+        if stream_id and "stdout" in event and event["stdout"]:
+            redis_client.publish(f"ansible:{stream_id}", event["stdout"])
 
     runner = ansible_runner.run(
         private_data_dir=private_data_dir,
@@ -42,6 +44,7 @@ def run_playbook_locally(playbook_path: str):
         },
         limit="localhost",
         quiet=True,
+        event_handler=stream_event,
     )
 
     return {
