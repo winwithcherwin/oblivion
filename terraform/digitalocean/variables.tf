@@ -1,9 +1,9 @@
 variable "ssh_key_name" {}
 
-variable "redis_uri" {
-  type = string
-}
-
-variable "server_count" {
-  type = number
+variable "servers" {
+  description = "Per-server configuration for DigitalOcean"
+  type = map(object({
+    region = string
+    size   = string
+  }))
 }

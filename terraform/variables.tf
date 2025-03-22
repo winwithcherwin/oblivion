@@ -4,12 +4,14 @@ variable "clouds" {
   default     = ["digitalocean"]
 }
 
-variable "server_counts" {
-  description = "How many servers per cloud"
-  type        = map(number)
-  default = {
-    digitalocean = 1
-  }
+variable "servers" {
+  description = "Map of per-cloud per-server configs"
+  type = map(map(object({
+    region      = optional(string)
+    size        = optional(string)
+    location    = optional(string)
+    server_type = optional(string)
+  })))
 }
 
 variable "ssh_key_name" {
@@ -22,10 +24,12 @@ variable "my_source_ip" {
 }
 
 variable "git_clone_dir" {
-  type = string
+  type    = string
+  default = "/opt/oblivion"
 }
 
 variable "git_repo_url" {
-  type = string
+  type    = string
+  default = "https://github.com/winwithcherwin/oblivion"
 }
 

@@ -1,12 +1,10 @@
 resource "digitalocean_droplet" "this" {
-  for_each = toset([
-    for i in range(var.server_count) : "do-${i}"
-  ])
+  for_each = var.servers
 
   name     = each.key
+  region   = each.value.region
+  size     = each.value.size
   image    = data.digitalocean_images.this.images[0].id
-  region   = "ams3"
-  size     = "s-1vcpu-1gb"
   ssh_keys = [digitalocean_ssh_key.this.id]
 
   user_data = <<-EOT
