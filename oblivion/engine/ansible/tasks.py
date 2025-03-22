@@ -28,7 +28,10 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
 
     def stream_event(event):
         if stream_id and "stdout" in event and event["stdout"]:
-            redis_client.publish(f"ansible:{stream_id}", event["stdout"])
+            line = event["stdout"]
+            if not line.endswith("\n"):
+                line += "\n"
+            redis_client.publish(f"ansible:{stream_id}", line)
 
     runner = ansible_runner.run(
         private_data_dir=private_data_dir,
@@ -46,6 +49,9 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
         quiet=True,
         event_handler=stream_event,
     )
+
+    if stream_id:
+        redis_client.publish(f"ansible:{stream_id}", "__EOF__")
 
     return {
         "status": runner.status,

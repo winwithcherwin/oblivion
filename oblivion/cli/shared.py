@@ -24,13 +24,17 @@ def follow_logs(stream_id):
     try:
         for msg in pubsub.listen():
             if msg["type"] == "message":
-                click.echo(msg["data"].decode(), nl=False)
+                data = msg["data"].decode()
+                if data == "__EOF__":
+                    break
+                click.echo(data, nl=False)
     except KeyboardInterrupt:
         click.echo("Stopped log stream")
     except redis.exceptions.RedisError as e:
         click.echo(f"Redis error: {e}")
     finally:
         click.echo("")
+        pubsub.unsubscribe()
 
 def task_command(task, timeout=10):
     def decorator(f):

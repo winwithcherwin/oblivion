@@ -1,6 +1,14 @@
-import redis
 import os
+import redis
+from urllib.parse import urlparse
 
 
-redis_client = redis.Redis.from_url(os.getenv("REDIS_URI"))
+REDIS_URI = os.environ.get("REDIS_URI")
+if not REDIS_URI:
+    raise RuntimeError("REDIS_URI environment variable not set")
+
+redis_client = redis.Redis.from_url(
+    REDIS_URI,
+    decode_responses=False
+)
 
