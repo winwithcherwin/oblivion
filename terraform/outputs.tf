@@ -1,7 +1,5 @@
 output "all_hosts" {
-  value = merge(
-    module.digitalocean[*].hosts...
-  )
+  value = local.all_hosts
 }
 
 output "redis_uri" {

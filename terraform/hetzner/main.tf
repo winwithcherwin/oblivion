@@ -1,11 +1,10 @@
 resource "hcloud_server" "this" {
-  for_each = toset([
-    for i in range(var.server_count) : "hz-${i}"
-  ])
-  name        = "each.key"
+  for_each = var.servers
+
+  name        = each.key
+  server_type = each.value.server_type
+  location    = each.value.location
   image       = "ubuntu-22.04"
-  server_type = var.server_type
-  location    = var.location
   ssh_keys    = [hcloud_ssh_key.this.id]
 }
 

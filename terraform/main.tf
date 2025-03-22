@@ -1,6 +1,7 @@
 locals {
+
   digitalocean_hosts = contains(var.clouds, "digitalocean") ? module.digitalocean[0].hosts : {}
-  hetzner_hosts      = contains(var.clouds, "hetzner") && length(module.hetzner) > 0 ? module.hetzner[0].hosts : {}
+  hetzner_hosts      = contains(var.clouds, "hetzner") ? module.hetzner[0].hosts : {}
 
   all_hosts = merge(
     local.digitalocean_hosts,

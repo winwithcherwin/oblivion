@@ -8,17 +8,11 @@ servers = {
     }
   }
 
-  /*
   hetzner = {
-    hz-api-0 = {
+    hz-worker-0 = {
       location    = "fsn1"
-      server_type = "cx11"
-    }
-    hz-worker-1 = {
-      location    = "nbg1"
-      server_type = "cx21"
+      server_type = "cpx11"
     }
   }
-  */
 }
 
