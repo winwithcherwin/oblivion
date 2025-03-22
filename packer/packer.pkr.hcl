@@ -54,10 +54,10 @@ build {
     inline = [
       "export DEBIAN_FRONTEND=noninteractive",
       "apt-get update -y",
-      "apt-get install -y unattended-upgrades",
-      "unattended-upgrade -d",
-      "apt-get upgrade -y",
-      "apt-get install -y python3-celery python3-redis redis-tools ansible"
+      "apt-get install -y python3 python3-venv python3-pip redis-tools ansible",
+      "python3 -m venv /opt/oblivion-venv",
+      "/opt/oblivion-venv/bin/pip install --upgrade pip",
+      "/opt/oblivion-venv/bin/pip install celery ansible-runner redis"
     ]
   }
 }
@@ -75,11 +75,12 @@ build {
     inline = [
       "export DEBIAN_FRONTEND=noninteractive",
       "apt-get update -y",
-      "apt-get install -y unattended-upgrades",
-      "unattended-upgrade -d",
-      "apt-get upgrade -y",
-      "apt-get install -y python3-celery python3-redis redis-tools ansible"
+      "apt-get install -y python3 python3-venv python3-pip redis-tools ansible",
+      "python3 -m venv /opt/oblivion-venv",
+      "/opt/oblivion-venv/bin/pip install --upgrade pip",
+      "/opt/oblivion-venv/bin/pip install celery ansible-runner redis"
     ]
+
   }
 }
 

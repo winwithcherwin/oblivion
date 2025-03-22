@@ -2,6 +2,7 @@ import click
 from oblivion.engine.ansible import run_playbook_locally
 from oblivion.cli.shared import task_command
 
+
 @click.group()
 def cli():
     """Run ansible"""
