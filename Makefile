@@ -19,16 +19,22 @@ tfapply: ## terraform apply
 tfdestroy: ## terraform destroy
 	terraform -chdir=terraform destroy -var="ssh_key_name=$(MY_SSH_KEY_NAME)" -var="my_source_ip=$(MY_SOURCE_IP)/32"
 
-tfmt: ## terraform fmt
+fmt: ## format all hcl
 	terraform -chdir=terraform fmt
+	packer fmt packer
 
 ssh: ## use fzf to ssh into host
 	bash ./utils/ssh.sh
 
-.PHONY: packer
-packer: ## run packer
-	packer plugins install github.com/hashicorp/digitalocean
-	cd packer ; packer build digitalocean.json
+packer-do: ## build digitalocean image
+	cd packer; \
+	packer init packer.pkr.hcl ;\
+	packer build -only=server.digitalocean.ubuntu packer.pkr.hcl
+
+packer-hz: ## build hetzner image
+	cd packer; \
+	packer init packer.pkr.hcl ;\
+	packer build -only=server.hcloud.ubuntu packer.pkr.hcl
 
 dotenv-redis-uri:
 	@python utils/tfvar2dotenv.py redis_uri; \

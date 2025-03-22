@@ -26,5 +26,5 @@ server_name=$(echo "$selected" | cut -f1)
 ip=$(echo "$selected" | cut -f2)
 
 echo "🔗 Connecting to $server_name at $ip"
-exec ssh "root@$ip"
+exec ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "root@$ip"
 
