@@ -2,136 +2,123 @@ import json
 import os
 import subprocess
 import socket
-import logging
-
+from pathlib import Path
 from celery import shared_task
-from jinja2 import Environment, FileSystemLoader, TemplateNotFound
-
+from jinja2 import Environment, FileSystemLoader
+import requests
 from oblivion.redis_client import redis_client
 
-# Constants
-WIREGUARD_KEY_PREFIX = "wireguard:public_keys"
 WG_DIR = "/etc/wireguard"
 WG_CONF_PATH = os.path.join(WG_DIR, "wg0.conf")
 WG_PRIVATE_KEY_PATH = os.path.join(WG_DIR, "privatekey")
 WG_PUBLIC_KEY_PATH = os.path.join(WG_DIR, "publickey")
+WIREGUARD_KEY_PREFIX = "wireguard:public_keys"
+WIREGUARD_IP_PREFIX = "wireguard:ip"
+SUBNET_BASE = "10.8.0."
 
-# Jinja2 setup
 env = Environment(
     loader=FileSystemLoader("oblivion/engine/wireguard/templates"),
     autoescape=False,
 )
 
-# Logging (optional but encouraged)
-logger = logging.getLogger(__name__)
+def get_hostname():
+    return socket.gethostname()
 
-
-def register_public_key(hostname: str, public_key: str, private_ip: str, public_ip: str):
-    """Register a host's WireGuard public key + IP info in Redis."""
-    key = f"{WIREGUARD_KEY_PREFIX}:{hostname}"
-    data = {
-        "hostname": hostname,
-        "public_key": public_key.strip(),
-        "private_ip": private_ip,
-        "public_ip": public_ip,
-    }
-
+def get_public_ip():
     try:
-        redis_client.set(key, json.dumps(data), ex=300)
-        return f"Registered WireGuard key for {hostname}"
-    except Exception as e:
-        logger.error(f"Redis error while registering key: {e}")
-        raise
+        return requests.get("https://api.ipify.org", timeout=3).text.strip()
+    except requests.RequestException as e:
+        raise RuntimeError(f"Could not determine public IP: {e}")
 
-
-def render_wireguard_conf(self_meta, peers):
-    """Renders a full wg0.conf from the given host + peer metadata."""
-    try:
-        interface_tpl = env.get_template("interface.tpl")
-        peer_tpl = env.get_template("peer.tpl")
-    except TemplateNotFound as e:
-        raise RuntimeError(f"Missing template: {e}")
-
-    interface = interface_tpl.render(
-        PRIVATE_KEY="REPLACE_WITH_YOUR_PRIVATE_KEY",
-        PRIVATE_IP=self_meta["private_ip"]
-    )
-
-    rendered_peers = []
-    for p in peers:
-        try:
-            rendered_peers.append(peer_tpl.render(
-                PUBLIC_KEY=p["public_key"].strip(),
-                ALLOWED_IP=p["private_ip"],
-                ENDPOINT=p["public_ip"]
-            ))
-        except KeyError as e:
-            logger.warning(f"Missing key in peer metadata: {e}")
-
-    return interface + "\n\n" + "\n".join(rendered_peers)
-
-
-@shared_task
-def generate_wireguard_conf():
-    """
-    Generates wg0.conf configurations for all registered WireGuard nodes.
-
-    Returns:
-        dict: hostname → rendered wg0.conf string
-    """
-    keys = redis_client.keys(f"{WIREGUARD_KEY_PREFIX}:*")
-    hosts = {}
-
-    for key in keys:
-        try:
-            raw = redis_client.get(key)
-            if not raw:
-                continue
-            hostname = key.decode().split(":")[-1]
-            hosts[hostname] = json.loads(raw.decode())
-        except (json.JSONDecodeError, AttributeError, UnicodeDecodeError) as e:
-            logger.warning(f"Skipping malformed entry {key}: {e}")
-            continue
-
-    configs = {}
-    for hostname, self_meta in hosts.items():
-        peers = [meta for peername, meta in hosts.items() if peername != hostname]
-        try:
-            config = render_wireguard_conf(self_meta, peers)
-            configs[hostname] = config
-        except Exception as e:
-            logger.error(f"Failed to generate config for {hostname}: {e}")
-            configs[hostname] = f"# Error generating config for {hostname}: {str(e)}"
-
-    return configs
-
-
-@shared_task
-def generate_and_register_keys(private_ip: str, public_ip: str):
-    """
-    Generates private/public WireGuard keys (if not already present),
-    and registers the public key in Redis.
-    """
-    hostname = socket.gethostname()
+def ensure_keys(force_regen=False):
     os.makedirs(WG_DIR, exist_ok=True)
-
     try:
-        if not os.path.exists(WG_PRIVATE_KEY_PATH):
+        if force_regen or not Path(WG_PRIVATE_KEY_PATH).exists():
             private_key = subprocess.check_output(["wg", "genkey"]).strip()
-            with open(WG_PRIVATE_KEY_PATH, "wb") as f:
-                f.write(private_key + b"\n")
+            Path(WG_PRIVATE_KEY_PATH).write_bytes(private_key + b"\n")
             os.chmod(WG_PRIVATE_KEY_PATH, 0o600)
 
             public_key = subprocess.check_output(["wg", "pubkey"], input=private_key).strip()
-            with open(WG_PUBLIC_KEY_PATH, "wb") as f:
-                f.write(public_key + b"\n")
-        else:
-            with open(WG_PUBLIC_KEY_PATH, "rb") as f:
-                public_key = f.read().strip()
-    except (OSError, subprocess.SubprocessError) as e:
-        logger.error(f"Failed to generate WireGuard keys: {e}")
-        raise RuntimeError(f"WireGuard key generation failed: {e}")
+            Path(WG_PUBLIC_KEY_PATH).write_bytes(public_key + b"\n")
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"Error generating keys: {e}")
 
-    register_public_key(hostname, public_key.decode(), private_ip, public_ip)
-    return f"Keys ensured, public key registered for {hostname}"
+    return Path(WG_PUBLIC_KEY_PATH).read_text().strip()
+
+def allocate_private_ip(hostname):
+    existing = redis_client.get(f"{WIREGUARD_IP_PREFIX}:{hostname}")
+    if existing:
+        return existing.decode()
+
+    for i in range(2, 255):
+        candidate = f"{SUBNET_BASE}{i}"
+        in_use = [redis_client.get(k).decode() for k in redis_client.keys(f"{WIREGUARD_IP_PREFIX}:*") if redis_client.get(k)]
+        if candidate not in in_use:
+            redis_client.set(f"{WIREGUARD_IP_PREFIX}:{hostname}", candidate)
+            return candidate
+
+    raise RuntimeError("No available IPs in 10.8.0.0/24")
+
+@shared_task
+def ping():
+    return "pong"
+
+@shared_task
+def register_wireguard_node():
+    try:
+        hostname = get_hostname()
+        public_ip = get_public_ip()
+        keyfile_exists = Path(WG_PRIVATE_KEY_PATH).exists()
+        redis_exists = redis_client.get(f"{WIREGUARD_KEY_PREFIX}:{hostname}")
+
+        if not keyfile_exists and redis_exists:
+            public_key = ensure_keys(force_regen=True)
+        else:
+            public_key = ensure_keys()
+
+        private_ip = allocate_private_ip(hostname)
+
+        redis_client.set(f"{WIREGUARD_KEY_PREFIX}:{hostname}", json.dumps({
+            "hostname": hostname,
+            "public_key": public_key,
+            "private_ip": private_ip,
+            "public_ip": public_ip,
+        }))
+
+        return f"✅ Registered {hostname} with {private_ip}"
+    except Exception as e:
+        return f"❌ Registration failed: {e}"
+
+def render_wireguard_config(self_meta, peer_list):
+    interface_tpl = env.get_template("interface.tpl")
+    peer_tpl = env.get_template("peer.tpl")
+
+    try:
+        private_key = Path(WG_PRIVATE_KEY_PATH).read_text().strip()
+    except FileNotFoundError:
+        raise RuntimeError("Missing private key at /etc/wireguard/privatekey")
+
+    interface = interface_tpl.render(
+        PRIVATE_KEY=private_key,
+        PRIVATE_IP=self_meta["private_ip"]
+    )
+
+    rendered_peers = [
+        peer_tpl.render(
+            PUBLIC_KEY=peer["public_key"].strip(),
+            ALLOWED_IP=peer["private_ip"],
+            ENDPOINT=peer["public_ip"]
+        ) for peer in peer_list
+    ]
+
+    return interface + "\n\n" + "\n".join(rendered_peers)
+
+@shared_task
+def write_wireguard_config(self_meta, peer_list):
+    try:
+        config = render_wireguard_config(self_meta, peer_list)
+        Path(WG_CONF_PATH).write_text(config)
+        return f"✅ Wrote {WG_CONF_PATH} with {len(peer_list)} peers"
+    except Exception as e:
+        return f"❌ Failed to write config: {e}"
 

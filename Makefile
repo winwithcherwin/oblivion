@@ -51,3 +51,40 @@ livetest: ## run test task
 	python -m oblivion calc add 5 7 --all
 	python -m oblivion ansible run echo/cherwin --all
 	python -m oblivion ansible run echo --all
+
+# Makefile for managing WireGuard mesh overlay via Celery + Redis
+
+PYTHON=python -m oblivion wireguard
+
+.PHONY: register write-config check-liveness full-refresh register-one write-one teardown-one
+
+## 🔐 Register all nodes (generate keys + IP + store in Redis)
+register:
+	@$(PYTHON) register --all
+
+## 🧩 Write wg0.conf on all nodes based on current peer state
+write-config:
+	@$(PYTHON) write-config --all
+
+## 📡 Ping all nodes; remove unreachable ones from Redis
+check-liveness:
+	@$(PYTHON) check-liveness
+
+## ♻️ Reregister and reconfigure a single node
+## Usage: make register-one QUEUE=server2
+register-one:
+	@$(PYTHON) register --queue $(QUEUE)
+
+## 💾 Rewrites config on a single node
+## Usage: make write-one QUEUE=server2
+write-one:
+	@$(PYTHON) write-config --queues $(QUEUE)
+
+## 🔁 Full refresh cycle (clean up dead peers + rewrite all configs)
+full-refresh: check-liveness write-config
+
+## 🧼 Teardown WireGuard from a node (removes keys, config, service)
+## Usage: make teardown-one QUEUE=server3
+teardown-one:
+	@python -m oblivion ansible run wireguard/teardown --queue $(QUEUE)
+

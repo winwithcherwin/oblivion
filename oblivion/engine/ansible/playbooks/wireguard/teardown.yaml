@@ -1,0 +1,26 @@
+---
+- name: Teardown WireGuard
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: Stop WireGuard service
+      service:
+        name: wg-quick@wg0
+        state: stopped
+        enabled: no
+      ignore_errors: yes
+
+    - name: Remove WireGuard config
+      file:
+        path: /etc/wireguard/wg0.conf
+        state: absent
+
+    - name: Remove private key
+      file:
+        path: /etc/wireguard/privatekey
+        state: absent
+
+    - name: Remove public key
+      file:
+        path: /etc/wireguard/publickey
+        state: absent
