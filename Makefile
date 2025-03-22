@@ -49,3 +49,5 @@ tree:
 
 livetest: ## run test task
 	python -m oblivion calc add 5 7 --all
+	python -m oblivion ansible run echo/cherwin --all
+	python -m oblivion ansible run echo --all
