@@ -9,6 +9,13 @@
     - name: Generate wireguard host data
       set_fact:
         wireguard_hosts: "{{ lookup('pipe', 'python3 scripts/generate_hosts.py') | from_json }}"
+      environment:
+        REDIS_URL: "{{ lookup('env', 'REDIS_URI') }}"
+
+    - name: Fail if wireguard_hosts is empty
+      fail:
+        msg: "Could not load wireguard host data from Redis"
+      when: wireguard_hosts | length == 0
 
     - name: Debug iventory_hostname
       debug:
