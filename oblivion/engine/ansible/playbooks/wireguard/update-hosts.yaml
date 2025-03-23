@@ -7,8 +7,6 @@
 
   tasks:
     - name: Generate wireguard host data
-      run_once: true
-      delegate_to: localhost
       set_fact:
         wireguard_hosts: "{{ lookup('pipe', 'python3 scripts/generate_hosts.py') | from_json }}"
 
