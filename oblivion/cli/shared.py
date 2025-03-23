@@ -3,14 +3,17 @@ import uuid
 import redis
 import json
 import os
+import time
+
 from functools import wraps
 from rich import print as rich_print
 from rich.text import Text
+from rich.table import Table
+from rich.live import Live
 
 from oblivion.celery_app import app
 from oblivion.redis_client import redis_client
 from oblivion.settings import ENABLE_CLI_COLOR
-
 
 def get_all_queues():
     inspect = app.control.inspect()
@@ -22,7 +25,6 @@ def get_all_queues():
     if not seen:
         raise click.ClickException("No active queues found.")
     return sorted(seen)
-
 
 def follow_logs(stream_id, expected_hosts=None):
     click.echo(f"→ Live logs (stream ID: {stream_id})\n")
@@ -56,7 +58,6 @@ def follow_logs(stream_id, expected_hosts=None):
                 click.echo(data)
                 continue
 
-            # Assign color per host unless too many
             if host not in host_colors and use_colors:
                 seen_hosts.add(host)
                 if len(seen_hosts) > max_colors:
@@ -72,7 +73,6 @@ def follow_logs(stream_id, expected_hosts=None):
                 if not subline:
                     continue
 
-                # Prevent double prefix only if it already starts with [host]
                 if subline.startswith(f"ok: [{host}]") or subline.startswith(f"changed: [{host}]"):
                     text = Text(subline)
                 elif subline.startswith("ok: [") or subline.startswith("changed: ["):
@@ -91,7 +91,6 @@ def follow_logs(stream_id, expected_hosts=None):
     finally:
         click.echo("")
         pubsub.unsubscribe()
-
 
 def task_command(task, timeout=10):
     def decorator(f):
@@ -122,10 +121,9 @@ def task_command(task, timeout=10):
         return wrapper
     return decorator
 
-
 def streaming_ansible_task_command(task, timeout=10):
     """
-    For Ansible-style tasks that return a dict with rc/status/stats/stdout/duration
+    For Ansible-style tasks that return a dict with rc/status/stats/stdout
     """
     def decorator(f):
         @click.option("--queue", help="Target queue name")
@@ -141,6 +139,7 @@ def streaming_ansible_task_command(task, timeout=10):
 
             target_queues = get_all_queues() if fanout else [queue]
             results = []
+            start_time = time.monotonic()
             for q in target_queues:
                 click.echo(f"→ Dispatching to: {q}")
                 res = task.apply_async(args=task_args, kwargs=task_kwargs, queue=q)
@@ -150,22 +149,35 @@ def streaming_ansible_task_command(task, timeout=10):
 
             # Expect Ansible-style dict result
             click.echo("\nResults:")
+            table = Table(show_header=True, header_style="bold magenta")
+            table.add_column("Host")
+            table.add_column("RC", justify="right")
+            table.add_column("Status")
+            table.add_column("OK", justify="right")
+            table.add_column("Changed", justify="right")
+            table.add_column("Failed", justify="right")
+            table.add_column("Duration", justify="right")
+
             for q, res in results:
                 try:
                     result = res.get(timeout=timeout)
                     rc = result.get("rc")
                     status = result.get("status")
                     stats = result.get("stats") or {}
-                    duration = result.get("duration")
-                    duration_str = f"{duration:.2f}s" if duration is not None else "?"
+                    duration = result.get("duration", "?")
 
-                    summary = f"ok={stats.get('ok', 0)} changed={stats.get('changed', 0)} " \
-                              f"failed={stats.get('failures', 0)} duration={duration_str}"
+                    ok = str(stats.get("ok", 0))
+                    changed = str(stats.get("changed", 0))
+                    failed = str(stats.get("failures", 0))
+                    duration_str = f"{duration:.2f}s" if isinstance(duration, (int, float)) else str(duration)
 
-                    color = "green" if rc == 0 else "red"
-                    click.secho(f"{q}: rc={rc} status={status} summary={summary}", fg=color)
+                    table.add_row(q, str(rc), status, ok, changed, failed, duration_str)
                 except Exception as e:
-                    click.echo(f"{q}: {e}")
+                    table.add_row(q, "?", "error", "-", "-", "-", f"Error: {str(e)}")
+
+            rich_print(table)
+            total_time = time.monotonic() - start_time
+            click.secho(f"\nTotal duration: {total_time:.2f}s", fg="cyan")
         return wrapper
     return decorator
 
