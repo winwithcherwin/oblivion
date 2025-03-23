@@ -1,0 +1,14 @@
+- name: Refresh WireGuard interface
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Bring down wg0 if it's up
+      command: wg-quick down wg0
+      register: down_result
+      failed_when: false
+      changed_when: "'Shutting down' in down_result.stdout"
+
+    - name: Bring up wg0
+      command: wg-quick up wg0
+
