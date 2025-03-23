@@ -2,9 +2,11 @@ import click
 import uuid
 import redis
 import json
+
 from functools import wraps
 from rich import print as rich_print
 from rich.text import Text
+
 from oblivion.celery_app import app
 from oblivion.redis_client import redis_client
 
@@ -24,9 +26,7 @@ def follow_logs(stream_id):
     pubsub = redis_client.pubsub()
     pubsub.subscribe(f"ansible:{stream_id}")
     host_colors = {}
-    available_colors = [
-        "cyan", "magenta", "green", "yellow", "blue", "bright_black"
-    ]
+    available_colors = ["cyan", "magenta", "green", "yellow", "blue", "bright_black"]
     max_colors = len(available_colors)
     seen_hosts = set()
     use_colors = True
@@ -47,6 +47,7 @@ def follow_logs(stream_id):
                 click.echo(data)
                 continue
 
+            # Assign color per host unless too many
             if host not in host_colors and use_colors:
                 seen_hosts.add(host)
                 if len(seen_hosts) > max_colors:
@@ -62,16 +63,17 @@ def follow_logs(stream_id):
                 if not subline:
                     continue
 
-                if subline.startswith(f"ok: [{host}]"):
-                    if color:
-                        rich_print(f"[{color}]{subline}[/{color}]")
-                    else:
-                        rich_print(subline)
-                elif subline.startswith("ok: ["):
-                    # Let Ansible show its own prefix when referring to another host
-                    rich_print(subline)
+                # Prevent double prefix only if it already starts with [host]
+                if subline.startswith(f"ok: [{host}]") or subline.startswith(f"changed: [{host}]"):
+                    text = Text(subline)
+                elif subline.startswith("ok: [") or subline.startswith("changed: ["):
+                    text = Text(subline)
                 else:
-                    rich_print(f"[{color}]{prefix}{subline}[/{color}]" if color else f"{prefix}{subline}")
+                    text = Text(f"{prefix}{subline}")
+
+                if color:
+                    text.stylize(color)
+                rich_print(text)
 
     except KeyboardInterrupt:
         click.echo("Stopped log stream")
