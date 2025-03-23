@@ -3,7 +3,6 @@ import redis
 import json
 import sys
 
-
 # Load Redis connection
 REDIS_URI = os.environ.get("REDIS_URI")
 if not REDIS_URI:
@@ -25,9 +24,10 @@ for key in keys:
         data = json.loads(raw.decode())
         hosts.append({
             "hostname": data["hostname"],
-            "wg_ip": data["wg_ip"]
+            "wg_ip": data["private_ip"]
         })
-    except Exception:
+    except Exception as e:
+        print(f"Skipping malformed data for key {key.decode()}: {e}", file=sys.stderr)
         continue
 
 # Sort alphabetically by hostname for deterministic order
@@ -42,6 +42,6 @@ hostmap = {
     for h in hosts
 }
 
-# Output as JSON
-json.dump(hostmap, sys.stdout)
+json.dump(hostmap, sys.stdout, indent=2)
+print()
 
