@@ -1,4 +1,5 @@
 import os
+import socket
 import ansible_runner
 
 from celery import shared_task
@@ -33,19 +34,21 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
                 line += "\n"
             redis_client.publish(f"ansible:{stream_id}", line)
 
+    hostname = socket.gethostname()
+
     runner = ansible_runner.run(
         private_data_dir=private_data_dir,
         playbook=abs_path,
         inventory={
             "all": {
                 "hosts": {
-                    "localhost": {
+                    hostname: {
                         "ansible_connection": "local"
                     }
                 }
             }
         },
-        limit="localhost",
+        limit=hostname,
         quiet=True,
         event_handler=stream_event,
     )
