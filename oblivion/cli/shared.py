@@ -1,6 +1,7 @@
 import click
 import uuid
 import redis
+import json
 
 from functools import wraps
 from oblivion.celery_app import app
@@ -27,7 +28,14 @@ def follow_logs(stream_id):
                 data = msg["data"].decode()
                 if data == "__EOF__":
                     break
-                click.echo(data, nl=False)
+                try:
+                    parsed = json.loads(data)
+                    host = parsed.get("host", "unknown")
+                    line = parsed.get("line", "")
+                    for subline in line.splitlines(keepends=True):
+                        click.echo(f"[{host}] {subline}", nl=False)
+                except json.JSONDecodeError:
+                    click.echo(data, nl=False)
     except KeyboardInterrupt:
         click.echo("Stopped log stream")
     except redis.exceptions.RedisError as e:
