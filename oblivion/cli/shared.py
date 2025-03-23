@@ -1,8 +1,11 @@
 import click
 import uuid
 import redis
+import json
 
 from functools import wraps
+from rich.console import Console
+from rich.text import Text
 from oblivion.celery_app import app
 from oblivion.redis_client import redis_client
 
@@ -17,23 +20,52 @@ def get_all_queues():
         raise click.ClickException("No active queues found.")
     return sorted(seen)
 
+from rich.console import Console
+from rich.text import Text
+import json
+import hashlib
+
+def get_color_for_host(host):
+    """Hash hostname to a stable HSL color."""
+    hash_val = int(hashlib.md5(host.encode()).hexdigest(), 16)
+    hue = hash_val % 360
+    return f"hsl({hue}, 70%, 60%)"
+
 def follow_logs(stream_id):
-    click.echo(f"→ Live logs (stream ID: {stream_id})\n")
+    console = Console()
+    console.print(f"[bold cyan]→ Live logs (stream ID: {stream_id})[/bold cyan]\n")
+
     pubsub = redis_client.pubsub()
     pubsub.subscribe(f"ansible:{stream_id}")
+
     try:
         for msg in pubsub.listen():
-            if msg["type"] == "message":
-                data = msg["data"].decode()
-                if data == "__EOF__":
-                    break
-                click.echo(data, nl=False)
+            if msg["type"] != "message":
+                continue
+
+            data = msg["data"].decode()
+            if data == "__EOF__":
+                break
+
+            try:
+                payload = json.loads(data)
+                host = payload.get("host", "unknown")
+                line = payload.get("line", "").rstrip()
+
+                color = get_color_for_host(host)
+                prefix = f"[{host}]"
+                text = Text.assemble((prefix, color), (" ",), (line, ""))
+                console.print(text)
+            except json.JSONDecodeError:
+                # fallback for old unstructured messages
+                console.print(data.rstrip())
+
     except KeyboardInterrupt:
-        click.echo("Stopped log stream")
+        console.print("[yellow]Stopped log stream[/yellow]")
     except redis.exceptions.RedisError as e:
-        click.echo(f"Redis error: {e}")
+        console.print(f"[red]Redis error: {e}[/red]")
     finally:
-        click.echo("")
+        console.print()
         pubsub.unsubscribe()
 
 def task_command(task, timeout=10):
