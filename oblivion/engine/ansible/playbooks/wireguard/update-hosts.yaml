@@ -1,0 +1,22 @@
+- name: Set /etc/hosts for all WireGuard nodes
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    dest_path: "/etc/hosts"
+
+  tasks:
+    - name: Generate hosts file from Redis data
+      run_once: true
+      delegate_to: localhost
+      set_fact:
+        wireguard_hosts: "{{ lookup('pipe', 'python3 scripts/generate_hosts.py') | from_json }}"
+
+    - name: Push /etc/hosts to remote hosts
+      ansible.builtin.copy:
+        content: "{{ lookup('template', 'templates/hosts.j2') }}"
+        dest: "{{ dest_path }}"
+        owner: root
+        group: root
+        mode: '0644'
+
