@@ -2,8 +2,8 @@ import os
 import redis
 from urllib.parse import urlparse
 
+from oblivion.settings import REDIS_URI
 
-REDIS_URI = os.environ.get("REDIS_URI")
 if not REDIS_URI:
     raise RuntimeError("REDIS_URI environment variable not set")
 

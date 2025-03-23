@@ -3,8 +3,9 @@ import redis
 import json
 import sys
 
+from oblivion.settings import REDIS_URI
+
 # Load Redis connection
-REDIS_URI = os.environ.get("REDIS_URI")
 if not REDIS_URI:
     raise RuntimeError("REDIS_URI not set")
 
