@@ -1,5 +1,5 @@
 - name: Say hello from Ansible
-  hosts: localhost
+  hosts: all
   gather_facts: false
 
   tasks:

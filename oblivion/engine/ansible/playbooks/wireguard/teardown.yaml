@@ -1,7 +1,6 @@
 ---
 - name: Teardown WireGuard
-  hosts: localhost
-  become: yes
+  hosts: all
   tasks:
     - name: Stop WireGuard service
       service:

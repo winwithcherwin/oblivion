@@ -1,5 +1,5 @@
 - name: Refresh WireGuard interface
-  hosts: localhost
+  hosts: all
   gather_facts: false
 
   tasks:
