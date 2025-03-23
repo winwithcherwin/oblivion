@@ -35,19 +35,19 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
     private_data_dir = "/tmp/ansible-run"
     os.makedirs(private_data_dir, exist_ok=True)
 
+    # Use short hostname for inventory
+    hostname = socket.gethostname()
+
     def stream_event(event):
         if stream_id and "stdout" in event and event["stdout"]:
             line = event["stdout"]
             if not line.endswith("\n"):
                 line += "\n"
-            host = event.get("host") or event.get("event_data", {}).get("host") or "unknown"
+            host = event.get("event_data", {}).get("host") or hostname
             redis_client.publish(
                     f"ansible:{stream_id}",
                     json.dumps({"host": host, "line": line})
             )
-
-    # Use short hostname for inventory
-    hostname = socket.gethostname()
 
     # Merge in the virtualenv path and env file vars
     envvars = dict(os.environ)
