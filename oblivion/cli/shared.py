@@ -2,6 +2,7 @@ import click
 import uuid
 import redis
 import json
+import rich
 
 from functools import wraps
 from oblivion.celery_app import app
@@ -19,9 +20,16 @@ def get_all_queues():
     return sorted(seen)
 
 def follow_logs(stream_id):
+    from rich import print as rich_print
+
     click.echo(f"→ Live logs (stream ID: {stream_id})\n")
     pubsub = redis_client.pubsub()
     pubsub.subscribe(f"ansible:{stream_id}")
+
+    host_colors = {}
+    colors = ["cyan", "magenta", "yellow", "blue", "green", "white"]
+    use_colors = True
+
     try:
         for msg in pubsub.listen():
             if msg["type"] != "message":
@@ -36,16 +44,25 @@ def follow_logs(stream_id):
                 host = parsed.get("host", "unknown")
                 line = parsed.get("line", "")
 
-                for subline in line.splitlines():
-                    if not subline.strip():
-                        continue
-                    if f"[{host}]" in subline:
-                        # Already prefixed by Ansible — no need to add it again
-                        click.echo(subline)
+                if host not in host_colors:
+                    host_colors[host] = colors[len(host_colors) % len(colors)]
+
+                # Disable coloring if too many unique hosts
+                if len(host_colors) > len(colors):
+                    use_colors = False
+
+                for subline in line.splitlines(keepends=True):
+                    if subline.startswith(f"ok: [{host}] =>") or subline.strip() == "":
+                        click.echo(subline, nl=False)
                     else:
-                        click.echo(f"[{host}] {subline}")
+                        if use_colors:
+                            rich_print(f"[{host_colors[host]}][{host}] {subline}[/]")
+                        else:
+                            click.echo(f"[{host}] {subline}", nl=False)
+
             except json.JSONDecodeError:
                 click.echo(data, nl=False)
+
     except KeyboardInterrupt:
         click.echo("Stopped log stream")
     except redis.exceptions.RedisError as e:
