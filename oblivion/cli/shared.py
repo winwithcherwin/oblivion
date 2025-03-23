@@ -3,7 +3,6 @@ import uuid
 import redis
 import json
 import os
-
 from functools import wraps
 from rich import print as rich_print
 from rich.text import Text
@@ -11,6 +10,7 @@ from rich.text import Text
 from oblivion.celery_app import app
 from oblivion.redis_client import redis_client
 from oblivion.settings import ENABLE_CLI_COLOR
+
 
 def get_all_queues():
     inspect = app.control.inspect()
@@ -22,6 +22,7 @@ def get_all_queues():
     if not seen:
         raise click.ClickException("No active queues found.")
     return sorted(seen)
+
 
 def follow_logs(stream_id, expected_hosts=None):
     click.echo(f"→ Live logs (stream ID: {stream_id})\n")
@@ -91,6 +92,7 @@ def follow_logs(stream_id, expected_hosts=None):
         click.echo("")
         pubsub.unsubscribe()
 
+
 def task_command(task, timeout=10):
     def decorator(f):
         @click.option("--queue", help="Target queue name")
@@ -120,9 +122,10 @@ def task_command(task, timeout=10):
         return wrapper
     return decorator
 
+
 def streaming_ansible_task_command(task, timeout=10):
     """
-    For Ansible-style tasks that return a dict with rc/status/stats/stdout
+    For Ansible-style tasks that return a dict with rc/status/stats/stdout/duration
     """
     def decorator(f):
         @click.option("--queue", help="Target queue name")
@@ -152,9 +155,15 @@ def streaming_ansible_task_command(task, timeout=10):
                     result = res.get(timeout=timeout)
                     rc = result.get("rc")
                     status = result.get("status")
+                    stats = result.get("stats") or {}
+                    duration = result.get("duration")
+                    duration_str = f"{duration:.2f}s" if duration is not None else "?"
+
+                    summary = f"ok={stats.get('ok', 0)} changed={stats.get('changed', 0)} " \
+                              f"failed={stats.get('failures', 0)} duration={duration_str}"
+
                     color = "green" if rc == 0 else "red"
-                    stats = result.get("stats")
-                    click.secho(f"{q}: rc={rc} status={status} summary={stats}", fg=color)
+                    click.secho(f"{q}: rc={rc} status={status} summary={summary}", fg=color)
                 except Exception as e:
                     click.echo(f"{q}: {e}")
         return wrapper
