@@ -60,55 +60,63 @@ def write_configs(fanout, queues):
 
     target_queues = get_all_queues() if fanout else [q.strip() for q in queues.split(",")]
 
-    # Load registered nodes from Redis
+    # Load all peer metadata from Redis
     keys = redis_client.keys(f"{WIREGUARD_KEY_PREFIX}:*")
     hosts = {}
     for key in keys:
         try:
             raw = redis_client.get(key)
+            if not raw:
+                continue
             hostname = key.decode().split(":")[-1]
             hosts[hostname] = json.loads(raw.decode())
         except Exception:
+            click.echo(f"⚠️  Failed to parse metadata for {key.decode()}")
             continue
 
-    hostnames = sorted(hosts.keys())  # Deterministic ring
-    total_hosts = len(hostnames)
+    sorted_hostnames = sorted(hosts.keys())
 
-    for q in target_queues:
-        self_meta = hosts.get(q)
-        if not self_meta:
-            click.echo(f"⚠️  No registration data found for {q}, skipping")
+    # Build peer graph: each host connects to next N (non-symmetric)
+    peer_graph = {host: [] for host in sorted_hostnames}
+    N = max(1, min(3, len(sorted_hostnames) // 3))  # scale down with size
+
+    for i, host in enumerate(sorted_hostnames):
+        for j in range(1, N + 1):
+            peer = sorted_hostnames[(i + j) % len(sorted_hostnames)]
+            if peer != host:  # Prevent self-loop
+                peer_graph[host].append(peer)
+
+    # Invert for symmetric awareness (still non-symmetric configs)
+    awareness_graph = {host: set() for host in sorted_hostnames}
+    for host, peers in peer_graph.items():
+        for peer in peers:
+            awareness_graph[host].add(peer)
+            awareness_graph[peer].add(host)
+
+    for hostname in target_queues:
+        if hostname not in sorted_hostnames:
+            click.echo(f"⚠️  Host '{hostname}' is not in registration list, skipping.")
             continue
 
-        if q not in hostnames:
-            click.echo(f"⚠️  Queue '{q}' is not a registered host, skipping.")
+        self_meta = hosts[hostname]
+        peer_ids = awareness_graph[hostname]
+        peers = [hosts[p] for p in peer_ids if p != hostname and p in hosts]
+        missing_peers = [p for p in peer_ids if p not in hosts]
+
+        if missing_peers:
+            click.echo(f"⚠️  Missing metadata for peers of {hostname}: {', '.join(missing_peers)}")
+
+        if not peers:
+            click.echo(f"⚠️  No valid peers for {hostname}, skipping config")
             continue
 
-        if total_hosts <= 1:
-            peers = []
-        else:
-            index_in_ring = hostnames.index(q)
-
-            # Dynamically scale peer count based on cluster size
-            K = max(1, min(3, total_hosts // 4))
-
-            # Select next K nodes in the ring
-            peer_names = [
-                hostnames[(index_in_ring + i + 1) % total_hosts]
-                for i in range(K)
-            ]
-            peers = [hosts[p] for p in peer_names if p in hosts]
-
-            if len(peers) < K:
-                click.echo(f"⚠️  Only found {len(peers)} of {K} intended peers for {q}")
-
-        click.echo(f"→ Writing config on: {q} with {len(peers)} peers")
+        click.echo(f"→ Writing config on: {hostname} with {len(peers)} peers")
         try:
-            res = write_wireguard_config.apply_async(args=[self_meta, peers], queue=q)
+            res = write_wireguard_config.apply_async(args=[self_meta, peers], queue=hostname)
             result = res.get(timeout=10)
-            click.echo(f"  {q}: {result}")
+            click.echo(f"  {hostname}: {result}")
         except Exception as e:
-            click.echo(f"  ❌ {q}: Failed with error: {e}")
+            click.echo(f"  ❌ {hostname}: Failed with error: {e}")
 
 @cli.command("check-liveness")
 def check_liveness():
