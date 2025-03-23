@@ -52,6 +52,7 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
     # Merge in the virtualenv path and env file vars
     envvars = dict(os.environ)
     envvars["PATH"] = f"{VENV_BIN}:{envvars.get('PATH', '')}"
+    envvars["ANSIBLE_STDOUT_CALLBACK"] = "yaml"
 
     runner = ansible_runner.run(
         private_data_dir=private_data_dir,

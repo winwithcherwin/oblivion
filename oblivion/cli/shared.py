@@ -24,18 +24,28 @@ def follow_logs(stream_id):
     pubsub.subscribe(f"ansible:{stream_id}")
     try:
         for msg in pubsub.listen():
-            if msg["type"] == "message":
-                data = msg["data"].decode()
-                if data == "__EOF__":
-                    break
-                try:
-                    parsed = json.loads(data)
-                    host = parsed.get("host", "unknown")
-                    line = parsed.get("line", "")
-                    for subline in line.splitlines(keepends=True):
-                        click.echo(f"[{host}] {subline}", nl=False)
-                except json.JSONDecodeError:
-                    click.echo(data, nl=False)
+            if msg["type"] != "message":
+                continue
+
+            data = msg["data"].decode()
+            if data == "__EOF__":
+                break
+
+            try:
+                parsed = json.loads(data)
+                host = parsed.get("host", "unknown")
+                line = parsed.get("line", "")
+
+                for subline in line.splitlines():
+                    if not subline.strip():
+                        continue
+                    if f"[{host}]" in subline:
+                        # Already prefixed by Ansible — no need to add it again
+                        click.echo(subline)
+                    else:
+                        click.echo(f"[{host}] {subline}")
+            except json.JSONDecodeError:
+                click.echo(data, nl=False)
     except KeyboardInterrupt:
         click.echo("Stopped log stream")
     except redis.exceptions.RedisError as e:
