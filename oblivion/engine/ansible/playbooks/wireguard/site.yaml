@@ -13,7 +13,7 @@
         name: wireguard
         state: present
 
-    - name: Check if wg0 is already up
+    - name: Check if wg0 interface exists
       command: ip link show wg0
       register: wg0_status
       failed_when: false
@@ -22,17 +22,9 @@
     - name: Bring up wg0 if not already up
       command: wg-quick up wg0
       when: wg0_status.rc != 0
-      notify: Restart WireGuard
 
-    - name: Enable wg0 at boot
+    - name: Enable WireGuard interface at boot
       systemd:
         name: wg-quick@wg0
-        enabled: true
-
-  handlers:
-    - name: Restart WireGuard
-      systemd:
-        name: wg-quick@wg0
-        state: restarted
         enabled: true
 
