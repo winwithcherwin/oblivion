@@ -1,12 +1,12 @@
 import os
 import socket
 import json
+import time
 import ansible_runner
 from dotenv import load_dotenv
 
 from celery import shared_task
 from oblivion.redis_client import redis_client
-
 
 PLAYBOOK_ROOT = os.path.abspath("oblivion/engine/ansible/playbooks")
 ENV_FILE = "/etc/oblivion.env"
@@ -45,8 +45,8 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
                 line += "\n"
             host = event.get("event_data", {}).get("host") or hostname
             redis_client.publish(
-                    f"ansible:{stream_id}",
-                    json.dumps({"host": host, "line": line})
+                f"ansible:{stream_id}",
+                json.dumps({"host": host, "line": line})
             )
 
     # Merge in the virtualenv path and env file vars
@@ -54,6 +54,7 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
     envvars["PATH"] = f"{VENV_BIN}:{envvars.get('PATH', '')}"
     envvars["ANSIBLE_STDOUT_CALLBACK"] = "yaml"
 
+    start_time = time.time()
     runner = ansible_runner.run(
         private_data_dir=private_data_dir,
         playbook=abs_path,
@@ -71,6 +72,7 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
         quiet=True,
         event_handler=stream_event,
     )
+    end_time = time.time()
 
     if stream_id:
         redis_client.publish(f"ansible:{stream_id}", json.dumps({
@@ -83,5 +85,6 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
         "rc": runner.rc,
         "stdout": runner.stdout.read() if runner.stdout else None,
         "stats": runner.stats,
+        "duration": end_time - start_time,
     }
 
