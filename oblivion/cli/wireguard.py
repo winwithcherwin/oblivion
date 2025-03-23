@@ -39,6 +39,8 @@ def write_configs(fanout, queues):
         raise click.ClickException("You must specify --all or --queues")
 
     target_queues = get_all_queues() if fanout else [q.strip() for q in queues.split(",")]
+
+    # Load registered nodes from Redis
     keys = redis_client.keys(f"{WIREGUARD_KEY_PREFIX}:*")
     hosts = {}
     for key in keys:
@@ -49,16 +51,36 @@ def write_configs(fanout, queues):
         except Exception:
             continue
 
+    hostnames = sorted(hosts.keys())  # Deterministic ring
+    total_hosts = len(hostnames)
+
     for q in target_queues:
         self_meta = hosts.get(q)
         if not self_meta:
             click.echo(f"⚠️  No registration data found for {q}, skipping")
             continue
 
-        # Select up to 3 random peers excluding self
-        peers = [v for k, v in hosts.items() if k != q]
-        random.shuffle(peers)
-        peers = peers[:3]
+        if q not in hostnames:
+            click.echo(f"⚠️  Queue '{q}' is not a registered host, skipping.")
+            continue
+
+        if total_hosts <= 1:
+            peers = []
+        else:
+            index_in_ring = hostnames.index(q)
+
+            # Dynamically scale peer count based on cluster size
+            K = max(1, min(3, total_hosts // 4))
+
+            # Select next K nodes in the ring
+            peer_names = [
+                hostnames[(index_in_ring + i + 1) % total_hosts]
+                for i in range(K)
+            ]
+            peers = [hosts[p] for p in peer_names if p in hosts]
+
+            if len(peers) < K:
+                click.echo(f"⚠️  Only found {len(peers)} of {K} intended peers for {q}")
 
         click.echo(f"→ Writing config on: {q} with {len(peers)} peers")
         try:

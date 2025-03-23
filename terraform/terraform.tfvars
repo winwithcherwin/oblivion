@@ -6,6 +6,10 @@ servers = {
       region = "ams3"
       size   = "s-1vcpu-1gb"
     }
+    do-worker-0 = {
+      region = "ams3"
+      size   = "s-1vcpu-1gb"
+    }
   }
 
   hetzner = {
