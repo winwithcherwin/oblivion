@@ -10,6 +10,7 @@ from rich.text import Text
 
 from oblivion.celery_app import app
 from oblivion.redis_client import redis_client
+from oblivion import settings
 
 def get_all_queues():
     inspect = app.control.inspect()
@@ -30,7 +31,7 @@ def follow_logs(stream_id):
     available_colors = ["cyan", "magenta", "green", "yellow", "blue", "bright_black"]
     max_colors = len(available_colors)
     seen_hosts = set()
-    use_colors = os.getenv("OBLIVION_LOG_COLORS", "false").lower() in ("1", "true", "yes")
+    use_colors = settings.ENABLE_CLI_COLOR
 
     try:
         for msg in pubsub.listen():
