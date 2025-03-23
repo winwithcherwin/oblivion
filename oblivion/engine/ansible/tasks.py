@@ -53,6 +53,7 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
     envvars = dict(os.environ)
     envvars["PATH"] = f"{VENV_BIN}:{envvars.get('PATH', '')}"
     envvars["ANSIBLE_STDOUT_CALLBACK"] = "yaml"
+    envvars["PYTHONPATH"] = "/opt/oblivion"
 
     start_time = time.time()
     runner = ansible_runner.run(
