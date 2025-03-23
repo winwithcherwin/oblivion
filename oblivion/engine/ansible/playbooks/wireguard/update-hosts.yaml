@@ -12,6 +12,10 @@
       set_fact:
         wireguard_hosts: "{{ lookup('pipe', 'python3 scripts/generate_hosts.py') | from_json }}"
 
+    - name: Debug wireguard_hosts
+      debug:
+        var: wireguard_hosts
+
     - name: Set peer list and hostname for this host
       set_fact:
         peers: "{{ wireguard_hosts[inventory_hostname]['peers'] }}"
