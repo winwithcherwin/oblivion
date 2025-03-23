@@ -7,10 +7,28 @@
       apt:
         update_cache: yes
         cache_valid_time: 3600
+
     - name: Install WireGuard
       apt:
         name: wireguard
         state: present
+
+    - name: Check if wg0 is already up
+      command: ip link show wg0
+      register: wg0_status
+      failed_when: false
+      changed_when: false
+
+    - name: Bring up wg0 if not already up
+      command: wg-quick up wg0
+      when: wg0_status.rc != 0
+      notify: Restart WireGuard
+
+    - name: Enable wg0 at boot
+      systemd:
+        name: wg-quick@wg0
+        enabled: true
+
   handlers:
     - name: Restart WireGuard
       systemd:
