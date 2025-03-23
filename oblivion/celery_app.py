@@ -11,10 +11,12 @@ app = Celery("oblivion",
 )
 
 import oblivion.engine.ansible.tasks
+import oblivion.engine.wireguard.tasks
 
 app.conf.task_time_limit = 300
 app.autodiscover_tasks([
     "oblivion.engine",
-    "oblivion.engine.anasible",
+    "oblivion.engine.ansible",
+    "oblivion.engine.wireguard",
 ])
 
