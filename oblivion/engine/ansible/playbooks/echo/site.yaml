@@ -7,3 +7,14 @@
       debug:
         msg: "Hello, world from Ansible on {{ inventory_hostname }}"
 
+    - name: Lookup REDIS_URI 
+      debug:
+        msg: "OUTPUT: {{ lookup('ansible.builtin.env', 'REDIS_URI', default='NOTHING') }}"
+
+    - name: Lookup HOME
+      debug:
+        msg: "OUTPUT: {{ lookup('ansible.builtin.env', 'HOME', default='NOTHING') }}"
+
+    - name: Lookup PATH
+      debug:
+        msg: "OUTPUT: {{ lookup('ansible.builtin.env', 'PATH', default='NOTHING') }}"
