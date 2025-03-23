@@ -1,12 +1,19 @@
 import os
 import socket
 import ansible_runner
+from dotenv import load_dotenv
 
 from celery import shared_task
 from oblivion.redis_client import redis_client
 
 
 PLAYBOOK_ROOT = os.path.abspath("oblivion/engine/ansible/playbooks")
+ENV_FILE = "/etc/oblivion.env"
+VENV_BIN = "/opt/oblivion-venv/bin"
+
+# Load environment file if it exists
+if os.path.exists(ENV_FILE):
+    load_dotenv(ENV_FILE, override=True)
 
 @shared_task
 def run_playbook_locally(playbook_path: str, stream_id: str = None):
@@ -34,7 +41,12 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
                 line += "\n"
             redis_client.publish(f"ansible:{stream_id}", line)
 
+    # Use short hostname for inventory
     hostname = socket.gethostname()
+
+    # Merge in the virtualenv path and env file vars
+    envvars = dict(os.environ)
+    envvars["PATH"] = f"{VENV_BIN}:{envvars.get('PATH', '')}"
 
     runner = ansible_runner.run(
         private_data_dir=private_data_dir,
@@ -49,6 +61,7 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
             }
         },
         limit=hostname,
+        envvars=envvars,
         quiet=True,
         event_handler=stream_event,
     )

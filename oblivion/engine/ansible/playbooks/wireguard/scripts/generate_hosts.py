@@ -3,6 +3,7 @@ import redis
 import json
 import sys
 
+
 # Load Redis connection
 REDIS_URI = os.environ.get("REDIS_URI")
 if not REDIS_URI:
