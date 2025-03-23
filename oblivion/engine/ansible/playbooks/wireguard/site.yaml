@@ -3,16 +3,14 @@
   gather_facts: false
 
   tasks:
-    - name: Write wg0.conf
-      copy:
-        dest: /etc/wireguard/wg0.conf
-        content: "{{ wireguard_config }}"
-        owner: root
-        group: root
-        mode: '0600'
-      when: wireguard_config is defined
-      notify: Restart WireGuard
-
+    - name: Ensure package index is up to date
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+    - name: Install WireGuard
+      apt:
+        name: wireguard
+        state: present
   handlers:
     - name: Restart WireGuard
       systemd:
