@@ -118,8 +118,8 @@ def write_configs(fanout, queues):
         except Exception as e:
             click.echo(f"  ❌ {hostname}: Failed with error: {e}")
 
-@cli.command("check-liveness")
-def check_liveness():
+@cli.command("ping")
+def do_ping():
     """Pings all known hosts. Removes dead ones from Redis."""
     keys = redis_client.keys(f"{WIREGUARD_KEY_PREFIX}:*")
     for key in keys:
@@ -139,4 +139,4 @@ def check_liveness():
             redis_client.delete(f"{WIREGUARD_KEY_PREFIX}:{hostname}")
             redis_client.delete(f"{WIREGUARD_IP_PREFIX}:{hostname}")
         else:
-            click.echo(f"✅ {hostname} is alive")
+            click.echo(f"✅ {hostname} sent pong")

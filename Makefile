@@ -44,7 +44,7 @@ tree:
 
 OBLIVION=python -m oblivion
 
-wg-livetest: ## run test task
+livetest: ## run test task
 	@$(OBLIVION) calc add 5 7 --all
 	@$(OBLIVION) ansible run echo/cherwin --all
 	@$(OBLIVION) ansible run echo --all
@@ -65,6 +65,8 @@ wg-teardown: ## make teardown-one QUEUE=server3
 	@$(OBLIVION) ansible run wireguard/teardown --queue $(QUEUE)
 
 
-wg-alive:  ## ping all nodes; remove unreachable ones from Redis
-	@$(OBLIVION) wireguard check-liveness
+wg-status:  ## ping all nodes; remove unreachable ones from Redis
+	@$(OBLIVION) wireguard status --all
+	@$(OBLIVION) wireguard ping
+
 
