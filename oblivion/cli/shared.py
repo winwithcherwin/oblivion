@@ -2,6 +2,7 @@ import click
 import uuid
 import redis
 import json
+import os
 
 from functools import wraps
 from rich import print as rich_print
@@ -29,7 +30,7 @@ def follow_logs(stream_id):
     available_colors = ["cyan", "magenta", "green", "yellow", "blue", "bright_black"]
     max_colors = len(available_colors)
     seen_hosts = set()
-    use_colors = True
+    use_colors = os.getenv("OBLIVION_LOG_COLORS", "false").lower() in ("1", "true", "yes")
 
     try:
         for msg in pubsub.listen():
