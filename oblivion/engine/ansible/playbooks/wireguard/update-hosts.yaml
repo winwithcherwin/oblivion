@@ -1,16 +1,21 @@
 - name: Set /etc/hosts for all WireGuard nodes
-  hosts: localhost
+  hosts: all
   gather_facts: false
 
   vars:
     dest_path: "/etc/hosts"
 
   tasks:
-    - name: Generate hosts file from Redis data
+    - name: Generate wireguard host data
       run_once: true
       delegate_to: localhost
       set_fact:
         wireguard_hosts: "{{ lookup('pipe', 'python3 scripts/generate_hosts.py') | from_json }}"
+
+    - name: Set peer list and hostname for this host
+      set_fact:
+        peers: "{{ wireguard_hosts[inventory_hostname]['peers'] }}"
+        hostname: "{{ wireguard_hosts[inventory_hostname]['hostname'] }}"
 
     - name: Push /etc/hosts to remote hosts
       ansible.builtin.copy:
