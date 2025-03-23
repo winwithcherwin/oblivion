@@ -1,8 +1,9 @@
 import click
 import json
 import random
+
 from oblivion.cli.shared import get_all_queues
-from oblivion.engine.wireguard.tasks import register_wireguard_node, write_wireguard_config, ping
+from oblivion.engine.wireguard.tasks import register_wireguard_node, write_wireguard_config, ping, get_wireguard_status
 from oblivion.redis_client import redis_client
 
 WIREGUARD_KEY_PREFIX = "wireguard:public_keys"
@@ -12,6 +13,25 @@ WIREGUARD_IP_PREFIX = "wireguard:ip"
 def cli():
     """Manage WireGuard overlay network"""
     pass
+
+@cli.command("status")
+@click.option("--all", "fanout", is_flag=True, help="Query all hosts")
+@click.option("--queues", help="Comma-separated list of queues")
+def get_status(fanout, queues):
+    """Show wg0 interface status on all nodes."""
+    if not fanout and not queues:
+        raise click.ClickException("You must specify --all or --queues")
+
+    target_queues = get_all_queues() if fanout else [q.strip() for q in queues.split(",")]
+
+    for q in target_queues:
+        click.echo(f"→ Checking wg0 on: {q}")
+        res = get_wireguard_status.apply_async(queue=q)
+        result = res.get(timeout=10)
+        if 'output' in result:
+            click.echo(f"🟢 {result['hostname']}:\n{result['output']}")
+        else:
+            click.echo(f"🔴 {result['hostname']} error: {result.get('error')}")
 
 @cli.command("register")
 @click.option("--all", "fanout", is_flag=True, help="Register all hosts")

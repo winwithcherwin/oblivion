@@ -64,6 +64,16 @@ def ping():
     return "pong"
 
 @shared_task
+def get_wireguard_status():
+    import socket
+    hostname = socket.gethostname()
+    try:
+        output = subprocess.check_output(["wg", "show", "wg0"]).decode()
+        return {"hostname": hostname, "output": output}
+    except subprocess.CalledProcessError as e:
+        return {"hostname": hostname, "error": str(e)}
+
+@shared_task
 def register_wireguard_node():
     try:
         hostname = get_hostname()
