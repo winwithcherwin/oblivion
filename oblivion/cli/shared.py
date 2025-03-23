@@ -171,9 +171,10 @@ def streaming_ansible_task_command(task, timeout=10):
                     failed = str(stats.get("failures", 0))
                     duration_str = f"{duration:.2f}s" if isinstance(duration, (int, float)) else str(duration)
 
-                    table.add_row(q, str(rc), status, ok, changed, failed, duration_str)
+                    color = "green" if rc == 0 else "red"
+                    table.add_row(q, str(rc), status, ok, changed, failed, duration_str, style=color)
                 except Exception as e:
-                    table.add_row(q, "?", "error", "-", "-", "-", f"Error: {str(e)}")
+                    table.add_row(q, "?", "error", "-", "-", "-", f"Error: {str(e)}", style="red")
 
             rich_print(table)
             total_time = time.monotonic() - start_time
