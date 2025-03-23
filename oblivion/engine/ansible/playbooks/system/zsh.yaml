@@ -1,22 +1,31 @@
-- name: Developer Shell Setup
+- name: Set up ZSH dev environment
   hosts: all
   become: true
-  vars:
-    packages:
-      - zsh
-      - vim
-      - git
-      - curl
-      - wget
-      - bat
-      - fd-find
+  gather_facts: true
 
   tasks:
-    - name: Install common CLI tools
+    - name: Ensure required packages are installed
       apt:
-        name: "{{ packages }}"
-        state: present
+        name:
+          - zsh
+          - vim
+          - bat
+          - fd-find
+          - git
+          - curl
         update_cache: yes
+        state: present
+
+    - name: Ensure oh-my-zsh is installed for the user
+      become: false
+      environment:
+        HOME: "{{ ansible_env.HOME }}"
+      shell: |
+        if [ ! -d "{{ ansible_env.HOME }}/.oh-my-zsh" ]; then
+          sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+        fi
+      args:
+        executable: /bin/bash
 
     - name: Set vim as the default editor
       lineinfile:
@@ -27,27 +36,13 @@
 
     - name: Set ZSH as the default shell for the user
       user:
-        name: "{{ ansible_user }}"
+        name: "{{ ansible_facts.user_id }}"
         shell: /usr/bin/zsh
 
-    - name: Clone oh-my-zsh
+    - name: Make sure ~/.zshrc exists
       become: false
-      git:
-        repo: https://github.com/ohmyzsh/ohmyzsh.git
-        dest: "{{ ansible_env.HOME }}/.oh-my-zsh"
-        update: no
-
-    - name: Copy default .zshrc
-      become: false
-      copy:
-        src: "{{ ansible_env.HOME }}/.oh-my-zsh/templates/zshrc.zsh-template"
-        dest: "{{ ansible_env.HOME }}/.zshrc"
-        force: no
-
-    - name: Create symlink for bat
       file:
-        src: /usr/bin/batcat
-        dest: /usr/local/bin/bat
-        state: link
-      when: ansible_facts.packages['bat'] is defined
+        path: "{{ ansible_env.HOME }}/.zshrc"
+        state: touch
+        mode: '0644'
 
