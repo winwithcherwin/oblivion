@@ -73,7 +73,10 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
     )
 
     if stream_id:
-        redis_client.publish(f"ansible:{stream_id}", "__EOF__")
+        redis_client.publish(f"ansible:{stream_id}", json.dumps({
+            "host": hostname,
+            "eof": True
+        }))
 
     return {
         "status": runner.status,

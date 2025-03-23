@@ -23,10 +23,14 @@ def get_all_queues():
         raise click.ClickException("No active queues found.")
     return sorted(seen)
 
-def follow_logs(stream_id):
+def follow_logs(stream_id, expected_hosts=None):
     click.echo(f"→ Live logs (stream ID: {stream_id})\n")
     pubsub = redis_client.pubsub()
     pubsub.subscribe(f"ansible:{stream_id}")
+
+    seen_eof_hosts = set()
+    expected_hosts = set(expected_hosts or [])
+
     host_colors = {}
     available_colors = ["cyan", "magenta", "green", "yellow", "blue", "bright_black"]
     max_colors = len(available_colors)
@@ -38,12 +42,14 @@ def follow_logs(stream_id):
             if msg["type"] != "message":
                 continue
             data = msg["data"].decode()
-            if data == "__EOF__":
-                break
-
             try:
                 parsed = json.loads(data)
                 host = parsed.get("host", "unknown")
+                if parsed.get("eof"):
+                    seen_eof_hosts.add(host)
+                    if expected_hosts and seen_eof_hosts >= expected_hosts:
+                        break
+                    continue
                 line = parsed.get("line", "")
             except json.JSONDecodeError:
                 click.echo(data)
@@ -137,7 +143,7 @@ def streaming_ansible_task_command(task, timeout=10):
                 res = task.apply_async(args=task_args, kwargs=task_kwargs, queue=q)
                 results.append((q, res))
 
-            follow_logs(stream_id)
+            follow_logs(stream_id, expected_hosts=target_queues)
 
             # Expect Ansible-style dict result
             click.echo("\nResults:")
