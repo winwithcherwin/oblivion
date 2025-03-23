@@ -1,0 +1,68 @@
+- name: Setup ZSH Hacker Dev Shell
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    oh_my_zsh_repo: https://github.com/ohmyzsh/ohmyzsh.git
+    user_shell: /usr/bin/zsh
+
+  tasks:
+    - name: Ensure required packages are installed
+      apt:
+        name:
+          - zsh
+          - git
+          - curl
+          - vim
+          - bat
+          - fd-find
+          - exa
+        state: present
+        update_cache: yes
+
+    - name: Set default editor to vim
+      lineinfile:
+        path: /etc/environment
+        line: 'EDITOR=vim'
+        create: yes
+        state: present
+
+    - name: Ensure Oh My Zsh is cloned for user
+      become: false
+      git:
+        repo: "{{ oh_my_zsh_repo }}"
+        dest: "{{ ansible_env.HOME }}/.oh-my-zsh"
+        update: no
+
+    - name: Copy default .zshrc template
+      become: false
+      copy:
+        src: "{{ ansible_env.HOME }}/.oh-my-zsh/templates/zshrc.zsh-template"
+        dest: "{{ ansible_env.HOME }}/.zshrc"
+        remote_src: yes
+        force: no
+
+    - name: Set ZSH as default shell for user
+      user:
+        name: "{{ ansible_env.USER }}"
+        shell: "{{ user_shell }}"
+
+    - name: Add useful aliases to .zshrc
+      become: false
+      blockinfile:
+        path: "{{ ansible_env.HOME }}/.zshrc"
+        marker: "# {mark} Dev Aliases"
+        block: |
+          alias cat='batcat'
+          alias find='fdfind'
+          alias ls='exa -lah --group-directories-first'
+          export EDITOR=vim
+
+    - name: Ensure ~/.zshrc is owned by the user
+      file:
+        path: "{{ ansible_env.HOME }}/.zshrc"
+        owner: "{{ ansible_env.USER }}"
+        group: "{{ ansible_env.USER }}"
+        mode: '0644'
+
