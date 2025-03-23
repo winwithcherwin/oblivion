@@ -26,15 +26,10 @@ fmt: ## format all hcl
 ssh: ## use fzf to ssh into host
 	bash ./utils/ssh.sh
 
-packer-do: ## build digitalocean image
-	cd packer; \
-	packer init packer.pkr.hcl ;\
-	packer build -only=server.digitalocean.ubuntu packer.pkr.hcl
-
-packer-hz: ## build hetzner image
-	cd packer; \
-	packer init packer.pkr.hcl ;\
-	packer build -only=server.hcloud.ubuntu packer.pkr.hcl
+.PHONY: packer
+packer: ## build images with packer
+	packer init packer/packer.pkr.hcl ;\
+	packer build packer/packer.pkr.hcl
 
 dotenv-redis-uri:
 	@python utils/tfvar2dotenv.py redis_uri; \
@@ -47,44 +42,29 @@ dotenv: dotenv-redis-uri ## set your .env (only run this after tf-apply)
 tree:
 	tree -aI .git -I .terraform
 
-livetest: ## run test task
-	python -m oblivion calc add 5 7 --all
-	python -m oblivion ansible run echo/cherwin --all
-	python -m oblivion ansible run echo --all
+OBLIVION=python -m oblivion
 
-# Makefile for managing WireGuard mesh overlay via Celery + Redis
+wg-livetest: ## run test task
+	@$(OBLIVION) calc add 5 7 --all
+	@$(OBLIVION) ansible run echo/cherwin --all
+	@$(OBLIVION) ansible run echo --all
 
-PYTHON=python -m oblivion wireguard
+wg: ## setup WireGuard
+	@$(OBLIVION) wireguard register --all
+	@$(OBLIVION) wireguard write-config --all
+	@$(OBLIVION) ansible run wireguard --all
+	@$(OBLIVION) wireguard status --all
 
-.PHONY: register write-config check-liveness full-refresh register-one write-one teardown-one
-
-## 🔐 Register all nodes (generate keys + IP + store in Redis)
-register:
-	@$(PYTHON) register --all
-
-## 🧩 Write wg0.conf on all nodes based on current peer state
-write-config:
-	@$(PYTHON) write-config --all
-
-## 📡 Ping all nodes; remove unreachable ones from Redis
-check-liveness:
-	@$(PYTHON) check-liveness
-
-## ♻️ Reregister and reconfigure a single node
-## Usage: make register-one QUEUE=server2
-register-one:
-	@$(PYTHON) register --queue $(QUEUE)
-
-## 💾 Rewrites config on a single node
-## Usage: make write-one QUEUE=server2
-write-one:
-	@$(PYTHON) write-config --queues $(QUEUE)
-
-## 🔁 Full refresh cycle (clean up dead peers + rewrite all configs)
-full-refresh: check-liveness write-config
+wg-refresh: ## removes stale nodes and regenerate WireGuard connections everywhere
+	@$(OBLIVION) wireguard check-liveness
+	@$(OBLIVION) wireguard write-config --all
+	@$(OBLIVION) ansible run wireguard --all
 
 ## 🧼 Teardown WireGuard from a node (removes keys, config, service)
-## Usage: make teardown-one QUEUE=server3
-teardown-one:
-	@python -m oblivion ansible run wireguard/teardown --queue $(QUEUE)
+wg-teardown: ## make teardown-one QUEUE=server3
+	@$(OBLIVION) ansible run wireguard/teardown --queue $(QUEUE)
+
+
+wg-alive:  ## ping all nodes; remove unreachable ones from Redis
+	@$(OBLIVION) wireguard check-liveness
 

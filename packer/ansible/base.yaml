@@ -1,0 +1,42 @@
+- name: Provision base server
+  hosts: all
+  become: true
+  tasks:
+    - name: Perform full system upgrade
+      apt:
+        upgrade: dist
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Disable unattended upgrades
+      systemd:
+        name: unattended-upgrades
+        state: stopped
+        enabled: false
+      ignore_errors: true
+
+    - name: Install system packages
+      apt:
+        name:
+          - python3
+          - python3-pip
+          - python3-venv
+          - redis-tools
+          - ansible
+          - wireguard
+        state: present
+        update_cache: yes
+
+    - name: Create virtualenv
+      command: python3 -m venv /opt/oblivion-venv
+      args:
+        creates: /opt/oblivion-venv
+
+    - name: Upgrade pip
+      command: /opt/oblivion-venv/bin/pip install --upgrade pip
+
+    - name: Install Python dependencies
+      pip:
+        requirements: /tmp/requirements.txt
+        executable: /opt/oblivion-venv/bin/pip
+

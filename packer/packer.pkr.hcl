@@ -8,12 +8,11 @@ packer {
       version = ">= 1.0.0"
       source  = "github.com/hetznercloud/hcloud"
     }
+    ansible = {
+      version = ">= 1.0.0"
+      source  = "github.com/hashicorp/ansible"
+    }
   }
-}
-
-variable "cloud" {
-  type    = string
-  default = "digitalocean"
 }
 
 locals {
@@ -42,44 +41,26 @@ source "hcloud" "ubuntu" {
 }
 
 build {
-  name    = "server"
-  sources = ["source.digitalocean.ubuntu"]
+  name = "server"
+  sources = [
+    "source.digitalocean.ubuntu",
+    "source.hcloud.ubuntu"
+  ]
+
+  provisioner "file" {
+    source      = "oblivion/requirements.txt"
+    destination = "/tmp/requirements.txt"
+  }
 
   provisioner "shell" {
-    script       = "./scripts/wait-for-cloud-init.sh"
+    script       = "packer/scripts/wait-for-cloud-init.sh"
     pause_before = "10s"
   }
 
-  provisioner "shell" {
-    inline = [
-      "export DEBIAN_FRONTEND=noninteractive",
-      "apt-get update -y && apt-get upgrade -y",
-      "apt-get install -y python3 python3-venv python3-pip redis-tools ansible",
-      "python3 -m venv /opt/oblivion-venv",
-      "/opt/oblivion-venv/bin/pip install --upgrade pip",
-      "/opt/oblivion-venv/bin/pip install celery ansible-runner redis jinja2 requests python-dotenv"
-    ]
-  }
-}
-
-build {
-  name    = "server"
-  sources = ["source.hcloud.ubuntu"]
-
-  provisioner "shell" {
-    script       = "./scripts/wait-for-cloud-init.sh"
-    pause_before = "10s"
-  }
-
-  provisioner "shell" {
-    inline = [
-      "export DEBIAN_FRONTEND=noninteractive",
-      "apt-get update -y && apt-get upgrade -y",
-      "apt-get install -y python3 python3-venv python3-pip redis-tools ansible",
-      "python3 -m venv /opt/oblivion-venv",
-      "/opt/oblivion-venv/bin/pip install --upgrade pip",
-      "/opt/oblivion-venv/bin/pip install celery ansible-runner redis jinja2 requests python-dotenv"
-    ]
+  provisioner "ansible" {
+    playbook_file   = "packer/ansible/base.yaml"
+    user            = "root"
+    extra_arguments = ["--scp-extra-args", "'-O'"]
   }
 }
 

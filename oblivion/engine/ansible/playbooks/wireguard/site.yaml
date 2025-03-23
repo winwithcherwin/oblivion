@@ -1,18 +1,8 @@
-- name: Configure WireGuard
+- name: Enable WireGuard
   hosts: all
   gather_facts: false
 
   tasks:
-    - name: Ensure package index is up to date
-      apt:
-        update_cache: yes
-        cache_valid_time: 3600
-
-    - name: Install WireGuard
-      apt:
-        name: wireguard
-        state: present
-
     - name: Check if wg0 interface exists
       command: ip link show wg0
       register: wg0_status
