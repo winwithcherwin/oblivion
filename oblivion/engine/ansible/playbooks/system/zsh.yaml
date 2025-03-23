@@ -1,4 +1,4 @@
-- name: Set up ZSH dev environment
+- name: Set up ZSH dev environment with safe remote prompt
   hosts: all
   become: true
   gather_facts: true
@@ -45,4 +45,28 @@
         path: "{{ ansible_env.HOME }}/.zshrc"
         state: touch
         mode: '0644'
+
+    - name: Set custom ZSH theme (terminalparty)
+      become: false
+      lineinfile:
+        path: "{{ ansible_env.HOME }}/.zshrc"
+        regexp: '^ZSH_THEME='
+        line: 'ZSH_THEME="terminalparty"'
+        create: yes
+
+    - name: Add custom terminalparty theme
+      become: false
+      copy:
+        dest: "{{ ansible_env.HOME }}/.oh-my-zsh/custom/themes/terminalparty.zsh-theme"
+        mode: '0644'
+        content: |
+          function prompt_root_detect() {
+            if [[ "$EUID" -eq 0 ]]; then
+              echo "%F{red}#%f"
+            else
+              echo "$"
+            fi
+          }
+
+          PROMPT='%F{cyan}%n@%m%f:%F{yellow}%~%f $(prompt_root_detect) '
 
