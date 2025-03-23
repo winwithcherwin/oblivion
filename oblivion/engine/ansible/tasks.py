@@ -1,5 +1,6 @@
 import os
 import socket
+import json
 import ansible_runner
 from dotenv import load_dotenv
 
@@ -39,7 +40,11 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
             line = event["stdout"]
             if not line.endswith("\n"):
                 line += "\n"
-            redis_client.publish(f"ansible:{stream_id}", line)
+            host = event.get("host") or event.get("event_data", {}).get("host") or "unknown"
+            redis_client.publish(
+                    f"ansible:{stream_id}",
+                    json.dumps({"host": host, "line": line})
+            )
 
     # Use short hostname for inventory
     hostname = socket.gethostname()
