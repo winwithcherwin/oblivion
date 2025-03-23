@@ -57,7 +57,7 @@ build {
       "apt-get install -y python3 python3-venv python3-pip redis-tools ansible",
       "python3 -m venv /opt/oblivion-venv",
       "/opt/oblivion-venv/bin/pip install --upgrade pip",
-      "/opt/oblivion-venv/bin/pip install celery ansible-runner redis jinja2"
+      "/opt/oblivion-venv/bin/pip install celery ansible-runner redis jinja2 requests"
     ]
   }
 }
@@ -78,7 +78,7 @@ build {
       "apt-get install -y python3 python3-venv python3-pip redis-tools ansible",
       "python3 -m venv /opt/oblivion-venv",
       "/opt/oblivion-venv/bin/pip install --upgrade pip",
-      "/opt/oblivion-venv/bin/pip install celery ansible-runner redis jinja2"
+      "/opt/oblivion-venv/bin/pip install celery ansible-runner redis jinja2 requests"
     ]
 
   }
