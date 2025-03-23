@@ -4,9 +4,9 @@ import redis
 import json
 from functools import wraps
 from rich import print as rich_print
+from rich.text import Text
 from oblivion.celery_app import app
 from oblivion.redis_client import redis_client
-
 
 def get_all_queues():
     inspect = app.control.inspect()
@@ -18,7 +18,6 @@ def get_all_queues():
     if not seen:
         raise click.ClickException("No active queues found.")
     return sorted(seen)
-
 
 def follow_logs(stream_id):
     click.echo(f"→ Live logs (stream ID: {stream_id})\n")
@@ -48,7 +47,6 @@ def follow_logs(stream_id):
                 click.echo(data)
                 continue
 
-            # Disable coloring if too many unique hosts
             if host not in host_colors and use_colors:
                 seen_hosts.add(host)
                 if len(seen_hosts) > max_colors:
@@ -56,15 +54,25 @@ def follow_logs(stream_id):
                 else:
                     host_colors[host] = available_colors[len(host_colors)]
 
+            color = host_colors.get(host, None) if use_colors else None
+            prefix = f"[{host}] "
+
             for subline in line.splitlines():
-                if subline.startswith(f"ok: [{host}] =>") or subline.strip() == "":
-                    # Let Ansible status lines through unmodified
-                    click.echo(subline)
-                else:
-                    if use_colors:
-                        rich_print(f"[{host_colors[host]}][{host}] {subline}[/]")
+                subline = subline.rstrip()
+                if not subline:
+                    continue
+
+                if subline.startswith(f"ok: [{host}]"):
+                    if color:
+                        rich_print(f"[{color}]{subline}[/{color}]")
                     else:
-                        click.echo(f"[{host}] {subline}")
+                        rich_print(subline)
+                elif subline.startswith("ok: ["):
+                    # Let Ansible show its own prefix when referring to another host
+                    rich_print(subline)
+                else:
+                    rich_print(f"[{color}]{prefix}{subline}[/{color}]" if color else f"{prefix}{subline}")
+
     except KeyboardInterrupt:
         click.echo("Stopped log stream")
     except redis.exceptions.RedisError as e:
@@ -72,7 +80,6 @@ def follow_logs(stream_id):
     finally:
         click.echo("")
         pubsub.unsubscribe()
-
 
 def task_command(task, timeout=10):
     def decorator(f):
@@ -102,7 +109,6 @@ def task_command(task, timeout=10):
                     click.echo(f"{q}: {e}")
         return wrapper
     return decorator
-
 
 def streaming_ansible_task_command(task, timeout=10):
     """
