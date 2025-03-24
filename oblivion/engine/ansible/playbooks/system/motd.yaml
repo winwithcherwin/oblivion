@@ -1,16 +1,23 @@
-- name: Minimal MOTD using /etc/motd (no pam_motd, no update-motd.d)
+- name: Install static MOTD with color
   hosts: all
-  gather_facts: no
+  become: true
+  gather_facts: false
 
   tasks:
 
-    - name: Ensure PAM does not print any MOTD
+    - name: Disable PAM MOTD in sshd
       lineinfile:
         path: /etc/pam.d/sshd
         regexp: '^session\s+optional\s+pam_motd\.so'
         state: absent
 
-    - name: Delete all dynamic MOTD systems
+    - name: Disable PAM MOTD in login
+      lineinfile:
+        path: /etc/pam.d/login
+        regexp: '^session\s+optional\s+pam_motd\.so'
+        state: absent
+
+    - name: Remove update-motd and dynamic files
       file:
         path: "{{ item }}"
         state: absent
@@ -19,23 +26,23 @@
         - /etc/motd.dynamic
         - /run/motd.dynamic
 
-    - name: Enable static MOTD printing in SSHD
+    - name: Enable static MOTD printing in SSH
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: '^PrintMotd'
         line: 'PrintMotd yes'
         create: true
 
-    - name: Write static /etc/motd
+    - name: Deploy static colorized MOTD
       copy:
         dest: /etc/motd
         content: |
-          ｏｂｌｉｖｉｏｎ
+          \033[1;35mｏｂｌｉｖｉｏｎ\033[0m
 
           Welcome.
         mode: '0644'
 
-    - name: Restart SSHD
+    - name: Restart SSH
       service:
         name: ssh
         state: restarted
