@@ -50,6 +50,7 @@
         owner: root
         group: root
         mode: '0755'
+        force: true
 
   handlers:
     - name: Restart SSH

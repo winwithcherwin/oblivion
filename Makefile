@@ -32,6 +32,7 @@ update: terraform-apply ## run terraform apply and playbooks
 	@$(MAKE) --no-print-directory run-playbooks
 
 git-update-fix:
+	@date >> oblivion/engine/ansible/playbooks/system/files/motd/01-oblivion
 	@git add -A
 	@git commit -m "Test fix"
 	@git push
