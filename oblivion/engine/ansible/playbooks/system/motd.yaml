@@ -1,27 +1,23 @@
-- name: Install beautiful custom MOTD
+- name: Clean and install MOTD
   hosts: all
-  become: true
   gather_facts: no
 
   tasks:
 
-    - name: Remove noisy default MOTD scripts
+    - name: Remove all MOTD scripts except 00-oblivion
+      shell: |
+        find /etc/update-motd.d/ ! -name '00-oblivion' -type f -exec rm -f {} +
+      args:
+        warn: false
+
+    - name: Remove static MOTD files
       file:
-        path: "/etc/update-motd.d/{{ item }}"
+        path: "{{ item }}"
         state: absent
       loop:
-        - 00-header
-        - 10-help-text
-        - 50-motd-news
-        - 80-livepatch
-        - 91-release-upgrade
-        - 98-fsck-at-reboot
-        - 98-reboot-required
-
-    - name: Remove static /etc/motd file if exists
-      file:
-        path: /etc/motd
-        state: absent
+        - /etc/motd
+        - /etc/motd.dynamic
+        - /run/motd.dynamic
 
     - name: Copy custom MOTD script
       copy:
@@ -36,15 +32,15 @@
         line: 'PrintMotd no'
         create: yes
 
-    - name: Ensure PAM prints MOTD on SSH login
+    - name: Ensure PAM only prints run-parts MOTD once
       blockinfile:
         path: /etc/pam.d/sshd
         marker: "# {mark} ANSIBLE MANAGED MOTD"
         block: |
-          session optional pam_motd.so motd=/run/motd.dynamic
           session optional pam_motd.so noupdate
+          session optional pam_motd.so
 
-    - name: Restart SSH to apply MOTD settings
+    - name: Restart SSH
       service:
         name: ssh
         state: restarted
