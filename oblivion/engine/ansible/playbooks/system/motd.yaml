@@ -1,11 +1,11 @@
-- name: Install minimal MOTD
+- name: Install minimal and clean MOTD
   hosts: all
   become: true
   gather_facts: false
 
   tasks:
 
-    - name: Wipe all MOTD scripts except 00-oblivion
+    - name: Remove all MOTD scripts except 00-oblivion
       shell: |
         find /etc/update-motd.d/ -type f ! -name '00-oblivion' -delete || true
       args:
@@ -20,20 +20,20 @@
         - /etc/motd.dynamic
         - /run/motd.dynamic
 
-    - name: Install MOTD script
+    - name: Copy MOTD script
       copy:
         src: files/motd/00-oblivion
         dest: /etc/update-motd.d/00-oblivion
         mode: '0755'
 
-    - name: Disable SSH static motd
+    - name: Ensure SSH doesn't print static motd
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: '^PrintMotd'
         line: 'PrintMotd no'
         create: yes
 
-    - name: Ensure PAM prints MOTD once
+    - name: Ensure PAM prints MOTD once via run-parts
       blockinfile:
         path: /etc/pam.d/sshd
         marker: "# {mark} ANSIBLE MANAGED MOTD"
@@ -41,7 +41,27 @@
           session optional pam_motd.so noupdate
           session optional pam_motd.so
 
-    - name: Restart SSHD
+    - name: Remove run-parts/cat calls from /etc/profile
+      shell: |
+        sed -i '/run-parts \/etc\/update-motd.d/d' /etc/profile || true
+        sed -i '/cat \/etc\/motd/d' /etc/profile || true
+      args:
+        executable: /bin/bash
+
+    - name: Remove run-parts/cat calls from /etc/profile.d/*
+      shell: |
+        find /etc/profile.d -type f -exec sed -i '/run-parts \/etc\/update-motd.d/d' {} \;
+        find /etc/profile.d -type f -exec sed -i '/cat \/etc\/motd/d' {} \;
+      args:
+        executable: /bin/bash
+
+    - name: Remove cat /etc/motd from /etc/bash.bashrc
+      lineinfile:
+        path: /etc/bash.bashrc
+        regexp: '^cat /etc/motd'
+        state: absent
+
+    - name: Restart SSH to apply MOTD changes
       service:
         name: ssh
         state: restarted

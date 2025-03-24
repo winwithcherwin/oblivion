@@ -107,7 +107,7 @@ when-infra-valid:
 
 run-playbooks: when-infra-valid
 	@$(OBLIVION) ansible run --all system/motd
-	@$(OBLIVION) ansible run --all system/zsh
+	#@$(OBLIVION) ansible run --all system/zsh
 	@date > $(BOOTSTRAP_INFRA_VALID)
 
 
