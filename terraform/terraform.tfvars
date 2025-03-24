@@ -1,6 +1,8 @@
-clouds = ["digitalocean", "hetzner"]
+#clouds = ["digitalocean", "hetzner"]
+clouds = ["hetzner"]
 
 servers = {
+/*
   digitalocean = {
     do-worker-0 = {
       region = "ams3"
@@ -11,6 +13,7 @@ servers = {
       size   = "s-1vcpu-1gb"
     }
   }
+  */
   hetzner = {
     hz-worker-0 = {
       location    = "fsn1"
