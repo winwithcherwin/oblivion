@@ -1,9 +1,6 @@
-- name: Install static colorized MOTD
+- name: Install static centered colorized MOTD
   hosts: all
   gather_facts: false
-
-  vars:
-    motd_banner_text: "ｏｂｌｉｖｉｏｎ"
 
   tasks:
 

@@ -1,23 +1,20 @@
 #!/bin/sh
 
-# Use tput if we’re in a terminal
+# Get terminal width
 cols=$(tput cols 2>/dev/null || echo 80)
 
-# Our banner
+# Banner text
 text="ｏｂｌｉｖｉｏｎ"
+display_width=16  # known width of this text (8 chars, each full-width)
 
-# Calculate display width (each wide char like ｏ counts as 2)
-text_width=$(echo -n "$text" | wc -m)
-text_display_width=$((text_width * 2))
-
-# Compute left padding
-padding=$(( (cols - text_display_width) / 2 ))
+# Calculate left padding
+padding=$(( (cols - display_width) / 2 ))
 [ "$padding" -lt 0 ] && padding=0
 
 # Colors
 BOLD_PURPLE="\033[1;35m"
 RESET="\033[0m"
 
-# Output with vertical breathing room
+# Output with vertical spacing
 printf "\n\n\n%*s${BOLD_PURPLE}%s${RESET}\n\n\n" "$padding" "" "$text"
 
