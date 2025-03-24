@@ -45,6 +45,8 @@ git-update-fix: timestamp-motd
 	git add -A
 	git commit -m "Test fix"
 	git push
+	@echo "sleeping before running tasks"
+	sleep 3
 	@$(MAKE) update
 
 destroy: terraform-destroy reset-bootstrap ## destroy *everything*
