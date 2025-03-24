@@ -1,8 +1,35 @@
 #!/bin/bash
-# updated at: Mon Mar 24 04:35:01 PM UTC 2025
+# updated at: Mon Mar 24 04:37:59 PM UTC 2025
 
+# Force a fixed terminal width for centering (80 columns)
+WIDTH=80
+
+# Define the banner text and subtext
+BANNER="ｏｂｌｉｖｉｏｎ"
+SUBTEXT="Welcome."
+
+# For full‑width Unicode, assume each character occupies 2 columns.
+# "ｏｂｌｉｖｉｏｎ" is 8 characters → display width = 8 * 2 = 16.
+BANNER_DISPLAY_WIDTH=16
+
+# For ASCII, the display width equals the character count.
+SUBTEXT_DISPLAY_WIDTH=${#SUBTEXT}  # 8 in this case
+
+# Calculate left padding needed to center each line in an 80‑column field.
+BANNER_PADDING=$(( (WIDTH - BANNER_DISPLAY_WIDTH) / 2 ))
+SUBTEXT_PADDING=$(( (WIDTH - SUBTEXT_DISPLAY_WIDTH) / 2 ))
+[ "$BANNER_PADDING" -lt 0 ] && BANNER_PADDING=0
+[ "$SUBTEXT_PADDING" -lt 0 ] && SUBTEXT_PADDING=0
+
+# --- Debug output (optional, remove these lines when satisfied) ---
+#echo "DEBUG: Terminal width = $WIDTH"
+#echo "DEBUG: BANNER_PADDING = $BANNER_PADDING"
+#echo "DEBUG: SUBTEXT_PADDING = $SUBTEXT_PADDING"
+# -------------------------------------------------------------
+
+# Print with vertical breathing space (3 blank lines above, 2 below)
 printf "\n\n\n"
-printf "%32s%s\n" "" "ｏｂｌｉｖｉｏｎ"
-printf "%36s%s\n" "" "Welcome."
+printf "%*s%s\n" "$BANNER_PADDING" "" "$BANNER"
+printf "%*s%s\n" "$SUBTEXT_PADDING" "" "$SUBTEXT"
 printf "\n\n"
 
