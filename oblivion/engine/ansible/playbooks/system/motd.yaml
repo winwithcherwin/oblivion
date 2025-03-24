@@ -48,18 +48,11 @@
 
     - name: Deploy custom centered MOTD banner script
       copy:
+        src: files/motd/01-oblivion
         dest: /etc/update-motd.d/01-oblivion
+        owner: root
+        group: root
         mode: '0755'
-        content: |
-          #!/bin/sh
-          # Center and print the "oblivion" banner in bold purple
-          cols="$(tput cols 2>/dev/null || echo 80)"
-          text="{{ motd_banner_text }}"
-          # Calculate padding for centering
-          padding=$(( (cols - ${#text}) / 2 ))
-          [ "$padding" -lt 0 ] && padding=0
-          # Print with one blank line above and below
-          printf "\n\033[1;35m%*s%s\033[0m\n\n" "$padding" "" "$text"
 
   handlers:
     - name: Restart SSH
