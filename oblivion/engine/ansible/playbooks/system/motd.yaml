@@ -1,6 +1,5 @@
-- name: Install dynamic centered MOTD using Python and wcwidth (with aligned subtext)
+- name: Install dynamic centered MOTD using Python and fix PAM configuration
   hosts: all
-  become: true
   gather_facts: false
 
   tasks:
@@ -11,6 +10,15 @@
         owner: root
         group: root
         mode: '0755'
+
+    - name: Deploy custom MOTD generator script (Python)
+      copy:
+        src: files/motd/01-oblivion
+        dest: /etc/update-motd.d/01-oblivion
+        owner: root
+        group: root
+        mode: '0755'
+        force: true
 
     - name: Disable default dynamic MOTD scripts (remove execute bit)
       find:
@@ -27,22 +35,21 @@
       loop: "{{ motd_scripts.files }}"
       when: item.path != '/etc/update-motd.d/01-oblivion'
 
-    - name: Disable SSHd's built-in MOTD print (PrintMotd)
+    - name: Insert PAM block to execute dynamic MOTD scripts
+      blockinfile:
+        path: /etc/pam.d/sshd
+        marker: "# {mark} ANSIBLE MOTD"
+        block: |
+          session    optional     pam_motd.so motd=/run/motd.dynamic
+          session    optional     pam_motd.so noupdate
+
+    - name: Disable SSHd's built-in MOTD print (so only PAM prints MOTD)
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: '^PrintMotd'
         line: 'PrintMotd no'
         create: yes
       notify: Restart SSH
-
-    - name: Deploy custom centered MOTD banner script (Python)
-      copy:
-        src: files/motd/01-oblivion
-        dest: /etc/update-motd.d/01-oblivion
-        owner: root
-        group: root
-        mode: '0755'
-        force: true
 
   handlers:
     - name: Restart SSH
