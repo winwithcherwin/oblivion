@@ -1,4 +1,4 @@
-- name: Install dynamic centered MOTD using Python and wcwidth
+- name: Install dynamic centered MOTD using Python and wcwidth (no PAM modifications)
   hosts: all
   become: true
   gather_facts: false
@@ -27,20 +27,12 @@
       loop: "{{ motd_scripts.files }}"
       when: item.path != '/etc/update-motd.d/01-oblivion'
 
-    - name: Disable static MOTD from PAM (avoid double MOTD)
-      pamd:
-        name: sshd
-        type: session
-        control: optional
-        module_path: pam_motd.so
-        module_arguments: noupdate
-        state: absent
-
     - name: Disable SSHd's built-in MOTD print (PrintMotd)
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: '^PrintMotd'
         line: 'PrintMotd no'
+        create: yes
       notify: Restart SSH
 
     - name: Deploy custom centered MOTD banner script (Python)
