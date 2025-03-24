@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
-# updated at: Mon Mar 24 07:55:59 PM UTC 2025
+# updated at: Mon Mar 24 08:00:00 PM UTC 2025
+
 """
-Dynamic MOTD script that centers a banner and subtext using wcwidth,
-but caps the left padding so that on very wide terminals the text remains closer to the left.
+Dynamic MOTD generator that centers a banner and subtext using wcwidth.
+This script prints the MOTD content to stdout.
 """
 
 import shutil
 import locale
-from wcwidth import wcswidth
+
+try:
+    from wcwidth import wcswidth
+except ImportError:
+    def wcswidth(s):
+        # Simple fallback: assume each char is 1 column wide unless its codepoint is high.
+        return sum(2 if ord(c) >= 0x1100 else 1 for c in s)
 
 # Set locale for proper Unicode handling.
 locale.setlocale(locale.LC_ALL, '')
@@ -27,23 +34,22 @@ banner_width = wcswidth(banner)
 subtext_width = wcswidth(subtext)
 
 # Compute natural left padding for centering.
-natural_banner_padding = (width - banner_width) // 2
-natural_subtext_padding = (width - subtext_width) // 2
-
-# Define maximum left padding (to keep text closer to left on wide screens).
-max_padding = 40
-
-# Use the lesser of natural padding and max_padding.
-banner_padding = natural_banner_padding if natural_banner_padding < max_padding else max_padding
-subtext_padding = natural_subtext_padding if natural_subtext_padding < max_padding else max_padding
+banner_padding = (width - banner_width) // 2
+subtext_padding = (width - subtext_width) // 2
+if banner_padding < 0:
+    banner_padding = 0
+if subtext_padding < 0:
+    subtext_padding = 0
 
 # ANSI color codes for bold purple.
 BOLD_PURPLE = "\033[1;35m"
 RESET = "\033[0m"
 
-# Print with vertical breathing space: 1 blank line above and 1 below.
-print("\n")
-print(" " * banner_padding + BOLD_PURPLE + banner + RESET)
-print(" " * subtext_padding + subtext)
-print("\n")
+# Build output with minimal vertical padding.
+output = "\n"
+output += " " * banner_padding + BOLD_PURPLE + banner + RESET + "\n"
+output += " " * subtext_padding + subtext + "\n"
+output += "\n"
+
+print(output, end="")
 
