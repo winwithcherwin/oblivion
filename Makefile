@@ -42,10 +42,11 @@ timestamp-motd:
 	@chmod +x $(ANSIBLE_SYSTEM_DIR)/files/motd/01-oblivion
 
 git-update-fix: timestamp-motd
-	git add -A
-	git commit -m "Test fix"
-	git push
+	@git add -A
+	@git commit -m "Test fix"
+	@git push
 	@$(MAKE) update
+	@$(MAKE) ssh
 
 destroy: terraform-destroy reset-bootstrap ## destroy *everything*
 

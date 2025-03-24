@@ -17,6 +17,7 @@ if [ ${#choices[@]} -eq 1 ]; then
   server_name=$(echo "$line" | cut -f1)
   ip=$(echo "$line" | cut -f2)
   echo "🔗 Connecting to $server_name at $ip"
+  ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "root@$ip" cat /etc/update-motd.d/01-oblivion
   exec ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "root@$ip"
 fi
 

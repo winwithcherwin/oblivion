@@ -3,7 +3,6 @@
   gather_facts: false
 
   tasks:
-
     - name: Ensure /etc/update-motd.d exists
       file:
         path: /etc/update-motd.d

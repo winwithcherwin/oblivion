@@ -1,31 +1,8 @@
 #!/bin/bash
-# updated at: Mon Mar 24 04:24:58 PM UTC 2025
+# updated at: Mon Mar 24 04:35:01 PM UTC 2025
 
-
-# Use a fixed terminal width (80 columns) for consistent centering
-WIDTH=80
-
-BANNER="ｏｂｌｉｖｉｏｎ"
-SUBTEXT="Welcome."
-
-# Hardcoded display widths:
-# For full-width Unicode, assume each character takes 2 columns.
-BANNER_DISPLAY_WIDTH=16    # 8 characters * 2 columns
-SUBTEXT_DISPLAY_WIDTH=8    # 8 ASCII characters
-
-# Calculate left padding (number of spaces)
-BANNER_PADDING=$(( (WIDTH - BANNER_DISPLAY_WIDTH) / 2 ))
-SUBTEXT_PADDING=$(( (WIDTH - SUBTEXT_DISPLAY_WIDTH) / 2 ))
-[ "$BANNER_PADDING" -lt 0 ] && BANNER_PADDING=0
-[ "$SUBTEXT_PADDING" -lt 0 ] && SUBTEXT_PADDING=0
-
-# Colors (bold purple)
-BOLD_PURPLE="\033[1;35m"
-RESET="\033[0m"
-
-# Print vertical breathing space, then centered lines
 printf "\n\n\n"
-printf "%*s%s\n" "$BANNER_PADDING" "" "${BOLD_PURPLE}${BANNER}${RESET}"
-printf "%*s%s\n" "$SUBTEXT_PADDING" "" "$SUBTEXT"
+printf "%32s%s\n" "" "ｏｂｌｉｖｉｏｎ"
+printf "%36s%s\n" "" "Welcome."
 printf "\n\n"
 
