@@ -1,8 +1,37 @@
-BANNER="ｏｂｌｉｖｉｏｎ"
-WIDTH=$(tput cols 2>/dev/null || echo 80)
-PADDING=$(( (WIDTH - ${#BANNER}) / 2 ))
 
-echo ""
-printf "%*s\n" $((PADDING + ${#BANNER})) "$BANNER"
-echo ""
+# Get terminal width (default 80 if unavailable)
+WIDTH=$(tput cols 2>/dev/null || echo 80)
+
+# Define banner text and subtext
+BANNER="ｏｂｌｉｖｉｏｎ"
+SUBTEXT="Welcome."
+
+# Hardcode expected display widths:
+# For full-width Unicode, each character is assumed to occupy 2 columns.
+BANNER_DISPLAY_WIDTH=16
+SUBTEXT_DISPLAY_WIDTH=8
+
+# Calculate left and right padding for the banner line
+BANNER_LEFT_PADDING=$(( (WIDTH - BANNER_DISPLAY_WIDTH) / 2 ))
+BANNER_RIGHT_PADDING=$(( WIDTH - BANNER_DISPLAY_WIDTH - BANNER_LEFT_PADDING ))
+
+# Similarly for the subtext
+SUBTEXT_LEFT_PADDING=$(( (WIDTH - SUBTEXT_DISPLAY_WIDTH) / 2 ))
+SUBTEXT_RIGHT_PADDING=$(( WIDTH - SUBTEXT_DISPLAY_WIDTH - SUBTEXT_LEFT_PADDING ))
+
+# Ensure padding is not negative
+[ "$BANNER_LEFT_PADDING" -lt 0 ] && BANNER_LEFT_PADDING=0
+[ "$SUBTEXT_LEFT_PADDING" -lt 0 ] && SUBTEXT_LEFT_PADDING=0
+
+# Colors
+BOLD_PURPLE="\033[1;35m"
+RESET="\033[0m"
+
+# Print with vertical breathing space
+printf "\n\n\n"
+# Center banner: print left padding, then the banner, then right padding (the right padding is not strictly needed for centering but makes the line exactly WIDTH characters)
+printf "%*s%s%*s\n" "$BANNER_LEFT_PADDING" "" "$BOLD_PURPLE$BANNER$RESET" "$BANNER_RIGHT_PADDING" ""
+# Center subtext similarly
+printf "%*s%s%*s\n" "$SUBTEXT_LEFT_PADDING" "" "$SUBTEXT" "$SUBTEXT_RIGHT_PADDING" ""
+printf "\n\n"
 
