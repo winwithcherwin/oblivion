@@ -33,14 +33,11 @@
         line: 'PrintMotd yes'
         create: true
 
-    - name: Deploy static colorized MOTD
-      copy:
-        dest: /etc/motd
-        content: |
-          \033[1;35mｏｂｌｉｖｉｏｎ\033[0m
-
-          Welcome.
-        mode: '0644'
+    - name: Deploy static colorized MOTD (bold purple)
+      shell: |
+        echo -e "\033[1;35mｏｂｌｉｖｉｏｎ\033[0m\n\nWelcome." > /etc/motd
+      args:
+        executable: /bin/bash
 
     - name: Restart SSH
       service:
