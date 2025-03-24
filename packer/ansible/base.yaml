@@ -21,8 +21,9 @@
           - python3
           - python3-pip
           - python3-venv
-          - redis-tools
+          - python3-wcwidth
           - ansible
+          - redis-tools
           - wireguard
         state: present
         update_cache: yes

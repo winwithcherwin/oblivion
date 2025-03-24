@@ -86,10 +86,11 @@ bootstrap-terraform: terraform-apply
 	@if [ ! -f $(BOOTSTRAP_TERRAFORM) ]; then \
 		echo "waiting for hosts to settle..."; \
 		mkdir -p $(BOOTSTRAP_DIR); \
-		sleep 10; \
+		sleep 20; \
 	fi
-	$(MAKE) --no-print-directory dotenv
+	@$(MAKE) --no-print-directory dotenv
 	@date > $(BOOTSTRAP_TERRAFORM)
+	@sleep 5
 
 when-terraform-bootstrapped:
 	@if [ ! -f $(BOOTSTRAP_TERRAFORM) ]; then \
@@ -102,7 +103,7 @@ terraform-destroy: ## terraform destroy
 
 
 # PLAYBOOKS
-test-playbooks: when-terraform-bootstrapped
+test-playbooks: when-terraform-bootstrapped ## test simple playbook
 	@$(OBLIVION) ansible run --all echo && \
 	mkdir -p $(BOOTSTRAP_DIR); \
 	date > $(BOOTSTRAP_INFRA_VALID) || \
@@ -118,25 +119,25 @@ when-infra-valid:
 
 run-playbooks: when-infra-valid
 	@$(OBLIVION) ansible run --all system/motd
-	#@$(OBLIVION) ansible run --all system/zsh
+	@$(OBLIVION) ansible run --all system/zsh
 	@date > $(BOOTSTRAP_INFRA_VALID)
 
 
 # WIREGUARD
 wireguard-init: when-infra-valid ## setup WireGuard
-	@$(OBLIVION) wireguard --all register
-	@$(OBLIVION) wireguard --all write-config
+	@$(OBLIVION) wireguard register --all
+	@$(OBLIVION) wireguard write-config --all
 
 wireguard-refresh: when-infra-valid ## removes stale nodes and regenerate WireGuard connections everywhere
-	@$(OBLIVION) wireguard check-liveness
-	@$(OBLIVION) wireguard --all write-config
+	@$(OBLIVION) wireguard ping
+	@$(OBLIVION) wireguard write-config --all
 
 ## Teardown WireGuard from a node (removes keys, config, service)
 wireguard-teardown: when-infra-valid ## make teardown-one QUEUE=server3
 	@$(OBLIVION) ansible run wireguard/teardown --queue $(QUEUE)
 
 wireguard-status: when-infra-valid ## ping all nodes; remove unreachable ones from Redis
-	@$(OBLIVION) wireguard --all status
+	@$(OBLIVION) wireguard status --all
 
 bootstrap-wireguard: wireguard-init
 	@if [ ! -f $(BOOTSTRAP_WIREGUARD) ]; then \
@@ -174,7 +175,7 @@ force-bootstrap:
 	@date > $(BOOTSTRAP_INFRA_VALID)
 
 reset-bootstrap:
-	rm -rf $(BOOTSTRAP_DIR)
+	@rm -rf $(BOOTSTRAP_DIR)
 
 fmt: ## format all hcl
 	terraform -chdir=terraform fmt
