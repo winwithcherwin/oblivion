@@ -1,22 +1,16 @@
-- name: Clean MOTD system entirely and install static version
+- name: Minimal MOTD using /etc/motd (no pam_motd, no update-motd.d)
   hosts: all
-  become: true
   gather_facts: no
 
   tasks:
-    - name: Disable PAM MOTD in sshd
+
+    - name: Ensure PAM does not print any MOTD
       lineinfile:
         path: /etc/pam.d/sshd
         regexp: '^session\s+optional\s+pam_motd\.so'
         state: absent
 
-    - name: Disable PAM MOTD in login
-      lineinfile:
-        path: /etc/pam.d/login
-        regexp: '^session\s+optional\s+pam_motd\.so'
-        state: absent
-
-    - name: Remove update-motd.d and dynamic motd files
+    - name: Delete all dynamic MOTD systems
       file:
         path: "{{ item }}"
         state: absent
@@ -25,21 +19,23 @@
         - /etc/motd.dynamic
         - /run/motd.dynamic
 
-    - name: Deploy static MOTD
+    - name: Enable static MOTD printing in SSHD
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PrintMotd'
+        line: 'PrintMotd yes'
+        create: true
+
+    - name: Write static /etc/motd
       copy:
         dest: /etc/motd
         content: |
           ｏｂｌｉｖｉｏｎ
+
+          Welcome.
         mode: '0644'
 
-    - name: Ensure SSH doesn't print MOTD itself
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: '^PrintMotd'
-        line: 'PrintMotd no'
-        create: true
-
-    - name: Restart SSH
+    - name: Restart SSHD
       service:
         name: ssh
         state: restarted
