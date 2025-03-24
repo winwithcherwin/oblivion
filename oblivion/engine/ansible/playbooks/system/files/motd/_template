@@ -1,29 +1,24 @@
 
-# Force a fixed terminal width for centering (80 columns)
-WIDTH=80
+# Get the terminal width (or default to 80)
+WIDTH=$(tput cols 2>/dev/null || echo 80)
 
-# Define the banner text and subtext
+# Define the banner and subtext
 BANNER="ｏｂｌｉｖｉｏｎ"
 SUBTEXT="Welcome."
 
-# For full‑width Unicode, assume each character occupies 2 columns.
-# "ｏｂｌｉｖｉｏｎ" is 8 characters → display width = 8 * 2 = 16.
-BANNER_DISPLAY_WIDTH=16
+# Use GNU Awk to calculate the display width.
+# For full-width Unicode characters, strwidth() returns the number of columns required.
+BANNER_DISPLAY_WIDTH=$(awk -v s="$BANNER" 'BEGIN { print strwidth(s) }')
+SUBTEXT_DISPLAY_WIDTH=$(awk -v s="$SUBTEXT" 'BEGIN { print length(s) }')
 
-# For ASCII, the display width equals the character count.
-SUBTEXT_DISPLAY_WIDTH=${#SUBTEXT}  # 8 in this case
+# Compute left padding for centering
+BANNER_PADDING=$(awk -v w="$WIDTH" -v d="$BANNER_DISPLAY_WIDTH" 'BEGIN { printf "%d", (w - d) / 2 }')
+SUBTEXT_PADDING=$(awk -v w="$WIDTH" -v d="$SUBTEXT_DISPLAY_WIDTH" 'BEGIN { printf "%d", (w - d) / 2 }')
 
-# Calculate left padding needed to center each line in an 80‑column field.
-BANNER_PADDING=$(( (WIDTH - BANNER_DISPLAY_WIDTH) / 2 ))
-SUBTEXT_PADDING=$(( (WIDTH - SUBTEXT_DISPLAY_WIDTH) / 2 ))
-[ "$BANNER_PADDING" -lt 0 ] && BANNER_PADDING=0
-[ "$SUBTEXT_PADDING" -lt 0 ] && SUBTEXT_PADDING=0
-
-# --- Debug output (optional, remove these lines when satisfied) ---
-#echo "DEBUG: Terminal width = $WIDTH"
-#echo "DEBUG: BANNER_PADDING = $BANNER_PADDING"
-#echo "DEBUG: SUBTEXT_PADDING = $SUBTEXT_PADDING"
-# -------------------------------------------------------------
+# For debugging, you could uncomment these lines:
+# echo "Terminal width: $WIDTH"
+# echo "Banner display width: $BANNER_DISPLAY_WIDTH, Padding: $BANNER_PADDING"
+# echo "Subtext display width: $SUBTEXT_DISPLAY_WIDTH, Padding: $SUBTEXT_PADDING"
 
 # Print with vertical breathing space (3 blank lines above, 2 below)
 printf "\n\n\n"
