@@ -33,7 +33,7 @@ update: terraform-apply ## run terraform apply and playbooks
 
 git-update-fix:
 	@git add -A
-	@git commit -m "Fix"
+	@git commit -m "Test fix"
 	@git push
 	@$(MAKE) update
 
