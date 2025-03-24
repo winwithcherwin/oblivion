@@ -1,4 +1,4 @@
-- name: Generate and install static centered MOTD from Python script
+- name: Install dynamic centered MOTD using Python and wcwidth (minimal vertical padding)
   hosts: all
   become: true
   gather_facts: false
@@ -12,7 +12,30 @@
         group: root
         mode: '0755'
 
-    - name: Deploy custom MOTD script (Python)
+    - name: Disable default dynamic MOTD scripts (remove execute bit)
+      find:
+        paths: /etc/update-motd.d
+        file_type: file
+        patterns: '*'
+        recurse: no
+      register: motd_scripts
+
+    - name: Remove execute permission from default MOTD scripts
+      file:
+        path: "{{ item.path }}"
+        mode: "0644"
+      loop: "{{ motd_scripts.files }}"
+      when: item.path != '/etc/update-motd.d/01-oblivion'
+
+    - name: Disable SSHd's built-in MOTD print (PrintMotd)
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PrintMotd'
+        line: 'PrintMotd no'
+        create: yes
+      notify: Restart SSH
+
+    - name: Deploy custom centered MOTD banner script (Python)
       copy:
         src: files/motd/01-oblivion
         dest: /etc/update-motd.d/01-oblivion
@@ -20,26 +43,6 @@
         group: root
         mode: '0755'
         force: true
-
-    - name: Run the MOTD script to generate MOTD content
-      command: /etc/update-motd.d/01-oblivion
-      register: motd_output
-
-    - name: Deploy static MOTD content to /etc/motd
-      copy:
-        content: "{{ motd_output.stdout }}"
-        dest: /etc/motd
-        owner: root
-        group: root
-        mode: '0644'
-
-    - name: Ensure SSHd prints static MOTD
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: '^PrintMotd'
-        line: 'PrintMotd yes'
-        create: yes
-      notify: Restart SSH
 
   handlers:
     - name: Restart SSH
