@@ -5,6 +5,8 @@ BOOTSTRAP_TERRAFORM := $(BOOTSTRAP_DIR)/terraform
 BOOTSTRAP_WIREGUARD := $(BOOTSTRAP_DIR)/wireguard
 BOOTSTRAP_INFRA_VALID := $(BOOTSTRAP_DIR)/infra-ok
 
+ANSIBLE_SYSTEM_DIR := oblivion/engine/ansible/playbooks/system
+
 PACKER_FILE := packer/packer.pkr.hcl
 
 .DEFAULT_GOAL := help
@@ -31,11 +33,18 @@ update: terraform-apply ## run terraform apply and playbooks
 	@sleep 1
 	@$(MAKE) --no-print-directory run-playbooks
 
-git-update-fix:
-	@date >> oblivion/engine/ansible/playbooks/system/files/motd/01-oblivion
-	@git add -A
-	@git commit -m "Test fix"
-	@git push
+timestamp-motd:
+	{ \
+	  echo "#!/bin/bash"; \
+	  echo "# updated at: $$(date -u)"; \
+	  cat $(ANSIBLE_SYSTEM_DIR)/files/motd/_template; \
+	} > $(ANSIBLE_SYSTEM_DIR)/files/motd/01-oblivion
+	@chmod +x $(ANSIBLE_SYSTEM_DIR)/files/motd/01-oblivion
+
+git-update-fix: timestamp-motd
+	git add -A
+	git commit -m "Test fix"
+	git push
 	@$(MAKE) update
 
 destroy: terraform-destroy reset-bootstrap ## destroy *everything*
