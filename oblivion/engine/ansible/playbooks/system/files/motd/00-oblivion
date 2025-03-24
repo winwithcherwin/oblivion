@@ -1,0 +1,42 @@
+#!/bin/bash
+# this file lives in: files/motd/00-oblivion
+
+[ -t 1 ] || exit 0
+TERM=${TERM:-xterm-256color}
+export TERM
+
+# Info
+IP=$(hostname -I | awk '{print $1}')
+WG_IP=$(ip -4 addr show wg0 2>/dev/null | awk '/inet / {print $2}' | cut -d/ -f1)
+PEERS=$(wg show wg0 2>/dev/null | grep '^peer:' | wc -l)
+UPDATES=$(apt list --upgradable 2>/dev/null | grep -v "^Listing" | wc -l)
+[[ "$UPDATES" -eq 0 ]] && STATUS="System up to date" || STATUS="$UPDATES updates available"
+
+HOSTNAME=$(hostname)
+UPTIME=$(uptime -p | sed 's/up //')
+
+# Colors
+RESET="\033[0m"
+DIM="\033[2m"
+CYAN="\033[36m"
+PURPLE="\033[35m"
+
+# Banner
+BANNER="ｏｂｌｉｖｉｏｎ"
+WIDTH=$(tput cols 2>/dev/null || echo 80)
+PADDING=$(( (WIDTH - ${#BANNER}) / 2 ))
+
+echo ""
+printf "%*s\n" $((PADDING + ${#BANNER})) "${DIM}${PURPLE}${BANNER}${RESET}"
+echo ""
+
+printf "${CYAN}%-15s${RESET} %s\n" "Hostname:" "$HOSTNAME"
+printf "${CYAN}%-15s${RESET} %s\n" "Uptime:" "$UPTIME"
+printf "${CYAN}%-15s${RESET} %s\n" "IP Address:" "$IP"
+if [ -n "$WG_IP" ]; then
+    printf "${CYAN}%-15s${RESET} %s\n" "WireGuard:" "$WG_IP"
+    printf "${CYAN}%-15s${RESET} %s\n" "WG Peers:" "$PEERS"
+fi
+printf "${CYAN}%-15s${RESET} %s\n" "Updates:" "$STATUS"
+echo ""
+

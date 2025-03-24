@@ -1,10 +1,11 @@
-- name: Fully reset and install working dynamic MOTD
+- name: Install beautiful custom MOTD
   hosts: all
+  become: true
   gather_facts: no
 
   tasks:
 
-    - name: Remove all default MOTD scripts
+    - name: Remove noisy default MOTD scripts
       file:
         path: "/etc/update-motd.d/{{ item }}"
         state: absent
@@ -17,58 +18,16 @@
         - 98-fsck-at-reboot
         - 98-reboot-required
 
-    - name: Remove static MOTD file (if it exists)
+    - name: Remove static /etc/motd file if exists
       file:
         path: /etc/motd
         state: absent
 
-    - name: Install custom MOTD script (with ANSI and padding)
+    - name: Copy custom MOTD script
       copy:
+        src: files/motd/00-oblivion
         dest: /etc/update-motd.d/00-oblivion
         mode: '0755'
-        content: |
-          {% raw %}
-          #!/bin/bash
-
-          [ -t 1 ] || exit 0
-          TERM=${TERM:-xterm-256color}
-          export TERM
-
-          # Info
-          IP=$(hostname -I | awk '{print $1}')
-          WG_IP=$(ip -4 addr show wg0 2>/dev/null | awk '/inet / {print $2}' | cut -d/ -f1)
-          PEERS=$(wg show wg0 2>/dev/null | grep '^peer:' | wc -l)
-          UPDATES=$(apt list --upgradable 2>/dev/null | grep -v "^Listing" | wc -l)
-          [[ "$UPDATES" -eq 0 ]] && STATUS="System up to date" || STATUS="$UPDATES updates available"
-
-          HOSTNAME=$(hostname)
-          UPTIME=$(uptime -p | sed 's/up //')
-
-          # Colors
-          RESET="\033[0m"
-          DIM="\033[2m"
-          CYAN="\033[36m"
-          PURPLE="\033[35m"
-
-          # Banner
-          BANNER="ｏｂｌｉｖｉｏｎ"
-          WIDTH=$(tput cols 2>/dev/null || echo 80)
-          PADDING=$(( (WIDTH - ${#BANNER}) / 2 ))
-
-          echo ""
-          printf "%*s\n" $((PADDING + ${#BANNER})) "${DIM}${PURPLE}${BANNER}${RESET}"
-          echo ""
-
-          printf "${CYAN}%-15s${RESET} %s\n" "Hostname:" "$HOSTNAME"
-          printf "${CYAN}%-15s${RESET} %s\n" "Uptime:" "$UPTIME"
-          printf "${CYAN}%-15s${RESET} %s\n" "IP Address:" "$IP"
-          if [ -n "$WG_IP" ]; then
-              printf "${CYAN}%-15s${RESET} %s\n" "WireGuard:" "$WG_IP"
-              printf "${CYAN}%-15s${RESET} %s\n" "WG Peers:" "$PEERS"
-          fi
-          printf "${CYAN}%-15s${RESET} %s\n" "Updates:" "$STATUS"
-          echo ""
-          {% endraw %}
 
     - name: Ensure sshd_config disables PrintMotd
       lineinfile:
@@ -77,7 +36,7 @@
         line: 'PrintMotd no'
         create: yes
 
-    - name: Ensure PAM triggers dynamic MOTD
+    - name: Ensure PAM prints MOTD on SSH login
       blockinfile:
         path: /etc/pam.d/sshd
         marker: "# {mark} ANSIBLE MANAGED MOTD"
@@ -85,7 +44,7 @@
           session optional pam_motd.so motd=/run/motd.dynamic
           session optional pam_motd.so noupdate
 
-    - name: Restart SSH to apply MOTD config
+    - name: Restart SSH to apply MOTD settings
       service:
         name: ssh
         state: restarted
