@@ -33,9 +33,13 @@
         line: 'PrintMotd yes'
         create: true
 
-    - name: Deploy static colorized MOTD (bold purple)
+    - name: Deploy centered, colorized MOTD with breathing space
       shell: |
-        echo -e "\033[1;35mｏｂｌｉｖｉｏｎ\033[0m\n\nWelcome." > /etc/motd
+        BANNER="ｏｂｌｉｖｉｏｎ"
+        WIDTH=80
+        [[ -t 1 ]] && WIDTH=$(tput cols 2>/dev/null || echo 80)
+        PADDING=$(( (WIDTH - ${#BANNER}) / 2 ))
+        echo -e "\n\n\n\033[1;35m$(printf '%*s' $((PADDING + ${#BANNER})) "$BANNER")\033[0m\n\n" > /etc/motd
       args:
         executable: /bin/bash
 
