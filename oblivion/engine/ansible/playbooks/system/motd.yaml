@@ -1,21 +1,34 @@
-- hosts: all
+- name: Install static colorized MOTD
+  hosts: all
+  gather_facts: false
+
   vars:
-    motd_banner_text: "ｏｂｌｉｖｉｏｎ"  # The banner text
+    motd_banner_text: "ｏｂｌｉｖｉｏｎ"
+
   tasks:
+
+    - name: Ensure /etc/update-motd.d exists
+      file:
+        path: /etc/update-motd.d
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
     - name: Disable default dynamic MOTD scripts (remove execute bit)
       find:
         paths: /etc/update-motd.d
         file_type: file
-        patterns: '*'          # find all files
+        patterns: '*'
         recurse: no
       register: motd_scripts
+
     - name: Remove execute permission from default MOTD scripts
       file:
         path: "{{ item.path }}"
         mode: "0644"
       loop: "{{ motd_scripts.files }}"
-      when: "'{{ item.path }}' != '/etc/update-motd.d/01-oblivion'"
-      # (This ensures only our script will be executable)
+      when: item.path != '/etc/update-motd.d/01-oblivion'
 
     - name: Disable static MOTD from PAM (avoid double MOTD)
       pamd:
@@ -23,9 +36,8 @@
         type: session
         control: optional
         module_path: pam_motd.so
-        arguments: noupdate
+        module_arguments: noupdate
         state: absent
-      # Removes the "pam_motd.so noupdate" line so PAM won't re-print /etc/motd
 
     - name: Disable SSHd's built-in MOTD print (PrintMotd)
       lineinfile:
@@ -34,23 +46,17 @@
         line: 'PrintMotd no'
       notify: Restart SSH
 
-    - name: Deploy custom MOTD banner script
+    - name: Deploy custom centered MOTD banner script
       copy:
         dest: /etc/update-motd.d/01-oblivion
-        owner: root
-        group: root
         mode: '0755'
         content: |
           #!/bin/sh
-          # Center and print the "oblivion" banner in bold purple
           cols="$(tput cols 2>/dev/null || echo 80)"
           text="{{ motd_banner_text }}"
-          # Calculate padding for centering
           padding=$(( (cols - ${#text}) / 2 ))
           [ "$padding" -lt 0 ] && padding=0
-          # Print with one blank line above and below
-          printf "\n\033[1;35m%*s%s\033[0m\n\n" "$padding" "" "$text"
-      # Using a literal block for content avoids YAML escape issues for \033 sequences
+          printf "\n\n\033[1;35m%*s%s\033[0m\n\n" "$padding" "" "$text"
 
   handlers:
     - name: Restart SSH
