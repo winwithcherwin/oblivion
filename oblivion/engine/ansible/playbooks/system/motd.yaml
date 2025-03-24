@@ -4,31 +4,33 @@
 
   tasks:
 
-    - name: Remove old MOTD junk (scripts, static file, etc)
+    - name: Remove all default MOTD scripts
       file:
-        path: "{{ item }}"
+        path: "/etc/update-motd.d/{{ item }}"
         state: absent
       loop:
-        - /etc/motd
-        - /etc/motd.dynamic
-        - /etc/update-motd.d/00-header
-        - /etc/update-motd.d/10-help-text
-        - /etc/update-motd.d/50-motd-news
-        - /etc/update-motd.d/80-livepatch
-        - /etc/update-motd.d/91-release-upgrade
-        - /etc/update-motd.d/98-fsck-at-reboot
-        - /etc/update-motd.d/98-reboot-required
+        - 00-header
+        - 10-help-text
+        - 50-motd-news
+        - 80-livepatch
+        - 91-release-upgrade
+        - 98-fsck-at-reboot
+        - 98-reboot-required
 
-    - name: Create custom MOTD script
+    - name: Remove static MOTD file (if it exists)
+      file:
+        path: /etc/motd
+        state: absent
+
+    - name: Install custom MOTD script (with ANSI and padding)
       copy:
         dest: /etc/update-motd.d/00-oblivion
         mode: '0755'
         content: |
+          {% raw %}
           #!/bin/bash
 
-          # Bail if not a terminal
           [ -t 1 ] || exit 0
-
           TERM=${TERM:-xterm-256color}
           export TERM
 
@@ -66,14 +68,16 @@
           fi
           printf "${CYAN}%-15s${RESET} %s\n" "Updates:" "$STATUS"
           echo ""
+          {% endraw %}
 
     - name: Ensure sshd_config disables PrintMotd
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: '^PrintMotd'
         line: 'PrintMotd no'
+        create: yes
 
-    - name: Ensure PAM prints MOTD only once
+    - name: Ensure PAM triggers dynamic MOTD
       blockinfile:
         path: /etc/pam.d/sshd
         marker: "# {mark} ANSIBLE MANAGED MOTD"
@@ -81,7 +85,7 @@
           session optional pam_motd.so motd=/run/motd.dynamic
           session optional pam_motd.so noupdate
 
-    - name: Restart SSH to apply changes
+    - name: Restart SSH to apply MOTD config
       service:
         name: ssh
         state: restarted
