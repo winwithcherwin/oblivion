@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-# updated at: Mon Mar 24 07:44:27 PM UTC 2025
+# updated at: Mon Mar 24 07:45:41 PM UTC 2025
 
-
+#!/usr/bin/env python3
 """
-Dynamic MOTD script that centers a banner and subtext using wcwidth,
-but limits the left padding so that on very wide terminals the text stays closer to the left.
+Dynamic MOTD script that centers a banner and subtext using wcwidth.
+This script generates output that we later capture into /etc/motd.
 """
 
 import os
@@ -15,45 +15,38 @@ try:
     from wcwidth import wcswidth
 except ImportError:
     def wcswidth(s):
-        # A very simple fallback that assumes each character is 1 column wide, except those above 0x1100.
+        # Simple fallback: assume each character is 1 column unless its codepoint is high.
         return sum(2 if ord(c) >= 0x1100 else 1 for c in s)
 
-# Set locale for proper Unicode handling.
 locale.setlocale(locale.LC_ALL, '')
 
-# Determine terminal width; default to 80 columns if not available.
+# Get terminal width (default to 80 if unavailable)
 try:
     width = shutil.get_terminal_size().columns
 except Exception:
     width = 80
 
-# Define the banner and subtext.
+# Define banner and subtext
 banner = "ｏｂｌｉｖｉｏｎ"
 subtext = "Welcome."
 
-# Calculate display widths using wcwidth.
+# Calculate display widths using wcwidth
 banner_width = wcswidth(banner)
 subtext_width = wcswidth(subtext)
 
-# Compute natural left padding for centering.
-natural_banner_padding = (width - banner_width) // 2
-natural_subtext_padding = (width - subtext_width) // 2
-if natural_banner_padding < 0:
-    natural_banner_padding = 0
-if natural_subtext_padding < 0:
-    natural_subtext_padding = 0
+# Compute left padding for centering
+banner_padding = (width - banner_width) // 2
+subtext_padding = (width - subtext_width) // 2
+if banner_padding < 0:
+    banner_padding = 0
+if subtext_padding < 0:
+    subtext_padding = 0
 
-# Define a maximum left padding value.
-max_padding = 40
-# Use the lesser of natural padding and max_padding.
-banner_padding = min(natural_banner_padding, max_padding)
-subtext_padding = min(natural_subtext_padding, max_padding)
-
-# ANSI color codes for bold purple.
+# ANSI color codes for bold purple
 BOLD_PURPLE = "\033[1;35m"
 RESET = "\033[0m"
 
-# Print with vertical breathing space: 3 blank lines above, 2 below.
+# Print with vertical breathing space (3 blank lines above, 2 below)
 print("\n" * 3)
 print(" " * banner_padding + BOLD_PURPLE + banner + RESET)
 print(" " * subtext_padding + subtext)
