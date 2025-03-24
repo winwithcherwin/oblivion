@@ -1,38 +1,7 @@
 
-import os
-import sys
-from wcwidth import wcswidth
 
-def get_terminal_width(default=80):
-    try:
-        return os.get_terminal_size().columns
-    except Exception:
-        return default
-
-# Terminal width (dynamically determined)
-WIDTH = get_terminal_width()
-
-# Define banner and subtext
-BANNER = "ｏｂｌｉｖｉｏｎ"
-SUBTEXT = "Welcome."
-
-# Compute display widths using wcwidth (accurate for Unicode)
-banner_width = wcswidth(BANNER)
-subtext_width = wcswidth(SUBTEXT)
-
-# Calculate left padding for centering
-banner_padding = (WIDTH - banner_width) // 2
-subtext_padding = (WIDTH - subtext_width) // 2
-if banner_padding < 0: banner_padding = 0
-if subtext_padding < 0: subtext_padding = 0
-
-# ANSI color codes
-BOLD_PURPLE = "\033[1;35m"
-RESET = "\033[0m"
-
-# Print with vertical breathing space (3 blank lines above, 2 below)
-print("\n" * 3)
-print(" " * banner_padding + BOLD_PURPLE + BANNER + RESET)
-print(" " * subtext_padding + SUBTEXT)
-print("\n" * 2)
+echo ""
+echo "                           ｏｂｌｉｖｉｏｎ"
+echo "                                  Welcome."
+echo ""
 
