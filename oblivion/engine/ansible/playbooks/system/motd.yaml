@@ -1,4 +1,4 @@
-- name: Install static centered colorized MOTD using AWK for proper centering
+- name: Install static centered colorized MOTD using AWK for centering
   hosts: all
   become: true
   gather_facts: false
@@ -43,7 +43,7 @@
         line: 'PrintMotd no'
       notify: Restart SSH
 
-    - name: Deploy custom centered MOTD banner script (using AWK for centering)
+    - name: Deploy custom centered MOTD banner script
       copy:
         src: files/motd/01-oblivion
         dest: /etc/update-motd.d/01-oblivion
