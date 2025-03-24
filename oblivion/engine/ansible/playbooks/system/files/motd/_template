@@ -1,23 +1,16 @@
-
 """
-Dynamic MOTD generator that centers a banner and subtext using wcwidth.
-This script prints the MOTD content to stdout.
+Dynamic MOTD script that centers a banner and centers subtext directly beneath it.
+It uses wcwidth to accurately measure Unicode display widths and caps left padding on wide screens.
 """
 
 import shutil
 import locale
-
-try:
-    from wcwidth import wcswidth
-except ImportError:
-    def wcswidth(s):
-        # Simple fallback: assume each char is 1 column wide unless its codepoint is high.
-        return sum(2 if ord(c) >= 0x1100 else 1 for c in s)
+from wcwidth import wcswidth
 
 # Set locale for proper Unicode handling.
 locale.setlocale(locale.LC_ALL, '')
 
-# Get terminal width dynamically (default to 80 if unavailable)
+# Get terminal width dynamically (default to 80 columns if unavailable).
 try:
     width = shutil.get_terminal_size().columns
 except Exception:
@@ -31,23 +24,24 @@ subtext = "Welcome."
 banner_width = wcswidth(banner)
 subtext_width = wcswidth(subtext)
 
-# Compute natural left padding for centering.
-banner_padding = (width - banner_width) // 2
-subtext_padding = (width - subtext_width) // 2
-if banner_padding < 0:
-    banner_padding = 0
-if subtext_padding < 0:
-    subtext_padding = 0
+# Compute natural left padding for centering the banner.
+natural_banner_padding = (width - banner_width) // 2
+
+# Cap left padding on wide screens.
+max_padding = 40
+banner_padding = min(natural_banner_padding, max_padding)
+
+# Compute subtext padding so that it is centered relative to the banner.
+# That is, shift it to the right by half the difference between the banner's display width and the subtext's.
+subtext_padding = banner_padding + ((banner_width - subtext_width) // 2)
 
 # ANSI color codes for bold purple.
 BOLD_PURPLE = "\033[1;35m"
 RESET = "\033[0m"
 
-# Build output with minimal vertical padding.
-output = "\n"
-output += " " * banner_padding + BOLD_PURPLE + banner + RESET + "\n"
-output += " " * subtext_padding + subtext + "\n"
-output += "\n"
-
-print(output, end="")
+# Print with minimal vertical breathing space (1 blank line above and below).
+print("\n")
+print(" " * banner_padding + BOLD_PURPLE + banner + RESET)
+print(" " * subtext_padding + subtext)
+print("\n")
 
