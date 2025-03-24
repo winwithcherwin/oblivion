@@ -1,14 +1,15 @@
-- name: Clean and install MOTD
+- name: Install minimal MOTD
   hosts: all
-  gather_facts: no
+  become: true
+  gather_facts: false
 
   tasks:
 
-    - name: Remove all MOTD scripts except 00-oblivion
+    - name: Wipe all MOTD scripts except 00-oblivion
       shell: |
-        find /etc/update-motd.d/ ! -name '00-oblivion' -type f -exec rm -f {} +
+        find /etc/update-motd.d/ -type f ! -name '00-oblivion' -delete || true
       args:
-        warn: false
+        executable: /bin/bash
 
     - name: Remove static MOTD files
       file:
@@ -19,20 +20,20 @@
         - /etc/motd.dynamic
         - /run/motd.dynamic
 
-    - name: Copy custom MOTD script
+    - name: Install MOTD script
       copy:
         src: files/motd/00-oblivion
         dest: /etc/update-motd.d/00-oblivion
         mode: '0755'
 
-    - name: Ensure sshd_config disables PrintMotd
+    - name: Disable SSH static motd
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: '^PrintMotd'
         line: 'PrintMotd no'
         create: yes
 
-    - name: Ensure PAM only prints run-parts MOTD once
+    - name: Ensure PAM prints MOTD once
       blockinfile:
         path: /etc/pam.d/sshd
         marker: "# {mark} ANSIBLE MANAGED MOTD"
@@ -40,7 +41,7 @@
           session optional pam_motd.so noupdate
           session optional pam_motd.so
 
-    - name: Restart SSH
+    - name: Restart SSHD
       service:
         name: ssh
         state: restarted
