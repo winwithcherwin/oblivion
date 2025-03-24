@@ -1,39 +1,31 @@
 #!/bin/bash
-# updated at: Mon Mar 24 04:22:22 PM UTC 2025
+# updated at: Mon Mar 24 04:24:58 PM UTC 2025
 
-# Get terminal width (default 80 if unavailable)
-WIDTH=$(tput cols 2>/dev/null || echo 80)
 
-# Define banner text and subtext
+# Use a fixed terminal width (80 columns) for consistent centering
+WIDTH=80
+
 BANNER="ｏｂｌｉｖｉｏｎ"
 SUBTEXT="Welcome."
 
-# Hardcode expected display widths:
-# For full-width Unicode, each character is assumed to occupy 2 columns.
-BANNER_DISPLAY_WIDTH=16
-SUBTEXT_DISPLAY_WIDTH=8
+# Hardcoded display widths:
+# For full-width Unicode, assume each character takes 2 columns.
+BANNER_DISPLAY_WIDTH=16    # 8 characters * 2 columns
+SUBTEXT_DISPLAY_WIDTH=8    # 8 ASCII characters
 
-# Calculate left and right padding for the banner line
-BANNER_LEFT_PADDING=$(( (WIDTH - BANNER_DISPLAY_WIDTH) / 2 ))
-BANNER_RIGHT_PADDING=$(( WIDTH - BANNER_DISPLAY_WIDTH - BANNER_LEFT_PADDING ))
+# Calculate left padding (number of spaces)
+BANNER_PADDING=$(( (WIDTH - BANNER_DISPLAY_WIDTH) / 2 ))
+SUBTEXT_PADDING=$(( (WIDTH - SUBTEXT_DISPLAY_WIDTH) / 2 ))
+[ "$BANNER_PADDING" -lt 0 ] && BANNER_PADDING=0
+[ "$SUBTEXT_PADDING" -lt 0 ] && SUBTEXT_PADDING=0
 
-# Similarly for the subtext
-SUBTEXT_LEFT_PADDING=$(( (WIDTH - SUBTEXT_DISPLAY_WIDTH) / 2 ))
-SUBTEXT_RIGHT_PADDING=$(( WIDTH - SUBTEXT_DISPLAY_WIDTH - SUBTEXT_LEFT_PADDING ))
-
-# Ensure padding is not negative
-[ "$BANNER_LEFT_PADDING" -lt 0 ] && BANNER_LEFT_PADDING=0
-[ "$SUBTEXT_LEFT_PADDING" -lt 0 ] && SUBTEXT_LEFT_PADDING=0
-
-# Colors
+# Colors (bold purple)
 BOLD_PURPLE="\033[1;35m"
 RESET="\033[0m"
 
-# Print with vertical breathing space
+# Print vertical breathing space, then centered lines
 printf "\n\n\n"
-# Center banner: print left padding, then the banner, then right padding (the right padding is not strictly needed for centering but makes the line exactly WIDTH characters)
-printf "%*s%s%*s\n" "$BANNER_LEFT_PADDING" "" "$BOLD_PURPLE$BANNER$RESET" "$BANNER_RIGHT_PADDING" ""
-# Center subtext similarly
-printf "%*s%s%*s\n" "$SUBTEXT_LEFT_PADDING" "" "$SUBTEXT" "$SUBTEXT_RIGHT_PADDING" ""
+printf "%*s%s\n" "$BANNER_PADDING" "" "${BOLD_PURPLE}${BANNER}${RESET}"
+printf "%*s%s\n" "$SUBTEXT_PADDING" "" "$SUBTEXT"
 printf "\n\n"
 
