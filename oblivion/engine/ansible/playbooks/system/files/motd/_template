@@ -1,18 +1,12 @@
 """
 Dynamic MOTD script that centers a banner and subtext using wcwidth,
-with reduced vertical padding.
+with reduced vertical padding so the MOTD appears higher on the screen.
 """
 
 import os
 import shutil
 import locale
-
-try:
-    from wcwidth import wcswidth
-except ImportError:
-    def wcswidth(s):
-        # Fallback: assume each character is 1 column wide unless it's likely wide.
-        return sum(2 if ord(c) >= 0x1100 else 1 for c in s)
+from wcwidth import wcswidth
 
 # Set locale for proper Unicode handling.
 locale.setlocale(locale.LC_ALL, '')
@@ -43,14 +37,9 @@ if subtext_padding < 0:
 BOLD_PURPLE = "\033[1;35m"
 RESET = "\033[0m"
 
-# Print with reduced vertical breathing space: 1 blank line above, 1 blank line below.
+# Print with minimal vertical breathing space: 1 blank line above and 1 below.
 print("\n")
 print(" " * banner_padding + BOLD_PURPLE + banner + RESET)
 print(" " * subtext_padding + subtext)
-print("\n")
-print("\n")
-print("\n")
-print("\n")
-print("\n")
 print("\n")
 
