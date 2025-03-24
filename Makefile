@@ -28,8 +28,14 @@ world: bootstrap-packer bootstrap-terraform infra-check bootstrap-wireguard run-
 
 update: terraform-apply ## run terraform apply and playbooks
 	@echo "waiting after terraform apply..."
-	@sleep 3
+	@sleep 1
 	@$(MAKE) --no-print-directory run-playbooks
+
+update-with-git:
+	@git add -A
+	@git commit -m "Fix"
+	@git push
+	@$(MAKE) update
 
 destroy: terraform-destroy reset-bootstrap ## destroy *everything*
 
