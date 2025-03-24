@@ -31,7 +31,7 @@ update: terraform-apply ## run terraform apply and playbooks
 	@sleep 1
 	@$(MAKE) --no-print-directory run-playbooks
 
-update-with-git:
+git-update-fix:
 	@git add -A
 	@git commit -m "Fix"
 	@git push

@@ -1,32 +1,38 @@
-- name: Install clean, static MOTD (direct to /etc/motd)
+- name: Fully reset and install working dynamic MOTD
   hosts: all
-  become: true
   gather_facts: no
 
   tasks:
 
-    - name: Disable dynamic MOTD system (Ubuntu-specific)
+    - name: Remove old MOTD junk (scripts, static file, etc)
       file:
-        path: /etc/profile.d/disable-dynamic-motd.sh
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/motd
+        - /etc/motd.dynamic
+        - /etc/update-motd.d/00-header
+        - /etc/update-motd.d/10-help-text
+        - /etc/update-motd.d/50-motd-news
+        - /etc/update-motd.d/80-livepatch
+        - /etc/update-motd.d/91-release-upgrade
+        - /etc/update-motd.d/98-fsck-at-reboot
+        - /etc/update-motd.d/98-reboot-required
+
+    - name: Create custom MOTD script
+      copy:
+        dest: /etc/update-motd.d/00-oblivion
         mode: '0755'
         content: |
-          #!/bin/sh
-          export MOTD_SHOWN=pam
-
-    - name: Disable update-motd symlink if exists
-      file:
-        path: /etc/motd
-        state: absent
-        force: yes
-
-    - name: Write static MOTD directly to /etc/motd
-      copy:
-        dest: /etc/motd
-        mode: '0644'
-        content: |
-          {% raw %}
           #!/bin/bash
 
+          # Bail if not a terminal
+          [ -t 1 ] || exit 0
+
+          TERM=${TERM:-xterm-256color}
+          export TERM
+
+          # Info
           IP=$(hostname -I | awk '{print $1}')
           WG_IP=$(ip -4 addr show wg0 2>/dev/null | awk '/inet / {print $2}' | cut -d/ -f1)
           PEERS=$(wg show wg0 2>/dev/null | grep '^peer:' | wc -l)
@@ -36,11 +42,13 @@
           HOSTNAME=$(hostname)
           UPTIME=$(uptime -p | sed 's/up //')
 
+          # Colors
           RESET="\033[0m"
           DIM="\033[2m"
           CYAN="\033[36m"
           PURPLE="\033[35m"
 
+          # Banner
           BANNER="ｏｂｌｉｖｉｏｎ"
           WIDTH=$(tput cols 2>/dev/null || echo 80)
           PADDING=$(( (WIDTH - ${#BANNER}) / 2 ))
@@ -48,6 +56,7 @@
           echo ""
           printf "%*s\n" $((PADDING + ${#BANNER})) "${DIM}${PURPLE}${BANNER}${RESET}"
           echo ""
+
           printf "${CYAN}%-15s${RESET} %s\n" "Hostname:" "$HOSTNAME"
           printf "${CYAN}%-15s${RESET} %s\n" "Uptime:" "$UPTIME"
           printf "${CYAN}%-15s${RESET} %s\n" "IP Address:" "$IP"
@@ -57,5 +66,23 @@
           fi
           printf "${CYAN}%-15s${RESET} %s\n" "Updates:" "$STATUS"
           echo ""
-          {% endraw %}
+
+    - name: Ensure sshd_config disables PrintMotd
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PrintMotd'
+        line: 'PrintMotd no'
+
+    - name: Ensure PAM prints MOTD only once
+      blockinfile:
+        path: /etc/pam.d/sshd
+        marker: "# {mark} ANSIBLE MANAGED MOTD"
+        block: |
+          session optional pam_motd.so motd=/run/motd.dynamic
+          session optional pam_motd.so noupdate
+
+    - name: Restart SSH to apply changes
+      service:
+        name: ssh
+        state: restarted
 
