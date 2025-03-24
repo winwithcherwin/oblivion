@@ -1,6 +1,6 @@
-- name: Setup dynamic MOTD via PAM and deploy a simple MOTD script
+- name: Install dynamic centered MOTD using Python and wcwidth
   hosts: all
-  become: yes
+  become: true
   gather_facts: false
 
   tasks:
@@ -12,7 +12,38 @@
         group: root
         mode: '0755'
 
-    - name: Deploy simple MOTD script
+    - name: Disable default dynamic MOTD scripts (remove execute bit)
+      find:
+        paths: /etc/update-motd.d
+        file_type: file
+        patterns: '*'
+        recurse: no
+      register: motd_scripts
+
+    - name: Remove execute permission from default MOTD scripts
+      file:
+        path: "{{ item.path }}"
+        mode: "0644"
+      loop: "{{ motd_scripts.files }}"
+      when: item.path != '/etc/update-motd.d/01-oblivion'
+
+    - name: Disable static MOTD from PAM (avoid double MOTD)
+      pamd:
+        name: sshd
+        type: session
+        control: optional
+        module_path: pam_motd.so
+        module_arguments: noupdate
+        state: absent
+
+    - name: Disable SSHd's built-in MOTD print (PrintMotd)
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PrintMotd'
+        line: 'PrintMotd no'
+      notify: Restart SSH
+
+    - name: Deploy custom centered MOTD banner script (Python)
       copy:
         src: files/motd/01-oblivion
         dest: /etc/update-motd.d/01-oblivion
@@ -20,22 +51,6 @@
         group: root
         mode: '0755'
         force: true
-
-    - name: Configure PAM for dynamic MOTD in sshd
-      blockinfile:
-        path: /etc/pam.d/sshd
-        marker: "# {mark} ANSIBLE MOTD"
-        block: |
-          session    optional     pam_motd.so motd=/run/motd.dynamic
-          session    optional     pam_motd.so noupdate
-
-    - name: Disable SSHd's built-in MOTD print (so only PAM prints MOTD)
-      lineinfile:
-        path: /etc/ssh/sshd_config
-        regexp: '^PrintMotd'
-        line: 'PrintMotd no'
-        create: yes
-      notify: Restart SSH
 
   handlers:
     - name: Restart SSH
