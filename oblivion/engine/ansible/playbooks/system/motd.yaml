@@ -1,4 +1,4 @@
-- name: Install dynamic centered MOTD using Python and wcwidth (minimal vertical padding)
+- name: Install dynamic centered MOTD using Python and wcwidth (with capped padding)
   hosts: all
   become: true
   gather_facts: false

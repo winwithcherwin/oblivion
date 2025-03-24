@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-# updated at: Mon Mar 24 07:53:44 PM UTC 2025
+# updated at: Mon Mar 24 07:55:59 PM UTC 2025
 """
 Dynamic MOTD script that centers a banner and subtext using wcwidth,
-with reduced vertical padding so the MOTD appears higher on the screen.
+but caps the left padding so that on very wide terminals the text remains closer to the left.
 """
 
-import os
 import shutil
 import locale
 from wcwidth import wcswidth
@@ -13,7 +12,7 @@ from wcwidth import wcswidth
 # Set locale for proper Unicode handling.
 locale.setlocale(locale.LC_ALL, '')
 
-# Get terminal width; default to 80 if unavailable.
+# Get terminal width dynamically (default to 80 if unavailable)
 try:
     width = shutil.get_terminal_size().columns
 except Exception:
@@ -27,19 +26,22 @@ subtext = "Welcome."
 banner_width = wcswidth(banner)
 subtext_width = wcswidth(subtext)
 
-# Compute left padding for centering.
-banner_padding = (width - banner_width) // 2
-subtext_padding = (width - subtext_width) // 2
-if banner_padding < 0:
-    banner_padding = 0
-if subtext_padding < 0:
-    subtext_padding = 0
+# Compute natural left padding for centering.
+natural_banner_padding = (width - banner_width) // 2
+natural_subtext_padding = (width - subtext_width) // 2
+
+# Define maximum left padding (to keep text closer to left on wide screens).
+max_padding = 40
+
+# Use the lesser of natural padding and max_padding.
+banner_padding = natural_banner_padding if natural_banner_padding < max_padding else max_padding
+subtext_padding = natural_subtext_padding if natural_subtext_padding < max_padding else max_padding
 
 # ANSI color codes for bold purple.
 BOLD_PURPLE = "\033[1;35m"
 RESET = "\033[0m"
 
-# Print with minimal vertical breathing space: 1 blank line above and 1 below.
+# Print with vertical breathing space: 1 blank line above and 1 below.
 print("\n")
 print(" " * banner_padding + BOLD_PURPLE + banner + RESET)
 print(" " * subtext_padding + subtext)
