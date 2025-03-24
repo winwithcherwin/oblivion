@@ -30,7 +30,7 @@ world: bootstrap-packer bootstrap-terraform infra-check bootstrap-wireguard run-
 
 update: terraform-apply ## run terraform apply and playbooks
 	@echo "waiting after terraform apply..."
-	@sleep 1
+	@sleep 4
 	@$(MAKE) --no-print-directory run-playbooks
 
 timestamp-motd:
@@ -45,8 +45,6 @@ git-update-fix: timestamp-motd
 	git add -A
 	git commit -m "Test fix"
 	git push
-	@echo "sleeping before running tasks"
-	sleep 3
 	@$(MAKE) update
 
 destroy: terraform-destroy reset-bootstrap ## destroy *everything*
