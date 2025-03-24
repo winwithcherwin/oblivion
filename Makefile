@@ -106,7 +106,7 @@ when-infra-valid:
 	fi
 
 run-playbooks: when-infra-valid
-	@$(OBLIVION) ansible run --hz-worker-0 system/motd
+	@$(OBLIVION) ansible run --queue hz-worker-0 system/motd
 	#@$(OBLIVION) ansible run --all system/zsh
 	@date > $(BOOTSTRAP_INFRA_VALID)
 
