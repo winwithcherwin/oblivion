@@ -1,67 +1,45 @@
-- name: Install minimal and clean MOTD
+- name: Clean MOTD system entirely and install static version
   hosts: all
   become: true
-  gather_facts: false
+  gather_facts: no
 
   tasks:
+    - name: Disable PAM MOTD in sshd
+      lineinfile:
+        path: /etc/pam.d/sshd
+        regexp: '^session\s+optional\s+pam_motd\.so'
+        state: absent
 
-    - name: Remove all MOTD scripts except 00-oblivion
-      shell: |
-        find /etc/update-motd.d/ -type f ! -name '00-oblivion' -delete || true
-      args:
-        executable: /bin/bash
+    - name: Disable PAM MOTD in login
+      lineinfile:
+        path: /etc/pam.d/login
+        regexp: '^session\s+optional\s+pam_motd\.so'
+        state: absent
 
-    - name: Remove static MOTD files
+    - name: Remove update-motd.d and dynamic motd files
       file:
         path: "{{ item }}"
         state: absent
       loop:
-        - /etc/motd
+        - /etc/update-motd.d
         - /etc/motd.dynamic
         - /run/motd.dynamic
 
-    - name: Copy MOTD script
+    - name: Deploy static MOTD
       copy:
-        src: files/motd/00-oblivion
-        dest: /etc/update-motd.d/00-oblivion
-        mode: '0755'
+        dest: /etc/motd
+        content: |
+          ｏｂｌｉｖｉｏｎ
+        mode: '0644'
 
-    - name: Ensure SSH doesn't print static motd
+    - name: Ensure SSH doesn't print MOTD itself
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: '^PrintMotd'
         line: 'PrintMotd no'
-        create: yes
+        create: true
 
-    - name: Ensure PAM prints MOTD once via run-parts
-      blockinfile:
-        path: /etc/pam.d/sshd
-        marker: "# {mark} ANSIBLE MANAGED MOTD"
-        block: |
-          session optional pam_motd.so noupdate
-          session optional pam_motd.so
-
-    - name: Remove run-parts/cat calls from /etc/profile
-      shell: |
-        sed -i '/run-parts \/etc\/update-motd.d/d' /etc/profile || true
-        sed -i '/cat \/etc\/motd/d' /etc/profile || true
-      args:
-        executable: /bin/bash
-
-    - name: Remove run-parts/cat calls from /etc/profile.d/*
-      shell: |
-        find /etc/profile.d -type f -exec sed -i '/run-parts \/etc\/update-motd.d/d' {} \;
-        find /etc/profile.d -type f -exec sed -i '/cat \/etc\/motd/d' {} \;
-      args:
-        executable: /bin/bash
-
-    - name: Remove cat /etc/motd from /etc/bash.bashrc
-      lineinfile:
-        path: /etc/bash.bashrc
-        regexp: '^cat /etc/motd'
-        state: absent
-
-    - name: Restart SSH to apply MOTD changes
+    - name: Restart SSH
       service:
         name: ssh
         state: restarted
