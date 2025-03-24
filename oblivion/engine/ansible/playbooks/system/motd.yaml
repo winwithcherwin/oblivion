@@ -1,5 +1,4 @@
-- hosts: motd_servers
-  become: yes
+- hosts: all
   vars:
     motd_banner_text: "ｏｂｌｉｖｉｏｎ"  # The banner text
   tasks:
