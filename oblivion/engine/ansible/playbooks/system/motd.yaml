@@ -1,47 +1,61 @@
-- name: Install clean, minimal MOTD
+- name: Install clean, static MOTD (direct to /etc/motd)
   hosts: all
   become: true
   gather_facts: no
 
   tasks:
-    - name: Remove default and noisy MOTD scripts
-      file:
-        path: "/etc/update-motd.d/{{ item }}"
-        state: absent
-      loop:
-        - 00-header
-        - 00-custom
-        - 00-hacker
-        - 10-help-text
-        - 50-motd-news
-        - 50-landscape-sysinfo
-        - 85-fwupd
-        - 90-updates-available
-        - 91-contract-ua-esm-status
-        - 92-unattended-upgrades
-        - 95-hwe-eol
-        - 97-overlayroot
-        - 98-fsck-at-reboot
-        - 98-reboot-required
 
-    - name: Create single clean MOTD script
-      copy:
-        dest: /etc/update-motd.d/00-status
+    - name: Disable dynamic MOTD system (Ubuntu-specific)
+      file:
+        path: /etc/profile.d/disable-dynamic-motd.sh
         mode: '0755'
         content: |
+          #!/bin/sh
+          export MOTD_SHOWN=pam
+
+    - name: Disable update-motd symlink if exists
+      file:
+        path: /etc/motd
+        state: absent
+        force: yes
+
+    - name: Write static MOTD directly to /etc/motd
+      copy:
+        dest: /etc/motd
+        mode: '0644'
+        content: |
+          {% raw %}
           #!/bin/bash
+
           IP=$(hostname -I | awk '{print $1}')
           WG_IP=$(ip -4 addr show wg0 2>/dev/null | awk '/inet / {print $2}' | cut -d/ -f1)
           PEERS=$(wg show wg0 2>/dev/null | grep '^peer:' | wc -l)
           UPDATES=$(apt list --upgradable 2>/dev/null | grep -v "^Listing" | wc -l)
           [[ "$UPDATES" -eq 0 ]] && STATUS="System up to date" || STATUS="$UPDATES updates available"
 
+          HOSTNAME=$(hostname)
+          UPTIME=$(uptime -p | sed 's/up //')
+
+          RESET="\033[0m"
+          DIM="\033[2m"
+          CYAN="\033[36m"
+          PURPLE="\033[35m"
+
+          BANNER="ｏｂｌｉｖｉｏｎ"
+          WIDTH=$(tput cols 2>/dev/null || echo 80)
+          PADDING=$(( (WIDTH - ${#BANNER}) / 2 ))
+
           echo ""
-          printf "%-15s %s\n" "IP Address:" "$IP"
+          printf "%*s\n" $((PADDING + ${#BANNER})) "${DIM}${PURPLE}${BANNER}${RESET}"
+          echo ""
+          printf "${CYAN}%-15s${RESET} %s\n" "Hostname:" "$HOSTNAME"
+          printf "${CYAN}%-15s${RESET} %s\n" "Uptime:" "$UPTIME"
+          printf "${CYAN}%-15s${RESET} %s\n" "IP Address:" "$IP"
           if [ -n "$WG_IP" ]; then
-              printf "%-15s %s\n" "WireGuard:" "$WG_IP"
-              printf "%-15s %s\n" "WG Peers:" "$PEERS"
+              printf "${CYAN}%-15s${RESET} %s\n" "WireGuard:" "$WG_IP"
+              printf "${CYAN}%-15s${RESET} %s\n" "WG Peers:" "$PEERS"
           fi
-          printf "%-15s %s\n" "Updates:" "$STATUS"
+          printf "${CYAN}%-15s${RESET} %s\n" "Updates:" "$STATUS"
           echo ""
+          {% endraw %}
 
