@@ -1,48 +1,59 @@
-- name: Install static MOTD with color
-  hosts: all
-  become: true
-  gather_facts: false
-
+- hosts: motd_servers
+  become: yes
+  vars:
+    motd_banner_text: "ｏｂｌｉｖｉｏｎ"  # The banner text
   tasks:
-
-    - name: Disable PAM MOTD in sshd
-      lineinfile:
-        path: /etc/pam.d/sshd
-        regexp: '^session\s+optional\s+pam_motd\.so'
-        state: absent
-
-    - name: Disable PAM MOTD in login
-      lineinfile:
-        path: /etc/pam.d/login
-        regexp: '^session\s+optional\s+pam_motd\.so'
-        state: absent
-
-    - name: Remove update-motd and dynamic files
+    - name: Disable default dynamic MOTD scripts (remove execute bit)
+      find:
+        paths: /etc/update-motd.d
+        file_type: file
+        patterns: '*'          # find all files
+        recurse: no
+      register: motd_scripts
+    - name: Remove execute permission from default MOTD scripts
       file:
-        path: "{{ item }}"
-        state: absent
-      loop:
-        - /etc/update-motd.d
-        - /etc/motd.dynamic
-        - /run/motd.dynamic
+        path: "{{ item.path }}"
+        mode: "0644"
+      loop: "{{ motd_scripts.files }}"
+      when: "'{{ item.path }}' != '/etc/update-motd.d/01-oblivion'"
+      # (This ensures only our script will be executable)
 
-    - name: Enable static MOTD printing in SSH
+    - name: Disable static MOTD from PAM (avoid double MOTD)
+      pamd:
+        name: sshd
+        type: session
+        control: optional
+        module_path: pam_motd.so
+        arguments: noupdate
+        state: absent
+      # Removes the "pam_motd.so noupdate" line so PAM won't re-print /etc/motd
+
+    - name: Disable SSHd's built-in MOTD print (PrintMotd)
       lineinfile:
         path: /etc/ssh/sshd_config
         regexp: '^PrintMotd'
-        line: 'PrintMotd yes'
-        create: true
+        line: 'PrintMotd no'
+      notify: Restart SSH
 
-    - name: Deploy centered, colorized MOTD with breathing space
-      shell: |
-        BANNER="ｏｂｌｉｖｉｏｎ"
-        WIDTH=80
-        [[ -t 1 ]] && WIDTH=$(tput cols 2>/dev/null || echo 80)
-        PADDING=$(( (WIDTH - ${#BANNER}) / 2 ))
-        echo -e "\n\n\n\033[1;35m$(printf '%*s' $((PADDING + ${#BANNER})) "$BANNER")\033[0m\n\n" > /etc/motd
-      args:
-        executable: /bin/bash
+    - name: Deploy custom MOTD banner script
+      copy:
+        dest: /etc/update-motd.d/01-oblivion
+        owner: root
+        group: root
+        mode: '0755'
+        content: |
+          #!/bin/sh
+          # Center and print the "oblivion" banner in bold purple
+          cols="$(tput cols 2>/dev/null || echo 80)"
+          text="{{ motd_banner_text }}"
+          # Calculate padding for centering
+          padding=$(( (cols - ${#text}) / 2 ))
+          [ "$padding" -lt 0 ] && padding=0
+          # Print with one blank line above and below
+          printf "\n\033[1;35m%*s%s\033[0m\n\n" "$padding" "" "$text"
+      # Using a literal block for content avoids YAML escape issues for \033 sequences
 
+  handlers:
     - name: Restart SSH
       service:
         name: ssh
