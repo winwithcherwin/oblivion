@@ -35,7 +35,7 @@ update: terraform-apply ## run terraform apply and playbooks
 
 timestamp-motd:
 	{ \
-	  echo "#!/bin/bash"; \
+	  echo "#!/usr/bin/env python3"; \
 	  echo "# updated at: $$(date -u)"; \
 	  cat $(ANSIBLE_SYSTEM_DIR)/files/motd/_template; \
 	} > $(ANSIBLE_SYSTEM_DIR)/files/motd/01-oblivion
