@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-# updated at: Mon Mar 24 07:45:41 PM UTC 2025
-
-#!/usr/bin/env python3
+# updated at: Mon Mar 24 07:47:05 PM UTC 2025
 """
-Dynamic MOTD script that centers a banner and subtext using wcwidth.
-This script generates output that we later capture into /etc/motd.
+Dynamic MOTD script that centers a banner and subtext using wcwidth,
+with reduced vertical padding.
 """
 
 import os
@@ -15,26 +13,27 @@ try:
     from wcwidth import wcswidth
 except ImportError:
     def wcswidth(s):
-        # Simple fallback: assume each character is 1 column unless its codepoint is high.
+        # Fallback: assume each character is 1 column wide unless it's likely wide.
         return sum(2 if ord(c) >= 0x1100 else 1 for c in s)
 
+# Set locale for proper Unicode handling.
 locale.setlocale(locale.LC_ALL, '')
 
-# Get terminal width (default to 80 if unavailable)
+# Get terminal width; default to 80 if unavailable.
 try:
     width = shutil.get_terminal_size().columns
 except Exception:
     width = 80
 
-# Define banner and subtext
+# Define banner and subtext.
 banner = "ｏｂｌｉｖｉｏｎ"
 subtext = "Welcome."
 
-# Calculate display widths using wcwidth
+# Calculate display widths using wcwidth.
 banner_width = wcswidth(banner)
 subtext_width = wcswidth(subtext)
 
-# Compute left padding for centering
+# Compute left padding for centering.
 banner_padding = (width - banner_width) // 2
 subtext_padding = (width - subtext_width) // 2
 if banner_padding < 0:
@@ -42,13 +41,13 @@ if banner_padding < 0:
 if subtext_padding < 0:
     subtext_padding = 0
 
-# ANSI color codes for bold purple
+# ANSI color codes for bold purple.
 BOLD_PURPLE = "\033[1;35m"
 RESET = "\033[0m"
 
-# Print with vertical breathing space (3 blank lines above, 2 below)
-print("\n" * 3)
+# Print with reduced vertical breathing space: 1 blank line above, 1 blank line below.
+print("\n")
 print(" " * banner_padding + BOLD_PURPLE + banner + RESET)
 print(" " * subtext_padding + subtext)
-print("\n" * 2)
+print("\n")
 
