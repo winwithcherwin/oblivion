@@ -1,19 +1,23 @@
 #!/bin/sh
 
-# Get terminal width or fallback to 80
-cols="$(tput cols 2>/dev/null || echo 80)"
+# Use tput if we’re in a terminal
+cols=$(tput cols 2>/dev/null || echo 80)
 
+# Our banner
 text="ｏｂｌｉｖｉｏｎ"
 
-# Calculate center padding
-text_len="${#text}"
-padding=$(( (cols - text_len) / 2 ))
+# Calculate display width (each wide char like ｏ counts as 2)
+text_width=$(echo -n "$text" | wc -m)
+text_display_width=$((text_width * 2))
+
+# Compute left padding
+padding=$(( (cols - text_display_width) / 2 ))
 [ "$padding" -lt 0 ] && padding=0
 
 # Colors
 BOLD_PURPLE="\033[1;35m"
 RESET="\033[0m"
 
-# Print with breathing room
-printf "\n\n${BOLD_PURPLE}%*s%s${RESET}\n\n" "$padding" "" "$text"
+# Output with vertical breathing room
+printf "\n\n\n%*s${BOLD_PURPLE}%s${RESET}\n\n\n" "$padding" "" "$text"
 
