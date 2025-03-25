@@ -15,9 +15,9 @@ PACKER_FILE := packer/packer.pkr.hcl
 .PHONY: terraform-init terraform-plan terraform-apply terraform-destroy terraform-fmt
 .PHONY: packer bootstrap-packer
 .PHONY: wireguard-init wireguard-refresh wireguard-teardown wireguard-status
-.PHONY: bootstrap-packer bootstrap-terraform bootstrap-wireguard force-bootstrap reset-bootstrap
+.PHONY: bootstrap-packer bootstrap-wireguard force-bootstrap wipe-bootstrap
 .PHONY: run-playbooks test-playbooks
-.PHONY: ssh dotenv dotenv-redis-uri tree infra-check fmt
+.PHONY: ssh dotenv dotenv-redis-uri tree validate-infra fmt
 
 
 # CORE
@@ -26,7 +26,7 @@ help:
 	@grep -E '^[a-zA-Z0-9_.-]+:.*?##' $(MAKEFILE_LIST) | \
 	awk -F ':|##' '{ printf "\033[36m%-20s\033[0m %s\n", $$1, $$3 }'
 
-world: bootstrap-packer bootstrap-terraform infra-check bootstrap-wireguard run-playbooks ## build *everything*
+world: bootstrap-packer terraform-apply validate-infra bootstrap-wireguard run-playbooks ## builds everything
 
 update: terraform-apply ## run terraform apply and playbooks
 	@echo "waiting after terraform apply..."
@@ -48,7 +48,10 @@ git-update-fix: timestamp-motd
 	@$(MAKE) update
 	@$(MAKE) ssh
 
-destroy: terraform-destroy reset-bootstrap ## destroy *everything*
+destroy: terraform-destroy wipe-bootstrap ## destroy infra
+	@sed -i '/^REDIS_URI=/d' .env
+
+nuke: terraform-destroy nuke-bootstrap ## destroy *everything* (forces packer to rebuild, on next run)
 
 status: ## show bootstrap status timestamps (sorted, relative)
 	@utils/bootstrap_status.sh $(BOOTSTRAP_DIR)
@@ -66,7 +69,6 @@ bootstrap-packer:
 		date >  $(BOOTSTRAP_PACKER); \
 	fi
 
-
 ## TERRAFORM
 terraform-init: ## initialize terraform
 	terraform -chdir=terraform init
@@ -76,25 +78,13 @@ terraform-plan: terraform-init ## terraform plan
 
 terraform-apply: terraform-init ## terraform apply
 	terraform -chdir=terraform apply -auto-approve -var="ssh_key_name=$(MY_SSH_KEY_NAME)" -var="my_source_ip=$(MY_SOURCE_IP)/32"
-	@if [ -f $(BOOTSTRAP_TERRAFORM) ]; then \
-		$(MAKE) --no-print-directory dotenv; \
-		date > $(BOOTSTRAP_TERRAFORM); \
-	fi
-
-
-bootstrap-terraform: terraform-apply
-	@if [ ! -f $(BOOTSTRAP_TERRAFORM) ]; then \
-		echo "waiting for hosts to settle..."; \
-		mkdir -p $(BOOTSTRAP_DIR); \
-		sleep 20; \
-	fi
-	@$(MAKE) --no-print-directory dotenv
 	@date > $(BOOTSTRAP_TERRAFORM)
-	@sleep 5
+	@echo "Waiting for hosts to settle..."
+	@sleep 7
 
 when-terraform-bootstrapped:
 	@if [ ! -f $(BOOTSTRAP_TERRAFORM) ]; then \
-		echo "Terraform did not bootstrap. Run \'make world\' first."; \
+		echo "Terraform did not bootstrap. Run \'make terraform-apply\' first."; \
 		exit 1; \
 	fi
 
@@ -104,12 +94,16 @@ terraform-destroy: ## terraform destroy
 
 # PLAYBOOKS
 test-playbooks: when-terraform-bootstrapped ## test simple playbook
-	@$(OBLIVION) ansible run --all echo && \
-	mkdir -p $(BOOTSTRAP_DIR); \
-	date > $(BOOTSTRAP_INFRA_VALID) || \
-	( rm --force $(BOOTSTRAP_INFRA_VALID) && echo "Infra validation failed" && exit 1)
+	if ! $(OBLIVION) ansible run --all echo; then \
+		echo "Ansible run failed"; \
+		rm -f $(BOOTSTRAP_INFRA_VALID); \
+		exit 1; \
+	fi
 
-infra-check: test-playbooks
+
+validate-infra: check-redis dotenv test-playbooks
+	@mkdir -p $(BOOTSTRAP_DIR)
+	@date > $(BOOTSTRAP_INFRA_VALID)
 
 when-infra-valid:
 	@if [ ! -f $(BOOTSTRAP_INFRA_VALID) ]; then \
@@ -128,17 +122,6 @@ wireguard-init: when-infra-valid ## setup WireGuard
 	@$(OBLIVION) wireguard register --all
 	@$(OBLIVION) wireguard write-config --all
 
-wireguard-refresh: when-infra-valid ## removes stale nodes and regenerate WireGuard connections everywhere
-	@$(OBLIVION) wireguard ping
-	@$(OBLIVION) wireguard write-config --all
-
-## Teardown WireGuard from a node (removes keys, config, service)
-wireguard-teardown: when-infra-valid ## make teardown-one QUEUE=server3
-	@$(OBLIVION) ansible run wireguard/teardown --queue $(QUEUE)
-
-wireguard-status: when-infra-valid ## ping all nodes; remove unreachable ones from Redis
-	@$(OBLIVION) wireguard status --all
-
 bootstrap-wireguard: wireguard-init
 	@if [ ! -f $(BOOTSTRAP_WIREGUARD) ]; then \
 		echo "waiting for wireguard to settle..."; \
@@ -150,20 +133,32 @@ bootstrap-wireguard: wireguard-init
 	@mkdir -p $(BOOTSTRAP_DIR)
 	@date > $(BOOTSTRAP_WIREGUARD)
 
+wireguard-refresh: when-infra-valid ## removes stale nodes and regenerate WireGuard connections everywhere
+	@$(OBLIVION) wireguard ping
+	@$(OBLIVION) wireguard write-config --all
+
+## Teardown WireGuard from a node (removes keys, config, service)
+wireguard-teardown: when-infra-valid ## make teardown-one QUEUE=server3
+	@$(OBLIVION) ansible run wireguard/teardown --queue $(QUEUE)
+
+wireguard-status: when-infra-valid ## ping all nodes; remove unreachable ones from Redis
+	@$(OBLIVION) wireguard status --all
+
 
 # MISC
 ssh: ## use fzf to ssh into host
 	bash ./utils/ssh.sh
 
-dotenv-redis-uri:
-	@python utils/tfvar2dotenv.py redis_uri; \
-	if [ $$? -eq 0 ]; then \
-	    direnv allow; \
-	fi
+check-redis:
+	python utils/check_redis.py
 
-dotenv: when-infra-valid ## set your .env (only run this after tf-apply)
+dotenv-redis-uri: when-terraform-bootstrapped
+	python utils/tfvar2dotenv.py redis_uri;
+
+dotenv: ## set your .env
 	@$(MAKE) --no-print-directory dotenv-redis-uri
-
+	@if [ ! -f .env ]; then echo ".env is missing"; exit 1; fi
+	@direnv allow
 tree:
 	tree -aI .git -I .terraform
 
@@ -174,7 +169,12 @@ force-bootstrap:
 	@date > $(BOOTSTRAP_WIREGUARD)
 	@date > $(BOOTSTRAP_INFRA_VALID)
 
-reset-bootstrap:
+wipe-bootstrap:
+	@rm -rf $(BOOTSTRAP_TERRAFORM)
+	@rm -rf $(BOOTSTRAP_WIREGUARD)
+	@rm -rf $(BOOTSTRAP_INFRA_VALID)
+
+nuke-bootstrap:
 	@rm -rf $(BOOTSTRAP_DIR)
 
 fmt: ## format all hcl
