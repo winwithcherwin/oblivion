@@ -4,7 +4,9 @@ import redis
 import json
 import os
 import time
+import logging
 
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type, before_sleep_log
 from functools import wraps
 from rich import print as rich_print
 from rich.text import Text
@@ -13,16 +15,38 @@ from oblivion.celery_app import app
 from oblivion.redis_client import redis_client
 from oblivion.settings import ENABLE_CLI_COLOR
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
+class NoQueuesFoundError(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+        self.message = "No active queues found."
+
+retry_connection_errors = [
+    redis.exceptions.ConnectionError,
+    redis.exceptions.TimeoutError,
+    ConnectionRefusedError,
+    NoQueuesFoundError,
+]
+
+@retry(
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=1, max=10),
+    retry=retry_if_exception_type(retry_connection_errors),
+    before_sleep=before_sleep_log(logger, logging.Warning),
+    reraise=True
+)
 def get_all_queues():
     inspect = app.control.inspect()
     queues = inspect.active_queues() or {}
     seen = set()
+
     for worker_queues in queues.values():
         for q in worker_queues:
             seen.add(q["name"])
     if not seen:
-        raise click.ClickException("No active queues found.")
+        raise NoQueuesFoundError
     return sorted(seen)
 
 
