@@ -1,4 +1,3 @@
-# OBLIVION
+# ｏｂｌｉｖｉｏｎ
 
-One task away from total annihilation.
-
+With great power comes great responsibility.
