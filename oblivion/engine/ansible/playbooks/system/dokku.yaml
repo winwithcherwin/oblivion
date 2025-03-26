@@ -1,0 +1,14 @@
+---
+- hosts: dokku
+  tasks:
+  - name: dokku repo
+    apt_repository:
+      filename: dokku
+      repo: 'deb https://packagecloud.io/dokku/dokku/ubuntu/ {{ ansible_lsb.codename|lower }} main'
+      state: present
+
+    - name: install dokku
+      apt:
+        pkg: dokku
+        state: installed
+        update_cache: true

@@ -7,4 +7,9 @@
     * Use dedicated redis module
     * Setup with cloud-init
     * Use own PKI
-
+* Migrate to Python terraform
+* Use Postgresql backend for terraform (migrate from files to db)
+    * Have ob automatically do this after it has provisioned postgresql
+        * Use docker initially
+        * Then use a provisoned server
+        * Bonus points, hook it up with hashicorp vault!!!

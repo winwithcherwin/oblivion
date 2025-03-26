@@ -22,6 +22,7 @@ def main(var_name):
 if __name__ == "__main__":
     import sys
     var_name = main(sys.argv[1])
-    if var_name: sys.exit(0)
+    if var_name:
+        sys.exit(0)
     sys.exit(1)
 

@@ -27,9 +27,19 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
         abs_path += ".yaml"
 
     if not abs_path.startswith(PLAYBOOK_ROOT + os.sep):
+        if stream_id:
+            redis_client.publish(f"ansible:{stream_id}", json.dumps({
+                "host": hostname,
+                "eof": True
+            }))
         raise ValueError(f"Invalid playbook path {abs_path}, must be inside {PLAYBOOK_ROOT}")
 
     if not os.path.isfile(abs_path):
+        if stream_id:
+            redis_client.publish(f"ansible:{stream_id}", json.dumps({
+                "host": hostname,
+                "eof": True
+            }))
         raise FileNotFoundError(f"Playbook not found: {abs_path}")
 
     private_data_dir = "/tmp/ansible-run"

@@ -3,9 +3,8 @@ import redis
 from urllib.parse import urlparse
 
 from oblivion.settings import REDIS_URI
+from oblivion.core.utils import mask_uri
 
-if not REDIS_URI:
-    raise RuntimeError("REDIS_URI environment variable not set")
 
 redis_client = redis.Redis.from_url(
     REDIS_URI,

@@ -2,11 +2,12 @@ from celery import Celery
 import ssl
 import os
 
-redis_uri = os.getenv("REDIS_URI")
+from oblivion.settings import REDIS_URI
+
 
 app = Celery("oblivion",
-  broker=redis_uri,
-  backend=redis_uri,
+  broker=REDIS_URI,
+  backend=REDIS_URI,
   redis_backend_use_ssl={"ssl_cert_reqs": ssl.CERT_NONE},
 )
 

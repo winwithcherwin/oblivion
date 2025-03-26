@@ -1,19 +1,23 @@
 import click
 import uuid
 import redis
+import kombu
 import json
 import os
 import time
 import logging
 
-from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type, before_sleep_log
 from functools import wraps
 from rich import print as rich_print
 from rich.text import Text
 
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type, before_sleep_log
+
 from oblivion.celery_app import app
+from oblivion.core import terraform
 from oblivion.redis_client import redis_client
 from oblivion.settings import ENABLE_CLI_COLOR
+
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -23,21 +27,37 @@ class NoQueuesFoundError(Exception):
         super().__init__(message)
         self.message = "No active queues found."
 
-retry_connection_errors = [
-    redis.exceptions.ConnectionError,
-    redis.exceptions.TimeoutError,
+retry_connection_errors = (
     ConnectionRefusedError,
     NoQueuesFoundError,
-]
+    kombu.exceptions.OperationalError,
+    redis.exceptions.ConnectionError,
+    redis.exceptions.TimeoutError,
+)
 
 @retry(
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=1, min=1, max=10),
+    retry=retry_if_exception_type(AssertionError),
+    before_sleep=before_sleep_log(logger, logging.WARNING),
+    reraise=True
+)
+def assert_equal(func1, func2):
+    value1 = func1()
+    value2 = func2()
+
+    assert value1 == value2, f"mismatch:\n{func1.__name__}:{value1}\n{func2.__name__}:{value2}"
+    return value1
+
+@retry(
+    stop=stop_after_attempt(10),
+    wait=wait_exponential(multiplier=1, min=1, max=10),
     retry=retry_if_exception_type(retry_connection_errors),
-    before_sleep=before_sleep_log(logger, logging.Warning),
+    before_sleep=before_sleep_log(logger, logging.WARNING),
     reraise=True
 )
 def get_all_queues():
+    print("Redis URI (broker_url):", app.conf.broker_url)
     inspect = app.control.inspect()
     queues = inspect.active_queues() or {}
     seen = set()
@@ -48,7 +68,6 @@ def get_all_queues():
     if not seen:
         raise NoQueuesFoundError
     return sorted(seen)
-
 
 def follow_logs(stream_id, expected_hosts=None):
     click.echo(f"→ Live logs (stream ID: {stream_id})\n")
@@ -128,7 +147,7 @@ def task_command(task, timeout=10):
             if not fanout and not queue:
                 raise click.ClickException("You must provide --queue <name> or use --all.")
 
-            target_queues = get_all_queues() if fanout else [queue]
+            target_queues = assert_equal(get_all_queues, terraform.get_all_hosts) if fanout else [queue]
             results = []
 
             for q in target_queues:
@@ -163,7 +182,7 @@ def streaming_ansible_task_command(task, timeout=10):
             task_args = f(*args, **kwargs)
             task_kwargs = {"stream_id": stream_id}
 
-            target_queues = get_all_queues() if fanout else [queue]
+            target_queues = assert_equal(get_all_queues, terraform.get_all_hosts) if fanout else [queue]
             results = []
             start_time = time.monotonic()
             for q in target_queues:
