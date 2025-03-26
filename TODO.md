@@ -13,3 +13,4 @@
         * Use docker initially
         * Then use a provisoned server
         * Bonus points, hook it up with hashicorp vault!!!
+* Cleanup stale wireguard peers from /etc/wireguard.conf
