@@ -42,7 +42,7 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
             if not line.endswith("\n"):
                 line += "\n"
             host = event.get("event_data", {}).get("host") or hostname
-            redis_client.publish(
+            redis_client.xadd(
                 f"ansible:{stream_id}",
                 json.dumps({"host": host, "line": line})
             )
@@ -74,7 +74,7 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
     end_time = time.time()
 
     if stream_id:
-        redis_client.publish(f"ansible:{stream_id}", json.dumps({
+        redis_client.xadd(f"ansible:{stream_id}", json.dumps({
             "host": hostname,
             "eof": True
         }))

@@ -68,15 +68,32 @@ def get_all_queues():
         raise NoQueuesFoundError
     return sorted(seen)
 
-def follow_logs(stream_id, expected_hosts=None, inactivity_timeout=10):
+import json
+import time
+import click
+from rich import print as rich_print
+from rich.text import Text
+from oblivion.redis_client import redis_client
+from oblivion.settings import ENABLE_CLI_COLOR
+import redis.exceptions
+
+def follow_logs(stream_id, expected_hosts=None, block_timeout=10000):
+    """
+    Consume logs from a Redis stream in a blocking manner using XREAD,
+    applying color formatting and handling EOF messages.
+    
+    Args:
+      stream_id (str): Identifier for the Redis stream.
+      expected_hosts (list, optional): List of hosts to wait for an EOF signal.
+      block_timeout (int): Timeout in milliseconds for the blocking XREAD.
+    """
     click.echo(f"→ Live logs (stream ID: {stream_id})\n")
-    pubsub = redis_client.pubsub()
-    pubsub.subscribe(f"ansible:{stream_id}")
-    last_message_time = time.time()
-
-    seen_eof_hosts = set()
+    stream_key = f"ansible:{stream_id}"
+    last_id = "0-0"
     expected_hosts = set(expected_hosts or [])
+    seen_eof_hosts = set()
 
+    # Set up color formatting.
     host_colors = {}
     available_colors = ["cyan", "magenta", "green", "yellow", "blue", "bright_black"]
     max_colors = len(available_colors)
@@ -85,74 +102,71 @@ def follow_logs(stream_id, expected_hosts=None, inactivity_timeout=10):
 
     try:
         while True:
-            message = pubsub.get_message(timeout=1)
-            current_time = time.time()
+            # XREAD blocks for up to block_timeout milliseconds waiting for new messages.
+            result = redis_client.xread({stream_key: last_id}, block=block_timeout, count=1)
+            if not result:
+                click.echo("No messages received within the timeout period. Exiting log stream.")
+                break
 
-            if message is None:
-                # Exit if no message received within inactivity_timeout seconds.
-                if current_time - last_message_time > inactivity_timeout:
-                    click.echo("No messages received for too long, exiting log stream.")
-                    break
-                continue
+            for key, messages in result:
+                for message_id, message_data in messages:
+                    last_id = message_id  # Update our last seen ID to avoid reprocessing.
+                    data = message_data.get(b"data")
+                    try:
+                        parsed = json.loads(data.decode())
+                        host = parsed.get("host", "unknown")
+                    except json.JSONDecodeError:
+                        click.echo(f"Error decoding message: {data}")
+                        continue
+                    except Exception as e:
+                        click.echo(f"Error processing message: {e}")
+                        continue
 
-            last_message_time = current_time
+                    # Handle EOF marker: exit if all expected hosts have sent it,
+                    # or immediately if no expected hosts were defined.
+                    if parsed.get("eof"):
+                        seen_eof_hosts.add(host)
+                        if expected_hosts and seen_eof_hosts >= expected_hosts:
+                            click.echo("Received EOF from all expected hosts. Exiting log stream.")
+                            return
+                        if not expected_hosts:
+                            click.echo("Received EOF. Exiting log stream.")
+                            return
+                        continue
 
-            if message["type"] != "message":
-                continue
+                    line = parsed.get("line", "")
 
-            data = message["data"].decode()
-            try:
-                parsed = json.loads(data)
-                host = parsed.get("host", "unknown")
-                # Check for the EOF marker
-                if parsed.get("eof"):
-                    seen_eof_hosts.add(host)
-                    if expected_hosts and seen_eof_hosts >= expected_hosts:
-                        click.echo("Received EOF from all expected hosts. Exiting log stream.")
-                        break
-                    # If no expected hosts are defined, exit immediately on EOF.
-                    if not expected_hosts:
-                        click.echo("Received EOF. Exiting log stream.")
-                        break
-                    continue
-                line = parsed.get("line", "")
-            except json.JSONDecodeError:
-                click.echo(data)
-                continue
+                    # Apply color formatting per host.
+                    if host not in host_colors and use_colors:
+                        seen_hosts.add(host)
+                        if len(seen_hosts) > max_colors:
+                            use_colors = False
+                        else:
+                            host_colors[host] = available_colors[len(host_colors)]
+                    color = host_colors.get(host, None) if use_colors else None
+                    prefix = f"[{host}] "
 
-            if host not in host_colors and use_colors:
-                seen_hosts.add(host)
-                if len(seen_hosts) > max_colors:
-                    use_colors = False
-                else:
-                    host_colors[host] = available_colors[len(host_colors)]
+                    # Split multi-line output and format each line.
+                    for subline in line.splitlines():
+                        subline = subline.rstrip()
+                        if not subline:
+                            continue
 
-            color = host_colors.get(host, None) if use_colors else None
-            prefix = f"[{host}] "
-
-            for subline in line.splitlines():
-                subline = subline.rstrip()
-                if not subline:
-                    continue
-
-                if subline.startswith(f"ok: [{host}]") or subline.startswith(f"changed: [{host}]"):
-                    text = Text(subline)
-                elif subline.startswith("ok: [") or subline.startswith("changed: ["):
-                    text = Text(subline)
-                else:
-                    text = Text(f"{prefix}{subline}")
-
-                if color:
-                    text.stylize(color)
-                rich_print(text)
-
+                        if subline.startswith(f"ok: [{host}]") or subline.startswith(f"changed: [{host}]"):
+                            text = Text(subline)
+                        elif subline.startswith("ok: [") or subline.startswith("changed: ["):
+                            text = Text(subline)
+                        else:
+                            text = Text(f"{prefix}{subline}")
+                        if color:
+                            text.stylize(color)
+                        rich_print(text)
     except KeyboardInterrupt:
         click.echo("Stopped log stream")
     except redis.exceptions.RedisError as e:
         click.echo(f"Redis error: {e}")
     finally:
         click.echo("")
-        pubsub.unsubscribe()
 
 
 def task_command(task, timeout=10):
