@@ -77,7 +77,7 @@ from oblivion.redis_client import redis_client
 from oblivion.settings import ENABLE_CLI_COLOR
 import redis.exceptions
 
-def follow_logs(stream_id, expected_hosts=None, block_timeout=10000):
+def follow_logs(stream_id, expected_hosts=None, block_timeout=30000):
     """
     Consume logs from a Redis stream in a blocking manner using XREAD,
     applying color formatting and handling EOF messages.
