@@ -57,7 +57,6 @@ def assert_equal(func1, func2):
     reraise=True
 )
 def get_all_queues():
-    print("Redis URI (broker_url):", app.conf.broker_url)
     inspect = app.control.inspect()
     queues = inspect.active_queues() or {}
     seen = set()
