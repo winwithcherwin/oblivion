@@ -18,6 +18,8 @@ if os.path.exists(ENV_FILE):
 
 @shared_task
 def run_playbook_locally(playbook_path: str, stream_id: str = None):
+    hostname = socket.gethostname()
+
     base_path = os.path.join(PLAYBOOK_ROOT, playbook_path)
     abs_path = os.path.abspath(base_path)
 
@@ -27,15 +29,22 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
         abs_path += ".yaml"
 
     if not abs_path.startswith(PLAYBOOK_ROOT + os.sep):
-        raise ValueError(f"Invalid playbook path {abs_path}, must be inside {PLAYBOOK_ROOT}")
+        if stream_id:
+            data = {"data": json.dumps({"hostname": hostname, "eof": True})}
+            redis_client.xadd(f"ansible:{stream_id}", data)
+
+        raise Exception(f"Invalid playbook path at {abs_path}, must be inside {PLAYBOOK_ROOT}")
 
     if not os.path.isfile(abs_path):
-        raise FileNotFoundError(f"Playbook not found: {abs_path}")
+        if stream_id:
+            data = {"data": json.dumps({"hostname": hostname, "eof": True})}
+            redis_client.xadd(f"ansible:{stream_id}", data)
+
+        raise Exception(f"Playbook not found at {abs_path}")
 
     private_data_dir = "/tmp/ansible-run"
     os.makedirs(private_data_dir, exist_ok=True)
 
-    hostname = socket.gethostname()
     def stream_event(event):
         if stream_id and "stdout" in event and event["stdout"]:
             line = event["stdout"]
@@ -66,7 +75,7 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
         limit=hostname,
         envvars=envvars,
         quiet=True,
-        settings=dict(idle_timeout=1),
+        settings=dict(idle_timeout=10),
         event_handler=stream_event,
     )
     end_time = time.time()
