@@ -1,15 +1,12 @@
----
-- hosts: all
-  tasks:
-    - name: dokku repo
-      apt_repository:
-        filename: dokku
-        repo: 'deb https://packagecloud.io/dokku/dokku/ubuntu/ {{ ansible_lsb.codename|lower }} main'
-        state: present
-
-    - name: install dokku
-      apt:
-        pkg: dokku
-        state: present
-        update_cache: true
+- name: Installing Dokku
+  hosts: all
+  gather_facts: false
+  roles:
+    - dokku_bot.ansible_dokku
+  vars:
+    dokku_plugins:
+      - name: clone
+        url: https://github.com/crisward/dokku-clone.git
+      - name: postgres
+        url: https://github.com/dokku/dokku-postgres.git
 
