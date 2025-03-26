@@ -41,8 +41,7 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
             line = event["stdout"]
             if not line.endswith("\n"):
                 line += "\n"
-            host = event.get("event_data", {}).get("host") or hostname
-            data = {"data": json.dumps({"host": host, "line": line})}
+            data = {"data": json.dumps({"hostname": hostname, "line": line})}
             redis_client.xadd(f"ansible:{stream_id}", data)
 
     # Merge in the virtualenv path and env file vars
@@ -72,7 +71,7 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
     end_time = time.time()
 
     if stream_id:
-        data = {"data": json.dumps({"host": host, "eof": True})}
+        data = {"data": json.dumps({"hostname": hostname, "eof": True})}
         redis_client.xadd(f"ansible:{stream_id}", data)
 
     return {

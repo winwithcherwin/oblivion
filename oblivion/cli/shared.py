@@ -114,7 +114,7 @@ def follow_logs(stream_id, expected_hosts=None, block_timeout=10000):
                     data = message_data.get(b"data")
                     try:
                         parsed = json.loads(data.decode())
-                        host = parsed.get("host", "unknown")
+                        hostname = parsed.get("hostname", "unknown")
                     except json.JSONDecodeError:
                         click.echo(f"Error decoding message: {data}")
                         continue
@@ -125,7 +125,7 @@ def follow_logs(stream_id, expected_hosts=None, block_timeout=10000):
                     # Handle EOF marker: exit if all expected hosts have sent it,
                     # or immediately if no expected hosts were defined.
                     if parsed.get("eof"):
-                        seen_eof_hosts.add(host)
+                        seen_eof_hosts.add(hostname)
                         if expected_hosts and seen_eof_hosts >= expected_hosts:
                             click.echo("Received EOF from all expected hosts. Exiting log stream.")
                             return
@@ -138,7 +138,7 @@ def follow_logs(stream_id, expected_hosts=None, block_timeout=10000):
 
                     # Apply color formatting per host.
                     if host not in host_colors and use_colors:
-                        seen_hosts.add(host)
+                        seen_hosts.add(hostname)
                         if len(seen_hosts) > max_colors:
                             use_colors = False
                         else:
@@ -152,7 +152,7 @@ def follow_logs(stream_id, expected_hosts=None, block_timeout=10000):
                         if not subline:
                             continue
 
-                        if subline.startswith(f"ok: [{host}]") or subline.startswith(f"changed: [{host}]"):
+                        if subline.startswith(f"ok: [{hostname}]") or subline.startswith(f"changed: [{hostname}]"):
                             text = Text(subline)
                         elif subline.startswith("ok: [") or subline.startswith("changed: ["):
                             text = Text(subline)
