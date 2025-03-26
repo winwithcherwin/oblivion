@@ -66,6 +66,7 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
         limit=hostname,
         envvars=envvars,
         quiet=True,
+        settings=dict(idle_timeout=1),
         event_handler=stream_event,
     )
     end_time = time.time()

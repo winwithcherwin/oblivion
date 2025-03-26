@@ -137,14 +137,14 @@ def follow_logs(stream_id, expected_hosts=None, block_timeout=10000):
                     line = parsed.get("line", "")
 
                     # Apply color formatting per host.
-                    if host not in host_colors and use_colors:
+                    if hostname not in host_colors and use_colors:
                         seen_hosts.add(hostname)
                         if len(seen_hosts) > max_colors:
                             use_colors = False
                         else:
-                            host_colors[host] = available_colors[len(host_colors)]
-                    color = host_colors.get(host, None) if use_colors else None
-                    prefix = f"[{host}] "
+                            host_colors[hostname] = available_colors[len(host_colors)]
+                    color = host_colors.get(hostname, None) if use_colors else None
+                    prefix = f"[{hostname}] "
 
                     # Split multi-line output and format each line.
                     for subline in line.splitlines():
@@ -199,7 +199,7 @@ def task_command(task, timeout=10):
     return decorator
 
 
-def streaming_ansible_task_command(task, timeout=10):
+def streaming_ansible_task_command(task, timeout=5):
     """
     For Ansible-style tasks that return a dict with rc/status/stats/stdout
     """
