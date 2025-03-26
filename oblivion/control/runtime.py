@@ -1,14 +1,11 @@
 import json
-import logging
 import redis
 import kombu
-from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type, before_sleep_log
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
 
 from oblivion.celery_app import app
 from oblivion.redis_client import redis_client
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 
 class NoQueuesFoundError(Exception):
@@ -30,7 +27,6 @@ retry_connection_errors = (
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=1, min=1, max=10),
     retry=retry_if_exception_type(AssertionError),
-    before_sleep=before_sleep_log(logger, logging.WARNING),
     reraise=True,
 )
 def assert_equal(func1, func2):
@@ -48,7 +44,6 @@ def assert_equal(func1, func2):
     stop=stop_after_attempt(10),
     wait=wait_exponential(multiplier=1, min=1, max=10),
     retry=retry_if_exception_type(retry_connection_errors),
-    before_sleep=before_sleep_log(logger, logging.WARNING),
     reraise=True,
 )
 def get_all_queues():
