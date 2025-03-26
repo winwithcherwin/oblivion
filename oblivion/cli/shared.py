@@ -89,9 +89,9 @@ def follow_logs(stream_id, expected_hosts=None, inactivity_timeout=5):
             current_time = time.time()
 
             if message is None:
-                # Check for inactivity
+                # Exit if no message received within inactivity_timeout seconds.
                 if current_time - last_message_time > inactivity_timeout:
-                    click.echo("No messages received for a while, exiting log stream.")
+                    click.echo("No messages received for too long, exiting log stream.")
                     break
                 continue
 
@@ -104,9 +104,15 @@ def follow_logs(stream_id, expected_hosts=None, inactivity_timeout=5):
             try:
                 parsed = json.loads(data)
                 host = parsed.get("host", "unknown")
+                # Check for the EOF marker
                 if parsed.get("eof"):
                     seen_eof_hosts.add(host)
                     if expected_hosts and seen_eof_hosts >= expected_hosts:
+                        click.echo("Received EOF from all expected hosts. Exiting log stream.")
+                        break
+                    # If no expected hosts are defined, exit immediately on EOF.
+                    if not expected_hosts:
+                        click.echo("Received EOF. Exiting log stream.")
                         break
                     continue
                 line = parsed.get("line", "")
@@ -147,6 +153,7 @@ def follow_logs(stream_id, expected_hosts=None, inactivity_timeout=5):
     finally:
         click.echo("")
         pubsub.unsubscribe()
+
 
 def task_command(task, timeout=10):
     def decorator(f):
