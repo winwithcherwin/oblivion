@@ -1,172 +1,57 @@
 import click
 import uuid
-import redis
-import kombu
-import json
-import os
 import time
-import logging
-
 from functools import wraps
 from rich import print as rich_print
 from rich.text import Text
 
-from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type, before_sleep_log
-
 from oblivion.celery_app import app
 from oblivion.core import terraform
-from oblivion.redis_client import redis_client
-from oblivion.settings import ENABLE_CLI_COLOR
-
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
-
-class NoQueuesFoundError(Exception):
-    def __init__(self, message):
-        super().__init__(message)
-        self.message = "No active queues found."
-
-retry_connection_errors = (
-    ConnectionRefusedError,
+from oblivion.control.runtime import (
+    assert_equal,
+    get_all_queues,
+    follow_logs,
     NoQueuesFoundError,
-    kombu.exceptions.OperationalError,
-    redis.exceptions.ConnectionError,
-    redis.exceptions.TimeoutError,
 )
-
-@retry(
-    stop=stop_after_attempt(5),
-    wait=wait_exponential(multiplier=1, min=1, max=10),
-    retry=retry_if_exception_type(AssertionError),
-    before_sleep=before_sleep_log(logger, logging.WARNING),
-    reraise=True
-)
-def assert_equal(func1, func2):
-    value1 = func1()
-    value2 = func2()
-
-    assert value1 == value2, f"mismatch:\n{func1.__name__}:{value1}\n{func2.__name__}:{value2}"
-    return value1
-
-@retry(
-    stop=stop_after_attempt(10),
-    wait=wait_exponential(multiplier=1, min=1, max=10),
-    retry=retry_if_exception_type(retry_connection_errors),
-    before_sleep=before_sleep_log(logger, logging.WARNING),
-    reraise=True
-)
-def get_all_queues():
-    inspect = app.control.inspect()
-    queues = inspect.active_queues() or {}
-    seen = set()
-
-    for worker_queues in queues.values():
-        for q in worker_queues:
-            seen.add(q["name"])
-    if not seen:
-        raise NoQueuesFoundError
-    return sorted(seen)
-
-import json
-import time
-import click
-from rich import print as rich_print
-from rich.text import Text
-from oblivion.redis_client import redis_client
 from oblivion.settings import ENABLE_CLI_COLOR
-import redis.exceptions
 
-def follow_logs(stream_id, expected_hosts=None, block_timeout=30000):
-    """
-    Consume logs from a Redis stream in a blocking manner using XREAD,
-    applying color formatting and handling EOF messages.
-    
-    Args:
-      stream_id (str): Identifier for the Redis stream.
-      expected_hosts (list, optional): List of hosts to wait for an EOF signal.
-      block_timeout (int): Timeout in milliseconds for the blocking XREAD.
-    """
-    click.echo(f"→ Live logs (stream ID: {stream_id})\n")
-    stream_key = f"ansible:{stream_id}"
-    last_id = "0-0"
-    expected_hosts = set(expected_hosts or [])
-    seen_eof_hosts = set()
 
-    # Set up color formatting.
+def create_log_output_fn():
+    """
+    Returns an output callback that applies host-based color formatting.
+    This callback processes each log line, and if the line starts with a host prefix,
+    it applies a color from a predetermined palette.
+    """
     host_colors = {}
     available_colors = ["cyan", "magenta", "green", "yellow", "blue", "bright_black"]
     max_colors = len(available_colors)
     seen_hosts = set()
     use_colors = ENABLE_CLI_COLOR
 
-    try:
-        while True:
-            # XREAD blocks for up to block_timeout milliseconds waiting for new messages.
-            result = redis_client.xread({stream_key: last_id}, block=block_timeout, count=1)
-            if not result:
-                click.echo("No messages received within the timeout period. Exiting log stream.")
-                break
+    def output_fn(line):
+        # If the line is empty, just print an empty line.
+        if not line:
+            rich_print("")
+            return
 
-            for key, messages in result:
-                for message_id, message_data in messages:
-                    last_id = message_id  # Update our last seen ID to avoid reprocessing.
-                    data = message_data.get(b"data")
-                    try:
-                        parsed = json.loads(data.decode())
-                        hostname = parsed.get("hostname", "unknown")
-                    except json.JSONDecodeError:
-                        click.echo(f"Error decoding message: {data}")
-                        continue
-                    except Exception as e:
-                        click.echo(f"Error processing message: {e}")
-                        continue
-
-                    # Handle EOF marker: exit if all expected hosts have sent it,
-                    # or immediately if no expected hosts were defined.
-                    if parsed.get("eof"):
-                        seen_eof_hosts.add(hostname)
-                        if expected_hosts and seen_eof_hosts >= expected_hosts:
-                            click.echo("Received EOF from all expected hosts. Exiting log stream.")
-                            return
-                        if not expected_hosts:
-                            click.echo("Received EOF. Exiting log stream.")
-                            return
-                        continue
-
-                    line = parsed.get("line", "")
-
-                    # Apply color formatting per host.
-                    if hostname not in host_colors and use_colors:
-                        seen_hosts.add(hostname)
-                        if len(seen_hosts) > max_colors:
-                            use_colors = False
-                        else:
-                            host_colors[hostname] = available_colors[len(host_colors)]
-                    color = host_colors.get(hostname, None) if use_colors else None
-                    prefix = f"[{hostname}] "
-
-                    # Split multi-line output and format each line.
-                    for subline in line.splitlines():
-                        subline = subline.rstrip()
-                        if not subline:
-                            continue
-
-                        if subline.startswith(f"ok: [{hostname}]") or subline.startswith(f"changed: [{hostname}]"):
-                            text = Text(subline)
-                        elif subline.startswith("ok: [") or subline.startswith("changed: ["):
-                            text = Text(subline)
-                        else:
-                            text = Text(f"{prefix}{subline}")
-                        if color:
-                            text.stylize(color)
-                        rich_print(text)
-    except KeyboardInterrupt:
-        click.echo("Stopped log stream")
-    except redis.exceptions.RedisError as e:
-        click.echo(f"Redis error: {e}")
-    finally:
-        click.echo("")
+        # Check if the line starts with a host prefix like "[hostname] "
+        if line.startswith("[") and "]" in line:
+            end_index = line.find("]")
+            hostname = line[1:end_index]
+            if hostname not in host_colors and use_colors:
+                seen_hosts.add(hostname)
+                if len(seen_hosts) > max_colors:
+                    host_colors[hostname] = None
+                else:
+                    host_colors[hostname] = available_colors[len(host_colors)]
+            color = host_colors.get(hostname)
+            text = Text(line)
+            if color:
+                text.stylize(color)
+            rich_print(text)
+        else:
+            rich_print(line)
+    return output_fn
 
 
 def task_command(task, timeout=10):
@@ -176,18 +61,18 @@ def task_command(task, timeout=10):
         @wraps(f)
         def wrapper(*args, queue=None, fanout=False, **kwargs):
             task_args = f(*args, **kwargs)
-
             if not fanout and not queue:
                 raise click.ClickException("You must provide --queue <name> or use --all.")
-
-            target_queues = assert_equal(get_all_queues, terraform.get_all_hosts) if fanout else [queue]
+            target_queues = (
+                assert_equal(get_all_queues, terraform.get_all_hosts)
+                if fanout
+                else [queue]
+            )
             results = []
-
             for q in target_queues:
                 click.echo(f"→ Dispatching to: {q}")
                 res = task.apply_async(args=task_args, queue=q)
                 results.append((q, res))
-
             click.echo("\nResults:")
             for q, res in results:
                 try:
@@ -201,7 +86,7 @@ def task_command(task, timeout=10):
 
 def streaming_ansible_task_command(task, timeout=5):
     """
-    For Ansible-style tasks that return a dict with rc/status/stats/stdout
+    For Ansible-style tasks that return a dict with rc/status/stats/stdout.
     """
     def decorator(f):
         @click.option("--queue", help="Target queue name")
@@ -214,8 +99,11 @@ def streaming_ansible_task_command(task, timeout=5):
             stream_id = str(uuid.uuid4())
             task_args = f(*args, **kwargs)
             task_kwargs = {"stream_id": stream_id}
-
-            target_queues = assert_equal(get_all_queues, terraform.get_all_hosts) if fanout else [queue]
+            target_queues = (
+                assert_equal(get_all_queues, terraform.get_all_hosts)
+                if fanout
+                else [queue]
+            )
             results = []
             start_time = time.monotonic()
             for q in target_queues:
@@ -223,30 +111,30 @@ def streaming_ansible_task_command(task, timeout=5):
                 res = task.apply_async(args=task_args, kwargs=task_kwargs, queue=q)
                 results.append((q, res))
 
-            follow_logs(stream_id, expected_hosts=target_queues)
+            # Create an output function that applies host coloring.
+            output_fn = create_log_output_fn()
+            follow_logs(stream_id, expected_hosts=target_queues, output_fn=output_fn)
 
-            # Subtle summary per host
             click.echo("\nSummary:")
             for q, res in results:
                 try:
                     result = res.get(timeout=timeout)
                     rc = result.get("rc")
-                    status = result.get("status", "-")
                     stats = result.get("stats") or {}
                     duration = result.get("duration", "?")
-
                     ok = stats.get("ok", 0)
                     changed = stats.get("changed", 0)
                     failed = stats.get("failures", 0)
-                    duration_str = f"{duration:.2f}s" if isinstance(duration, (int, float)) else str(duration)
-
+                    duration_str = (
+                        f"{duration:.2f}s" if isinstance(duration, (int, float)) else str(duration)
+                    )
                     symbol = "✓" if rc == 0 else "✗"
                     color = "green" if rc == 0 else "red"
-
-                    rich_print(f"[{color}]{symbol} {q} | rc={rc} | {duration_str} | ok={ok} changed={changed} failed={failed}[/{color}]")
+                    rich_print(
+                        f"[{color}]{symbol} {q} | rc={rc} | {duration_str} | ok={ok} changed={changed} failed={failed}[/{color}]"
+                    )
                 except Exception as e:
                     rich_print(f"[red]✗ {q} | error: {e}[/red]")
-
             total_time = time.monotonic() - start_time
             click.secho(f"\nTotal duration: {total_time:.2f}s", fg="cyan")
         return wrapper
