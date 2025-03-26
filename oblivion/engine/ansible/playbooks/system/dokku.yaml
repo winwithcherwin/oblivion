@@ -1,6 +1,12 @@
 - name: Installing Dokku
   hosts: all
   gather_facts: true
+  tasks:
+    - name: Install role at specific path
+      community.general.ansible_galaxy_install:
+        type: role
+        name: dokku_bot.ansible_dokku
+        dest: /ansible/roles
   roles:
     - dokku_bot.ansible_dokku
   vars:
