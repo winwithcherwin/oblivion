@@ -68,10 +68,11 @@ def get_all_queues():
         raise NoQueuesFoundError
     return sorted(seen)
 
-def follow_logs(stream_id, expected_hosts=None):
+def follow_logs(stream_id, expected_hosts=None, inactivity_timeout=5):
     click.echo(f"→ Live logs (stream ID: {stream_id})\n")
     pubsub = redis_client.pubsub()
     pubsub.subscribe(f"ansible:{stream_id}")
+    last_message_time = time.time()
 
     seen_eof_hosts = set()
     expected_hosts = set(expected_hosts or [])
@@ -83,10 +84,23 @@ def follow_logs(stream_id, expected_hosts=None):
     use_colors = ENABLE_CLI_COLOR
 
     try:
-        for msg in pubsub.listen():
-            if msg["type"] != "message":
+        while True:
+            message = pubsub.get_message(timeout=1)
+            current_time = time.time()
+
+            if message is None:
+                # Check for inactivity
+                if current_time - last_message_time > inactivity_timeout:
+                    click.echo("No messages received for a while, exiting log stream.")
+                    break
                 continue
-            data = msg["data"].decode()
+
+            last_message_time = current_time
+
+            if message["type"] != "message":
+                continue
+
+            data = message["data"].decode()
             try:
                 parsed = json.loads(data)
                 host = parsed.get("host", "unknown")
@@ -133,7 +147,6 @@ def follow_logs(stream_id, expected_hosts=None):
     finally:
         click.echo("")
         pubsub.unsubscribe()
-
 
 def task_command(task, timeout=10):
     def decorator(f):
