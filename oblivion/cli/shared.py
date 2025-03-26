@@ -19,8 +19,12 @@ from oblivion.settings import ENABLE_CLI_COLOR
 def create_log_output_fn():
     """
     Returns an output callback that applies host-based color formatting.
-    This callback processes each log line, and if the line starts with a host prefix,
-    it applies a color from a predetermined palette.
+    This callback receives a dictionary with keys "hostname" and "line".
+
+    If "hostname" is None, the line is treated as a control message and printed as-is.
+    Otherwise, if the line (within its first 30 characters) already contains the hostname
+    (in the form "[hostname]"), it is output unchanged; if not, the prefix "[hostname] " is added.
+    Finally, a color (if enabled) is applied based on the hostname.
     """
     host_colors = {}
     available_colors = ["cyan", "magenta", "green", "yellow", "blue", "bright_black"]
@@ -28,29 +32,34 @@ def create_log_output_fn():
     seen_hosts = set()
     use_colors = ENABLE_CLI_COLOR
 
-    def output_fn(line):
-        # If the line is empty, just print an empty line.
-        if not line:
-            rich_print("")
+    def output_fn(msg):
+        hostname = msg.get("hostname")
+        line = msg.get("line", "").rstrip()
+
+        if hostname is None:
+            rich_print(line)
             return
 
-        # Check if the line starts with a host prefix like "[hostname] "
-        if line.startswith("[") and "]" in line:
-            end_index = line.find("]")
-            hostname = line[1:end_index]
-            if hostname not in host_colors and use_colors:
-                seen_hosts.add(hostname)
-                if len(seen_hosts) > max_colors:
-                    host_colors[hostname] = None
-                else:
-                    host_colors[hostname] = available_colors[len(host_colors)]
-            color = host_colors.get(hostname)
-            text = Text(line)
-            if color:
-                text.stylize(color)
-            rich_print(text)
+        # Check if the line already contains the hostname (in brackets)
+        # within the first 30 characters.
+        if f"[{hostname}]" in line[:30]:
+            final_line = line
         else:
-            rich_print(line)
+            final_line = f"[{hostname}] {line}"
+
+        # Apply host-based color formatting.
+        if hostname not in host_colors and use_colors:
+            seen_hosts.add(hostname)
+            if len(seen_hosts) > max_colors:
+                host_colors[hostname] = None
+            else:
+                host_colors[hostname] = available_colors[len(host_colors)]
+        color = host_colors.get(hostname)
+        text = Text(final_line)
+        if color:
+            text.stylize(color)
+        rich_print(text)
+
     return output_fn
 
 
@@ -111,7 +120,7 @@ def streaming_ansible_task_command(task, timeout=5):
                 res = task.apply_async(args=task_args, kwargs=task_kwargs, queue=q)
                 results.append((q, res))
 
-            # Create an output function that applies host coloring.
+            # Create an output function that applies host coloring and our formatting logic.
             output_fn = create_log_output_fn()
             follow_logs(stream_id, expected_hosts=target_queues, output_fn=output_fn)
 

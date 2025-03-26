@@ -31,7 +31,7 @@ retry_connection_errors = (
     wait=wait_exponential(multiplier=1, min=1, max=10),
     retry=retry_if_exception_type(AssertionError),
     before_sleep=before_sleep_log(logger, logging.WARNING),
-    reraise=True
+    reraise=True,
 )
 def assert_equal(func1, func2):
     """
@@ -49,7 +49,7 @@ def assert_equal(func1, func2):
     wait=wait_exponential(multiplier=1, min=1, max=10),
     retry=retry_if_exception_type(retry_connection_errors),
     before_sleep=before_sleep_log(logger, logging.WARNING),
-    reraise=True
+    reraise=True,
 )
 def get_all_queues():
     """
@@ -74,14 +74,17 @@ def follow_logs(stream_id, expected_hosts=None, block_timeout=30000, output_fn=p
     Args:
         stream_id (str): Identifier for the Redis stream.
         expected_hosts (list, optional): List of hosts to wait for an EOF signal.
-        block_timeout (int): Timeout in milliseconds for the blocking XREAD.
-        output_fn (callable): Callback for outputting log lines.
+        block_timeout (int): Timeout (in milliseconds) for blocking XREAD.
+        output_fn (callable): Callback to output each processed log message.
+            This callback receives a dict with keys such as:
+              - "hostname": the host name (or None for control messages)
+              - "line": the log text
+              - (additional keys can be added later)
     
-    This function aggregates logs from a single stream (which is what we want)
-    and outputs each log line with a host prefix. Presentation (colors, etc.) is left
-    to the caller via the provided output callback.
+    For each incoming log message, we remove extra whitespace and then call the
+    output callback with a dictionary that includes the hostname and the log line.
     """
-    output_fn(f"→ Live logs (stream ID: {stream_id})\n")
+    output_fn({"hostname": None, "line": f"→ Live logs (stream ID: {stream_id})\n"})
     stream_key = f"ansible:{stream_id}"
     last_id = "0-0"
     expected_hosts = set(expected_hosts or [])
@@ -91,44 +94,44 @@ def follow_logs(stream_id, expected_hosts=None, block_timeout=30000, output_fn=p
         while True:
             result = redis_client.xread({stream_key: last_id}, block=block_timeout, count=1)
             if not result:
-                output_fn("No messages received within the timeout period. Exiting log stream.")
+                output_fn({"hostname": None, "line": "No messages received within the timeout period. Exiting log stream."})
                 break
 
             for key, messages in result:
                 for message_id, message_data in messages:
-                    last_id = message_id  # Update the last seen message ID.
+                    last_id = message_id  # Update last seen message ID.
                     data = message_data.get(b"data")
                     try:
                         parsed = json.loads(data.decode())
                         hostname = parsed.get("hostname", "unknown")
                     except json.JSONDecodeError:
-                        output_fn(f"Error decoding message: {data}")
+                        output_fn({"hostname": None, "line": f"Error decoding message: {data}"})
                         continue
                     except Exception as e:
-                        output_fn(f"Error processing message: {e}")
+                        output_fn({"hostname": None, "line": f"Error processing message: {e}"})
                         continue
 
                     if parsed.get("eof"):
                         seen_eof_hosts.add(hostname)
                         if expected_hosts and seen_eof_hosts >= expected_hosts:
-                            output_fn("Received EOF from all expected hosts. Exiting log stream.")
+                            output_fn({"hostname": None, "line": "Received EOF from all expected hosts. Exiting log stream."})
                             return
                         if not expected_hosts:
-                            output_fn("Received EOF. Exiting log stream.")
+                            output_fn({"hostname": None, "line": "Received EOF. Exiting log stream."})
                             return
                         continue
 
-                    line = parsed.get("line", "")
-                    prefix = f"[{hostname}] "
-                    for subline in line.splitlines():
-                        subline = subline.rstrip()
-                        if not subline:
-                            continue
-                        output_fn(f"{prefix}{subline}")
+                    # Remove extra newlines.
+                    line = parsed.get("line", "").strip()
+                    if not line:
+                        continue
+
+                    # Call the output callback with a dictionary containing the hostname and line.
+                    output_fn({"hostname": hostname, "line": line})
     except KeyboardInterrupt:
-        output_fn("Stopped log stream")
+        output_fn({"hostname": None, "line": "Stopped log stream"})
     except redis.exceptions.RedisError as e:
-        output_fn(f"Redis error: {e}")
+        output_fn({"hostname": None, "line": f"Redis error: {e}"})
     finally:
-        output_fn("")
+        output_fn({"hostname": None, "line": ""})
 
