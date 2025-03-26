@@ -62,7 +62,7 @@ def get_all_queues():
     return sorted(seen)
 
 
-def follow_logs(stream_id, expected_hosts=None, block_timeout=30000, output_fn=print):
+def follow_logs(stream_id, expected_hosts=None, block_timeout=60000, output_fn=print):
     """
     Consume Ansible logs from a Redis stream in a blocking manner using XREAD.
     
