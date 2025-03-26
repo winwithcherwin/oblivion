@@ -1,6 +1,6 @@
 - name: Installing Dokku
   hosts: all
-  gather_facts: false
+  gather_facts: true
   roles:
     - dokku_bot.ansible_dokku
   vars:
