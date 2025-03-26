@@ -68,7 +68,7 @@ def get_all_queues():
         raise NoQueuesFoundError
     return sorted(seen)
 
-def follow_logs(stream_id, expected_hosts=None, inactivity_timeout=5):
+def follow_logs(stream_id, expected_hosts=None, inactivity_timeout=10):
     click.echo(f"→ Live logs (stream ID: {stream_id})\n")
     pubsub = redis_client.pubsub()
     pubsub.subscribe(f"ansible:{stream_id}")

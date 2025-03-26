@@ -10,6 +10,6 @@
     - name: install dokku
       apt:
         pkg: dokku
-        state: installed
+        state: present
         update_cache: true
 
