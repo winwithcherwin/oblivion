@@ -1,6 +1,5 @@
 - name: Set up ZSH dev environment with safe remote prompt
   hosts: all
-  become: true
   gather_facts: true
 
   tasks:
