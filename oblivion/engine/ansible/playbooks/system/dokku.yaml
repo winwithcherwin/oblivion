@@ -1,5 +1,5 @@
 ---
-- hosts: dokku
+- hosts: all
   tasks:
     - name: dokku repo
       apt_repository:

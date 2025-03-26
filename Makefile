@@ -32,7 +32,7 @@ world: genesis validate-infra bootstrap-wireguard run-playbooks ## builds everyt
 
 update: terraform-apply validate-infra ## run terraform apply and playbooks
 	@echo "waiting after terraform apply..."
-	@$(MAKE) --no-print-directory run-playbooks
+	#@$(MAKE) --no-print-directory run-playbooks
 
 timestamp-motd:
 	{ \
