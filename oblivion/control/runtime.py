@@ -39,7 +39,7 @@ def assert_equal(func1, func2):
     """
     value1 = func1()
     value2 = func2()
-    logger.info("Asserting equality: %s vs %s", value1, value2)
+
     assert value1 == value2, f"mismatch:\n{func1.__name__}: {value1}\n{func2.__name__}: {value2}"
     return value1
 
