@@ -1,10 +1,12 @@
-- name: Start open-webui
+- name: Stop open-webui
   hosts: all
   tasks:
-    - name: Start open-webui
+    - name: Stop and remove open-webui
       community.docker.docker_compose_v2:
         project_src: app
+        state: absent
       register: output
     - name: Show results
       ansible.builtin.debug:
         var: output
+
