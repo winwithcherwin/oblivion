@@ -4,7 +4,7 @@ servers = {
   digitalocean = {
     do-1 = {
       region = "ams3"
-      size   = "s-1vcpu-1gb"
+      size   = "s-2vcpu-2gb"
     }
   }
   hetzner = {
