@@ -1,0 +1,13 @@
+- name: Start open-webui
+  hosts: all
+  tasks:
+    - name: Start open-webui
+      community.docker.docker_container:
+        name: open-webui
+        image: ghrc.io/open-webui/open-webui:main
+        state: started
+        exposed_ports:
+          3000:8080
+        volumes:
+          - open-webui:/app/backend/data
+

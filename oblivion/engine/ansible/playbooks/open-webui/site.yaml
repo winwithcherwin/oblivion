@@ -1,0 +1,10 @@
+- name: Start open-webui
+  hosts: all
+  tasks:
+    - name: Start open-webui
+      community.docker.docker_compose_v2:
+        project_src: src
+      register: output
+    - name: Show results
+      ansible.builtin.debug:
+        var: output
