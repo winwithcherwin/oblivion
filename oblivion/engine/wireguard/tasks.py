@@ -127,14 +127,13 @@ def render_wireguard_config(self_meta, peer_list):
 @shared_task
 def write_wireguard_config(self_meta, peer_list):
     try:
-        config = render_wireguard_config(self_meta, peer_list)
-
         hostname = get_hostname()
+        config = render_wireguard_config(self_meta, peer_list)
+        Path(WG_CONF_PATH).write_text(config)
         redis_client.set(f"{WIREGUARD_PEERS_PREFIX}:{hostname}", json.dumps({
             "private_ip": self_meta["private_ip"],
             "peers": peer_list
         }))
-        Path(WG_CONF_PATH).write_text(config)
         return f"✅ Wrote {WG_CONF_PATH} with {len(peer_list)} peers"
     except Exception as e:
         return f"❌ Failed to write config: {e}"
