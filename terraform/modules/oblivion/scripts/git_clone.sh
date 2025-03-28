@@ -11,7 +11,7 @@ done
 
 if [ -d "$REPO_DIR/.git" ]; then
   echo "Repository already exists in $REPO_DIR. Pulling latest changes..."
-  cd "$REPO_DIR" && git fetch origin && git submodule update --recursive && git reset --hard origin/main
+  cd "$REPO_DIR" && git fetch origin && git submodule update --init && git reset --hard origin/main
 
 else
   echo "Cloning repository $REPO_URL into $REPO_DIR..."
