@@ -31,8 +31,6 @@ genesis: bootstrap-packer terraform-apply
 world: genesis validate-infra bootstrap-wireguard run-playbooks ## builds everything
 
 update: terraform-apply validate-infra ## run terraform apply and playbooks
-	@echo "waiting after terraform apply..."
-	#@$(MAKE) --no-print-directory run-playbooks
 
 timestamp-motd:
 	{ \
@@ -60,8 +58,8 @@ status: ## show bootstrap status timestamps (sorted, relative)
 
 ## PACKER
 packer: ## build images with packer
-	packer init $(PACKER_FILE)
-	packer build $(PACKER_FILE)
+	@packer init $(PACKER_FILE)
+	@packer build $(PACKER_FILE)
 
 bootstrap-packer:
 	@if [ ! -f $(BOOTSTRAP_PACKER) ]; then \
@@ -73,7 +71,7 @@ bootstrap-packer:
 
 ## TERRAFORM
 terraform-init: ## initialize terraform
-	terraform -chdir=terraform init
+	@terraform -chdir=terraform init
 	
 terraform-check-vars:
 	@if [ -z "$(MY_SSH_KEY_NAME)" ] || [ -z "$(MY_SOURCE_IP)" ]; then \
@@ -81,10 +79,10 @@ terraform-check-vars:
 	fi
 
 terraform-plan: terraform-check-vars terraform-init ## terraform plan
-	terraform -chdir=terraform plan -var="ssh_key_name=$(MY_SSH_KEY_NAME)" -var="my_source_ip=$(MY_SOURCE_IP)/32"
+	@terraform -chdir=terraform plan -var="ssh_key_name=$(MY_SSH_KEY_NAME)" -var="my_source_ip=$(MY_SOURCE_IP)/32"
 
 terraform-apply: terraform-check-vars terraform-init ## terraform apply
-	terraform -chdir=terraform apply -auto-approve -var="ssh_key_name=$(MY_SSH_KEY_NAME)" -var="my_source_ip=$(MY_SOURCE_IP)/32"
+	@terraform -chdir=terraform apply -auto-approve -var="ssh_key_name=$(MY_SSH_KEY_NAME)" -var="my_source_ip=$(MY_SOURCE_IP)/32"
 	@date > $(BOOTSTRAP_TERRAFORM)
 
 when-terraform-bootstrapped:
@@ -94,7 +92,7 @@ when-terraform-bootstrapped:
 	fi
 
 terraform-destroy: ## terraform destroy
-	terraform -chdir=terraform destroy -var="ssh_key_name=$(MY_SSH_KEY_NAME)" -var="my_source_ip=$(MY_SOURCE_IP)/32"
+	@terraform -chdir=terraform destroy -var="ssh_key_name=$(MY_SSH_KEY_NAME)" -var="my_source_ip=$(MY_SOURCE_IP)/32"
 
 
 ## VALIDATE
@@ -107,7 +105,7 @@ validate-redis-uri:
 
 provision-dotenv: ## set your .env
 	@echo "provisioning dotenv"
-	python utils/tfvar2dotenv.py redis_uri || { echo "failed to extract redis_uri"; exit 1; }
+	@python utils/tfvar2dotenv.py redis_uri || { echo "failed to extract redis_uri"; exit 1; }
 	@direnv allow
 
 when-infra-valid:
@@ -120,7 +118,7 @@ when-infra-valid:
 ## PLAYBOOKS
 test-playbooks: when-terraform-bootstrapped ## test simple playbook
 	# this will revoke INFRA_VALID if ansible fails
-	if ! $(OBLIVION) ansible run --all echo; then \
+	@if ! $(OBLIVION) ansible run --all echo; then \
 		echo "Ansible run failed"; \
 		rm -f $(BOOTSTRAP_INFRA_VALID); \
 		exit 1; \
@@ -162,10 +160,10 @@ wireguard-status: when-infra-valid ## ping all nodes; remove unreachable ones fr
 
 # MISC
 ssh: ## use fzf to ssh into host
-	bash ./utils/ssh.sh
+	@bash ./utils/ssh.sh
 
 tree:
-	tree -aI .git -I .terraform
+	@tree -aI .git -I .terraform
 
 force-bootstrap:
 	@mkdir -p $(BOOTSTRAP_DIR)
@@ -183,5 +181,5 @@ nuke-bootstrap:
 	@rm -rf $(BOOTSTRAP_DIR)
 
 fmt: ## format all hcl
-	terraform -chdir=terraform fmt
-	packer fmt packer
+	@terraform -chdir=terraform fmt
+	@packer fmt packer

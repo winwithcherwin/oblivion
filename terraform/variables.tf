@@ -15,12 +15,12 @@ variable "servers" {
 }
 
 variable "ssh_key_name" {
-  type    = string
-  default = "cherwin@gmail.com"
+  type = string
 }
 
 variable "my_source_ip" {
-  type = string
+  type      = string
+  sensitive = true
 }
 
 variable "git_clone_dir" {
