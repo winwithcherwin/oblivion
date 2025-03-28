@@ -8,6 +8,7 @@ from oblivion.redis_client import redis_client
 
 WIREGUARD_KEY_PREFIX = "wireguard:public_keys"
 WIREGUARD_IP_PREFIX = "wireguard:ip"
+WIREGUARD_PEERS_PREFIX = "wireguard:peers"
 
 @click.group()
 def cli():
@@ -140,3 +141,22 @@ def do_ping():
             redis_client.delete(f"{WIREGUARD_IP_PREFIX}:{hostname}")
         else:
             click.echo(f"✅ {hostname} sent pong")
+
+@cli.command("show-peers")
+def do_show_peers():
+    """Show registered configs for all nodes"""
+    keys = redis_client.keys(f"{WIREGUARD_PEERS_PREFIX}:*")
+    hosts = {}
+    for key in keys:
+        try:
+            raw = redis_client.get(key)
+            if not raw:
+                continue
+            hostname = key.decode().split(":")[-1]
+            hosts[hostname] = json.loads(raw.decode())
+        except Exception:
+            click.echo(f"⚠️  Failed to parse metadata for {key.decode()}")
+            continue
+
+    print(json.dumps(hosts))
+
