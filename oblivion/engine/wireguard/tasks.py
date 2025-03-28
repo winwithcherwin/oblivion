@@ -130,7 +130,6 @@ def write_wireguard_config(self_meta, peer_list):
         config = render_wireguard_config(self_meta, peer_list)
 
         hostname = get_hostname()
-        print(f"self_meta contains: {self_meta}")
         redis_client.set(f"{WIREGUARD_PEERS_PREFIX}:{hostname}", json.dumps({
             "private_ip": self_meta["private_ip"],
             "peers": peer_list
