@@ -1,0 +1,9 @@
+[submodule "oblivion/engine/ansible/playbooks/docker/roles/dokku_bot.ansible_dokku"]
+	path = oblivion/engine/ansible/playbooks/docker/roles/dokku_bot.ansible_dokku
+	url = https://github.com/winwithcherwin/ansible-dokku.git
+[submodule "oblivion/engine/ansible/playbooks/docker/roles/geerlingguy.docker"]
+	path = oblivion/engine/ansible/playbooks/docker/roles/geerlingguy.docker
+	url = https://github.com/winwithcherwin/ansible-role-docker
+[submodule "oblivion/engine/ansible/playbooks/docker/roles/nginxinc.nginx"]
+	path = oblivion/engine/ansible/playbooks/docker/roles/nginxinc.nginx
+	url = https://github.com/winwithcherwin/ansible-role-nginx.git

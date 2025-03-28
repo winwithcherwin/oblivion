@@ -1,6 +1,5 @@
 - name: Provision base server
   hosts: all
-  become: true
   tasks:
     - name: Perform full system upgrade
       apt:

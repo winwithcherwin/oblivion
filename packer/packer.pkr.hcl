@@ -58,7 +58,13 @@ build {
   }
 
   provisioner "ansible" {
-    playbook_file   = "packer/ansible/base.yaml"
+    playbook_file   = "oblivion/engine/ansible/playbooks/system/base.yaml"
+    user            = "root"
+    extra_arguments = ["--scp-extra-args", "'-O'"] # https://github.com/hashicorp/packer/issues/11783#issuecomment-1137052770
+  }
+
+  provisioner "ansible" {
+    playbook_file   = "oblivion/engine/ansible/playbooks/docker/dokku.yaml"
     user            = "root"
     extra_arguments = ["--scp-extra-args", "'-O'"]
   }
