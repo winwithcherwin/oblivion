@@ -37,21 +37,35 @@ def main():
         print(f"Failed to parse JSON for {self_key}: {e}", flush=True)
         return 1
 
-    peers = []
+    # Load the full topology
+    topology = {}
     for key in r.scan_iter(f"{prefix}:*"):
-        if key == self_key:
-            continue
         raw = r.get(key)
         if not raw:
             continue
         try:
             peer = json.loads(raw)
             peer["hostname"] = key.split(":", 1)[1]
-            peers.append(peer)
+            topology[peer["hostname"]] = peer
         except Exception as e:
-            print(f" Skipping {key}: {e}", flush=True)
+            print(f"Skipping {key}: {e}", flush=True)
 
-    print(json.dumps({"self": self_meta, "peers": peers}), flush=True)
+    # Build full peer list
+    peers = [v for k, v in topology.items() if k != hostname]
+
+    # Filter for direct wireguard peers (the ones we're actually peered with)
+    direct_peer_ips = {
+        p["private_ip"]
+        for p in self_meta.get("peers", [])
+        if "private_ip" in p
+    }
+
+    self_meta["direct_peer_ips"] = list(direct_peer_ips)
+
+    print(json.dumps({
+        "self": self_meta,
+        "peers": peers
+    }), flush=True)
     return 0
 
 if __name__ == "__main__":

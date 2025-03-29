@@ -7,14 +7,18 @@ router bgp 65001
   no bgp default ipv4-unicast
 
 {% for peer in peers %}
+{% if peer.private_ip in this_host.direct_peer_ips %}
   neighbor {{ peer.private_ip }} remote-as 65001
   neighbor {{ peer.private_ip }} description {{ peer.hostname }}
+{% endif %}
 {% endfor %}
 
   address-family ipv4 unicast
     network {{ this_host.private_ip }}/32
 {% for peer in peers %}
+{% if peer.private_ip in this_host.direct_peer_ips %}
     neighbor {{ peer.private_ip }} activate
+{% endif %}
 {% endfor %}
   exit-address-family
 
