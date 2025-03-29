@@ -1,16 +1,22 @@
+#!/usr/bin/env python3
+
 import os
 import json
 import socket
 import redis
+import sys
 from dotenv import load_dotenv
 
 load_dotenv("/etc/oblivion.env")
 
+def fail(msg):
+    print(f"{msg}", file=sys.stderr, flush=True)
+    sys.exit(1)
+
 def main():
     redis_uri = os.getenv("REDIS_URI")
     if not redis_uri:
-        print("REDIS_URI not found in /etc/oblivion.env", flush=True)
-        return 1
+        fail("REDIS_URI not found in /etc/oblivion.env")
 
     hostname = socket.gethostname()
     prefix = "wireguard:peers"
@@ -19,34 +25,35 @@ def main():
     try:
         r = redis.Redis.from_url(redis_uri, decode_responses=True)
     except Exception as e:
-        print(f"Failed to connect to Redis: {e}", flush=True)
-        return 1
+        fail(f"Failed to connect to Redis: {e}")
 
     raw_self = r.get(self_key)
     if not raw_self:
-        print(f"Peer metadata missing for: {self_key}", flush=True)
-        return 1
+        fail(f"Peer metadata missing for: {self_key}")
 
     try:
         self_meta = json.loads(raw_self)
         self_meta["hostname"] = hostname
     except Exception as e:
-        print(f"Failed to parse JSON for {self_key}: {e}", flush=True)
-        return 1
+        fail(f"Failed to parse self peer data: {e}")
 
-    # Only return the directly peered nodes
+    # Only return directly connected peers
     peers = self_meta.get("peers", [])
-    for p in peers:
-        if "hostname" not in p:
-            p["hostname"] = "<unknown>"
+    for peer in peers:
+        peer.setdefault("hostname", "<unknown>")
 
-    print(json.dumps({
+    output = {
         "self": self_meta,
         "peers": peers
-    }), flush=True)
+    }
 
-    return 0
+    try:
+        print(json.dumps(output), flush=True)
+    except Exception as e:
+        fail(f"Failed to serialize output: {e}")
+
+    sys.exit(0)
 
 if __name__ == "__main__":
-    exit(main())
+    main()
 
