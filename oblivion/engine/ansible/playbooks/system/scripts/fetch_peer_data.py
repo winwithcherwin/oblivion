@@ -46,6 +46,7 @@ def main():
         try:
             peer = json.loads(raw)
             peer["hostname"] = key.split(":", 1)[1]
+            peer["private_ip"] = peer.get("private_ip")
             topology[peer["hostname"]] = peer
         except Exception as e:
             print(f"Skipping {key}: {e}", flush=True)
@@ -53,7 +54,7 @@ def main():
     # Build full peer list
     peers = [v for k, v in topology.items() if k != hostname]
 
-    # Filter for direct wireguard peers (the ones we're actually peered with)
+    # Determine which peers we are *actually connected to* via WireGuard
     direct_peer_ips = {
         p["private_ip"]
         for p in self_meta.get("peers", [])
