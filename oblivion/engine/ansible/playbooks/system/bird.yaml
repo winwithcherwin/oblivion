@@ -1,0 +1,34 @@
+- name: Configure BIRD routing
+  hosts: all
+  vars:
+    wireguard_peers_prefix: "wireguard:peers"
+    bird_conf_path: "/etc/bird/bird.conf"
+
+  tasks:
+    - name: Load peer data from Redis
+      command: python3 scripts/fetch_peer_data.py
+      register: peer_data_raw
+      changed_when: false
+      failed_when: peer_data_raw.rc != 0 or (peer_data_raw.stdout | length == 0)
+
+    - name: Parse peer data
+      set_fact:
+        peer_data: "{{ peer_data_raw.stdout | from_json }}"
+        this_host: "{{ peer_data.self }}"
+        peers: "{{ peer_data.peers }}"
+
+    - name: Template BIRD config
+      template:
+        src: "templates/bird.conf.j2"
+        dest: "{{ bird_conf_path }}"
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+
+    - name: Restart BIRD
+      service:
+        name: bird
+        state: restarted
+      become: true
+

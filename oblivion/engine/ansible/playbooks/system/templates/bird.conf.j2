@@ -1,0 +1,27 @@
+router id {{ this_host.private_ip }};
+
+protocol device {
+  scan time 10;
+}
+
+protocol direct {
+  interface "wg0";
+}
+
+protocol kernel {
+  persist;
+  scan time 20;
+  import all;
+  export all;
+}
+
+{% for peer in this_host.peers %}
+protocol bgp {{ peer.hostname | replace('-', '_') }} {
+  local as 65001;
+  neighbor {{ peer.private_ip }} as 65001;
+  source address {{ this_host.private_ip }};
+  export where net = {{ this_host.private_ip }}/32;
+  import all;
+}
+{% endfor %}
+
