@@ -13,11 +13,11 @@ table inet filter {
     # Allow SSH (globally)
     tcp dport {{ ssh_port }} accept
 
-    # Allow BGP only on WireGuard interface
-    iif "{{ wireguard_interface }}" tcp dport {{ bgp_port }} accept
-    
     # Allow WireGuard traffic
     iif "eth0" udp dport 51820 accept
+
+    # Allow all WireGuard traffic
+    iif "wg0" accept
 
     # Drop everything else
     drop
