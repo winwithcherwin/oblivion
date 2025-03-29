@@ -10,6 +10,7 @@ router bgp 65001
 {% if peer.private_ip in this_host.direct_peer_ips %}
   neighbor {{ peer.private_ip }} remote-as 65001
   neighbor {{ peer.private_ip }} description {{ peer.hostname }}
+  neighbor {{ peer.private_ip }} next-hop-self
 {% endif %}
 {% endfor %}
 
