@@ -1,8 +1,7 @@
-- name: Configure FRR BGP using mesh metadata from Redis
+- name: Configure FRR using unified frr.conf from mesh metadata
   hosts: all
-  gather_facts: false
   vars:
-    bgpd_conf_path: "/etc/frr/bgpd.conf"
+    frr_conf_path: "/etc/frr/frr.conf"
 
   tasks:
     - name: Ensure FRR is installed
@@ -12,47 +11,42 @@
           - frr-pythontools
         state: present
         update_cache: true
-      become: true
 
-    - name: Enable bgpd daemon in FRR config
+    - name: Enable bgpd in FRR daemon config
       ansible.builtin.lineinfile:
         path: /etc/frr/daemons
         regexp: '^bgpd='
         line: 'bgpd=yes'
-      become: true
 
-    - name: Ensure FRR is started and enabled
+    - name: Start and enable FRR service
       ansible.builtin.service:
         name: frr
         state: started
         enabled: true
-      become: true
 
-    - name: Fetch mesh peer metadata from Redis (via Python)
+    - name: Run Python script to get mesh peer info from Redis
       ansible.builtin.command: python3 scripts/fetch_peer_data.py
       register: peer_json
       changed_when: false
       failed_when: peer_json.rc != 0
 
-    - name: Parse JSON from peer metadata script
+    - name: Parse JSON peer info
       set_fact:
         bgp_context: "{{ peer_json.stdout | from_json }}"
 
-    - name: Render bgpd.conf from Jinja2 template
+    - name: Template unified frr.conf
       ansible.builtin.template:
-        src: "templates/bgpd.conf.j2"
-        dest: "{{ bgpd_conf_path }}"
+        src: templates/frr.conf.j2
+        dest: "{{ frr_conf_path }}"
         owner: frr
         group: frr
         mode: "0644"
       vars:
         this_host: "{{ bgp_context.self }}"
         peers: "{{ bgp_context.peers }}"
-      become: true
 
-    - name: Restart FRR
+    - name: Restart FRR to apply config
       ansible.builtin.service:
         name: frr
         state: restarted
-      become: true
 

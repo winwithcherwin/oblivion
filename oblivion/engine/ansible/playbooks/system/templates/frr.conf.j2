@@ -4,7 +4,6 @@ log stdout
 
 router bgp 65001
   bgp router-id {{ this_host.private_ip }}
-  listen on {{ this_host.private_ip }}
   no bgp default ipv4-unicast
 
 {% for peer in peers %}
