@@ -1,0 +1,21 @@
+hostname {{ self.hostname }}
+password zebra
+log stdout
+
+router bgp 65001
+  bgp router-id {{ self.private_ip }}
+  listen on {{ self.private_ip }}
+  no bgp default ipv4-unicast
+
+{% for peer in peers %}
+  neighbor {{ peer.private_ip }} remote-as 65001
+  neighbor {{ peer.private_ip }} description {{ peer.hostname }}
+{% endfor %}
+
+  address-family ipv4 unicast
+    network {{ self.private_ip }}/32
+{% for peer in peers %}
+    neighbor {{ peer.private_ip }} activate
+{% endfor %}
+  exit-address-family
+
