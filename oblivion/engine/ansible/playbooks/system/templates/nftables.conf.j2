@@ -17,7 +17,7 @@ table inet filter {
     iif "{{ wireguard_interface }}" tcp dport {{ bgp_port }} accept
     
     # Allow WireGuard traffic
-    udp dport 51820 accept
+    iif "eth0" udp dport 51820 accept
 
     # Drop everything else
     drop
