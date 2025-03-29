@@ -46,7 +46,7 @@
         group: frr
         mode: "0644"
       vars:
-        self: "{{ bgp_context.self }}"
+        this_host: "{{ bgp_context.self }}"
         peers: "{{ bgp_context.peers }}"
       become: true
 
