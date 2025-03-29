@@ -7,17 +7,22 @@ router bgp 65001
   bgp cluster-id {{ this_host.private_ip }}
   no bgp default ipv4-unicast
 
-{% for peer in this_host.peers %}
+{% for peer in peers %}
+{% if peer.private_ip in this_host.direct_peer_ips %}
   neighbor {{ peer.private_ip }} remote-as 65001
   neighbor {{ peer.private_ip }} description {{ peer.hostname }}
-  neighbor {{ peer.private_ip }} next-hop-self
-  neighbor {{ peer.private_ip }} route-reflector-client
+{% endif %}
 {% endfor %}
 
   address-family ipv4 unicast
     network {{ this_host.private_ip }}/32
-{% for peer in this_host.peers %}
+
+{% for peer in peers %}
+{% if peer.private_ip in this_host.direct_peer_ips %}
     neighbor {{ peer.private_ip }} activate
+    neighbor {{ peer.private_ip }} next-hop-self
+    neighbor {{ peer.private_ip }} route-reflector-client
+{% endif %}
 {% endfor %}
   exit-address-family
 
