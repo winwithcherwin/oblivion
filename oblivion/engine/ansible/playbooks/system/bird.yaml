@@ -5,6 +5,12 @@
     bird_conf_path: "/etc/bird/bird.conf"
 
   tasks:
+    - name: Install BIRD
+      apt:
+        name: bird2
+        state: present
+        update_cache: true
+
     - name: Load peer data from Redis
       command: python3 scripts/fetch_peer_data.py
       register: peer_json
@@ -38,5 +44,4 @@
       service:
         name: bird
         state: restarted
-      become: true
 
