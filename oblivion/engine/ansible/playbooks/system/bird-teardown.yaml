@@ -1,0 +1,25 @@
+- name: Configure BIRD routing
+  hosts: all
+  vars:
+    bird_conf_path: "/etc/bird/bird.conf"
+
+  tasks:
+    - name: Uninstall BIRD
+      apt:
+        name: bird2
+        state: absent
+        update_cache: true
+
+    - name: Remove /etc/bird
+      file:
+        path: /etc/bird
+        state: absent
+        mode: "0755"
+        owner: root
+        group: root
+
+    - name: Stop BIRD
+      service:
+        name: bird
+        state: stopped
+
