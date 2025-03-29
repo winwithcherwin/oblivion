@@ -1,0 +1,8 @@
+- name: Install OpenBao
+  hosts: all
+  gather_facts: false
+  roles:
+    - role:  cherwin.openbao
+      openbao_version: "2.2.0"
+      openbao_enable_ui: true
+

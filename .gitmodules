@@ -7,3 +7,6 @@
 [submodule "oblivion/engine/ansible/playbooks/docker/roles/nginxinc.nginx"]
 	path = oblivion/engine/ansible/playbooks/docker/roles/nginxinc.nginx
 	url = https://github.com/winwithcherwin/ansible-role-nginx.git
+[submodule "oblivion/engine/ansible/playbooks/openbao/roles/cherwin.openbao"]
+	path = oblivion/engine/ansible/playbooks/openbao/roles/cherwin.openbao
+	url = https://github.com/winwithcherwin/ansible-openbao
