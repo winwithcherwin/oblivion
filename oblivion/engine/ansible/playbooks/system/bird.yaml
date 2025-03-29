@@ -15,6 +15,14 @@
       set_fact:
         peer_data: "{{ peer_json.stdout | from_json }}"
 
+    - name: Ensure /etc/bird exists
+      file:
+        path: /etc/bird
+        state: directory
+        mode: "0755"
+        owner: root
+        group: root
+
     - name: Template BIRD config
       template:
         src: "templates/bird.conf.j2"
