@@ -1,0 +1,23 @@
+#!/usr/sbin/nft -f
+
+table inet filter {
+  chain input {
+    type filter hook input priority 0; policy drop;
+
+    # Allow loopback
+    iif "lo" accept
+
+    # Allow established/related traffic
+    ct state established,related accept
+
+    # Allow SSH (globally)
+    tcp dport {{ ssh_port }} accept
+
+    # Allow BGP only on WireGuard interface
+    iif "{{ wireguard_interface }}" tcp dport {{ bgp_port }} accept
+
+    # Drop everything else
+    drop
+  }
+}
+

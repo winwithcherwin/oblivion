@@ -1,0 +1,33 @@
+- name: Configure nftables to restrict BGP to WireGuard interface
+  hosts: all
+  vars:
+    nftables_conf_path: /etc/nftables.conf
+    bgp_port: 179
+    ssh_port: 22
+    wireguard_interface: wg0
+
+  tasks:
+    - name: Ensure nftables is installed
+      ansible.builtin.apt:
+        name: nftables
+        state: present
+        update_cache: true
+
+    - name: Enable and start nftables service
+      ansible.builtin.service:
+        name: nftables
+        enabled: true
+        state: started
+
+    - name: Deploy nftables.conf template
+      ansible.builtin.template:
+        src: templates/nftables.conf.j2
+        dest: "{{ nftables_conf_path }}"
+        mode: "0644"
+
+    - name: Flush current nftables rules
+      ansible.builtin.command: nft flush ruleset
+
+    - name: Load new nftables rules
+      ansible.builtin.command: nft -f {{ nftables_conf_path }}
+
