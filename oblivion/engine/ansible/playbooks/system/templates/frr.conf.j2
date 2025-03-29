@@ -4,6 +4,7 @@ log stdout
 
 router bgp 65001
   bgp router-id {{ this_host.private_ip }}
+  bgp cluster-id {{ this_host.private_ip }}
   no bgp default ipv4-unicast
 
 {% for peer in peers %}
@@ -11,6 +12,7 @@ router bgp 65001
   neighbor {{ peer.private_ip }} remote-as 65001
   neighbor {{ peer.private_ip }} description {{ peer.hostname }}
   neighbor {{ peer.private_ip }} next-hop-self
+  neighbor {{ peer.private_ip }} route-reflector-client
 {% endif %}
 {% endfor %}
 
