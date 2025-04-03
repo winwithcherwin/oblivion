@@ -1,8 +1,34 @@
-- name: Install OpenBao
-  hosts: all
-  gather_facts: false
-  roles:
-    - role:  cherwin.openbao
-      openbao_version: "2.2.0"
-      openbao_enable_ui: true
+- name: Creating OpenBao server
+  hosts: localhost
+  tasks:
+  - name: Download OpenBao deb package
+    get_url:
+      url: https://github.com/openbao/openbao/releases/download/v2.2.0/bao_2.2.0_linux_amd64.deb
+      dest: /tmp
 
+  - name: Download GPG signature
+    get_url:
+      url: https://github.com/openbao/openbao/releases/download/v2.2.0/bao_2.2.0_linux_amd64.deb.gpgsig
+      dest: /tmp
+
+  - name: Get GPG public key
+    get_url:
+      url: https://openbao.org/assets/openbao-gpg-pub-20240618.asc
+      dest: /tmp
+
+  - name: Import GPG signature
+    command: gpg2 --import /tmp/openbao-gpg-pub-20240618.asc
+
+  - name: Verify GPG signature
+    command: gpg2 --verify /tmp/bao_2.2.0_linux_amd64.deb.gpgsig /tmp/bao_2.2.0_linux_amd64.deb
+
+  - name: Install from OpenBao (with APT)
+    apt:
+      deb: /tmp/bao_2.2.0_linux_amd64.deb
+
+  - name: Configure OpenBao
+    template:
+      src: openbao.hcl.j2
+      dest: /etc/openbao.hcl
+      owner: openbao
+      group: openbao

@@ -24,6 +24,7 @@
           - ansible
           - redis-tools
           - wireguard
+          - keyutils
         state: present
         update_cache: yes
 
