@@ -32,3 +32,11 @@
       dest: /etc/openbao/openbao.hcl
       owner: openbao
       group: openbao
+    notify: Restart OpenBao
+
+  handlers:
+    - name: Restart OpenBao
+      service:
+        name: openbao
+        state: restarted
+

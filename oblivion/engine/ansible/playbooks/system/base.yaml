@@ -25,6 +25,8 @@
           - redis-tools
           - wireguard
           - keyutils
+          - tree
+          - nmap
         state: present
         update_cache: yes
 
@@ -38,6 +40,6 @@
 
     - name: Install Python dependencies
       pip:
-        requirements: /tmp/requirements.txt
+        requirements: /etc/oblivion-requirements.txt
         executable: /opt/oblivion-venv/bin/pip
 
