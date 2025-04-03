@@ -72,58 +72,33 @@ def write_configs(fanout, queues):
             hostname = key.decode().split(":")[-1]
             hosts[hostname] = json.loads(raw.decode())
         except Exception:
-            click.echo(f"⚠️  Failed to parse metadata for {key.decode()}")
+            click.echo(f"Failed to parse metadata for {key.decode()}")
             continue
 
-    sorted_hostnames = sorted(hosts.keys())
+    if not hosts:
+        click.echo("No hosts found.")
+        return
 
-    # Build peer graph: each host connects to next N (non-symmetric)
-    peer_graph = {host: [] for host in sorted_hostnames}
-    N = max(1, min(3, len(sorted_hostnames) // 3))  # scale down with size
-
-    for i, host in enumerate(sorted_hostnames):
-        for j in range(1, N + 1):
-            peer = sorted_hostnames[(i + j) % len(sorted_hostnames)]
-            if peer != host:  # Prevent self-loop
-                peer_graph[host].append(peer)
-
-    # Invert for symmetric awareness (still non-symmetric configs)
-    awareness_graph = {host: set() for host in sorted_hostnames}
-    for host, peers in peer_graph.items():
-        for peer in peers:
-            awareness_graph[host].add(peer)
-            awareness_graph[peer].add(host)
-
+    mesh = {hostname: set(hosts.keys() - {hostname}) for hostname in hosts.keys()}
     for hostname in target_queues:
-        if hostname not in sorted_hostnames:
-            click.echo(f"⚠️  Host '{hostname}' is not in registration list, skipping.")
-            continue
-
         self_meta = hosts[hostname]
-        peer_ids = awareness_graph[hostname]
-        peers = [hosts[p] for p in peer_ids if p != hostname and p in hosts]
-        missing_peers = [p for p in peer_ids if p not in hosts]
-
-        if missing_peers:
-            click.echo(f"⚠️  Missing metadata for peers of {hostname}: {', '.join(missing_peers)}")
-
-        if not peers:
-            click.echo(f"⚠️  No valid peers for {hostname}, skipping config")
-            continue
-
-        click.echo(f"→ Writing config on: {hostname} with {len(peers)} peers")
+        peers = [hosts[peer] for peer in mesh[hostname]]
+        click.echo(f"Writing config on {hostname}")
         try:
             res = write_wireguard_config.apply_async(args=[self_meta, peers], queue=hostname)
             result = res.get(timeout=10)
             click.echo(f"  {hostname}: {result}")
         except Exception as e:
-            click.echo(f"  ❌ {hostname}: Failed with error: {e}")
+            click.echo(f"  {hostname}: Failed with error: {e}")
 
-@cli.command("ping")
+@cli.command("sweep")
 def do_ping():
-    """Pings all known hosts. Removes dead ones from Redis."""
+    """Sweeps all wireguard hosts via ping. Removes dead ones from Redis."""
     keys = redis_client.keys(f"{WIREGUARD_KEY_PREFIX}:*")
     for key in keys:
+        # if there is no endpoint we should skip it, because it is assumed to be a client
+        #raw = redis_client.get(key)
+        # load json and check for endpoint, skip if no endpoint
         hostname = key.decode().split(":")[-1]
         success = False
         for _ in range(3):
