@@ -68,10 +68,7 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
                 "hosts": {
                     hostname: {
                         "ansible_connection": "local"
-                    },
-                    "localhost": {
-                        "ansible_connection": "local"
-                    },
+                    }
                 }
             }
         },
