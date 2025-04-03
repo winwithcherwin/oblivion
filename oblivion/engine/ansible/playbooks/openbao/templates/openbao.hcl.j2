@@ -1,5 +1,4 @@
-ui            = true
-api_addr      = "https://0.0.0.0:8200"
+ui = true
 
 storage "file" {
   path = "/opt/openbao/data"
@@ -7,6 +6,6 @@ storage "file" {
 
 listener "tcp" {
   address       = "0.0.0.0:8200"
-  tls_cert_file = "/path/to/full-chain.pem"
-  tls_key_file  = "/path/to/private-key.pem"
+  tls_cert_file = "/opt/openbao/tls/tls.crt"
+  tls_key_file  = "/opt/openbao/tls/tls.key"
 }

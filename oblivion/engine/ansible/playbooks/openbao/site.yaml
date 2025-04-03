@@ -1,5 +1,5 @@
 - name: Creating OpenBao server
-  hosts: localhost
+  hosts: all
   tasks:
   - name: Download OpenBao deb package
     get_url:
@@ -28,7 +28,7 @@
 
   - name: Configure OpenBao
     template:
-      src: openbao.hcl.j2
-      dest: /etc/openbao.hcl
+      src: templates/openbao.hcl.j2
+      dest: /etc/openbao/openbao.hcl
       owner: openbao
       group: openbao
