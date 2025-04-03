@@ -7,3 +7,5 @@ terraform.tfstate.backup
 *.bak
 *.pyc
 .bootstrap/
+bao.json
+secrets.json

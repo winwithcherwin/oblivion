@@ -49,7 +49,7 @@ build {
 
   provisioner "file" {
     source      = "oblivion/requirements.txt"
-    destination = "/tmp/requirements.txt"
+    destination = "/etc/oblivion-requirements.txt"
   }
 
   provisioner "shell" {
