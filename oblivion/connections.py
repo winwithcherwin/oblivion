@@ -1,3 +1,5 @@
+import redis
+
 from oblivion.settings import REDIS_URI
 
 

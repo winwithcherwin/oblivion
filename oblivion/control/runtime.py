@@ -51,9 +51,10 @@ def get_all_queues():
     Retrieve and return a sorted list of all active queues.
     Raises NoQueuesFoundError if no queues are found.
     """
-    redis_host = app.conf.get("REDIS_HOST")
-    if redis_host is None:
-        raise ValueError("REDIS not configured")
+    broker_url = app.conf.get("broker_url")
+    if not broker_url:
+        raise ValueError("broker_url not set")
+
     inspect = app.control.inspect()
     queues = inspect.active_queues() or {}
     seen = set()
