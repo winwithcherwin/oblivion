@@ -4,7 +4,7 @@ import kombu
 from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
 
 from oblivion.celery_app import app
-from oblivion.redis_client import redis_client
+from oblivion.connections import get_redis_client
 
 
 
@@ -51,6 +51,9 @@ def get_all_queues():
     Retrieve and return a sorted list of all active queues.
     Raises NoQueuesFoundError if no queues are found.
     """
+    redis_host = app.conf.get("REDIS_HOST")
+    if redis_host is None:
+        raise ValueError("REDIS not configured")
     inspect = app.control.inspect()
     queues = inspect.active_queues() or {}
     seen = set()
@@ -79,6 +82,7 @@ def follow_logs(stream_id, expected_hosts=None, block_timeout=90000, output_fn=p
     For each incoming log message, we remove extra whitespace and then call the
     output callback with a dictionary that includes the hostname and the log line.
     """
+    redis_client = get_redis_client()
     output_fn({"hostname": None, "line": f"→ Live logs (stream ID: {stream_id})\n"})
     stream_key = f"ansible:{stream_id}"
     last_id = "0-0"

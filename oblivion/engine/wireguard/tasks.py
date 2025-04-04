@@ -6,7 +6,8 @@ from pathlib import Path
 from celery import shared_task
 from jinja2 import Environment, FileSystemLoader
 import requests
-from oblivion.redis_client import redis_client
+
+from oblivion.connections import get_redis_client
 
 WG_DIR = "/etc/wireguard"
 WG_CONF_PATH = os.path.join(WG_DIR, "wg0.conf")
@@ -47,6 +48,7 @@ def ensure_keys(force_regen=False):
     return Path(WG_PUBLIC_KEY_PATH).read_text().strip()
 
 def allocate_private_ip(hostname):
+    redis_client = get_redis_client()
     existing = redis_client.get(f"{WIREGUARD_IP_PREFIX}:{hostname}")
     if existing:
         return existing.decode()
@@ -76,6 +78,7 @@ def get_wireguard_status():
 
 @shared_task
 def register_wireguard_node():
+    redis_client = get_redis_client()
     try:
         hostname = get_hostname()
         public_ip = get_public_ip()
@@ -126,6 +129,7 @@ def render_wireguard_config(self_meta, peer_list):
 
 @shared_task
 def write_wireguard_config(self_meta, peer_list):
+    redis_client = get_redis_client()
     try:
         hostname = get_hostname()
         config = render_wireguard_config(self_meta, peer_list)

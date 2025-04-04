@@ -3,8 +3,8 @@ import json
 import random
 
 from oblivion.cli.shared import get_all_queues
+from oblivion.connections import get_redis_client
 from oblivion.engine.wireguard.tasks import register_wireguard_node, write_wireguard_config, ping, get_wireguard_status
-from oblivion.redis_client import redis_client
 
 WIREGUARD_KEY_PREFIX = "wireguard:public_keys"
 WIREGUARD_IP_PREFIX = "wireguard:ip"
@@ -23,7 +23,10 @@ def get_status(fanout, queues):
     if not fanout and not queues:
         raise click.ClickException("You must specify --all or --queues")
 
-    target_queues = get_all_queues() if fanout else [q.strip() for q in queues.split(",")]
+    try:
+        target_queues = get_all_queues() if fanout else [q.strip() for q in queues.split(",")]
+    except Exception as e:
+        raise click.ClickException(e)
 
     for q in target_queues:
         click.echo(f"→ Checking wg0 on: {q}")
@@ -41,7 +44,10 @@ def register_nodes(fanout, queues):
     if not fanout and not queues:
         raise click.ClickException("You must specify --all or --queues")
 
-    target_queues = get_all_queues() if fanout else [q.strip() for q in queues.split(",")]
+    try:
+        target_queues = get_all_queues() if fanout else [q.strip() for q in queues.split(",")]
+    except Exception as e:
+        raise click.ClickException(e)
 
     for q in target_queues:
         click.echo(f"→ Registering on: {q}")
@@ -59,9 +65,17 @@ def write_configs(fanout, queues):
     if not fanout and not queues:
         raise click.ClickException("You must specify --all or --queues")
 
-    target_queues = get_all_queues() if fanout else [q.strip() for q in queues.split(",")]
+    try:
+        target_queues = get_all_queues() if fanout else [q.strip() for q in queues.split(",")]
+    except Exception as e:
+        raise click.ClickException(e)
 
     # Load all peer metadata from Redis
+    try:
+        redis_client = get_redis_client()
+    except Exception as e:
+        raise click.ClickException(e)
+
     keys = redis_client.keys(f"{WIREGUARD_KEY_PREFIX}:*")
     hosts = {}
     for key in keys:
@@ -94,6 +108,11 @@ def write_configs(fanout, queues):
 @cli.command("sweep")
 def do_ping():
     """Sweeps all wireguard hosts via ping. Removes dead ones from Redis."""
+    try:
+        redis_client = get_redis_client()
+    except Exception as e:
+        raise click.ClickException(e)
+
     keys = redis_client.keys(f"{WIREGUARD_KEY_PREFIX}:*")
     for key in keys:
         # if there is no endpoint we should skip it, because it is assumed to be a client
@@ -120,6 +139,11 @@ def do_ping():
 @cli.command("show-peers")
 def do_show_peers():
     """Show registered configs for all nodes"""
+    try:
+        redis_client = get_redis_client()
+    except Exception as e:
+        raise click.ClickException(e)
+
     keys = redis_client.keys(f"{WIREGUARD_PEERS_PREFIX}:*")
     hosts = {}
     for key in keys:

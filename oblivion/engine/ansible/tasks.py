@@ -4,9 +4,9 @@ import json
 import time
 import ansible_runner
 from dotenv import load_dotenv
+from oblivion.connections import get_redis_client
 
 from celery import shared_task
-from oblivion.redis_client import redis_client
 
 PLAYBOOK_ROOT = os.path.abspath("oblivion/engine/ansible/playbooks")
 ENV_FILE = "/etc/oblivion.env"
@@ -18,6 +18,7 @@ if os.path.exists(ENV_FILE):
 
 @shared_task
 def run_playbook_locally(playbook_path: str, stream_id: str = None):
+    redis_client = get_redis_client()
     hostname = socket.gethostname()
 
     base_path = os.path.join(PLAYBOOK_ROOT, playbook_path)

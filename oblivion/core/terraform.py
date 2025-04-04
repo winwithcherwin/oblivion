@@ -23,4 +23,5 @@ def output(target_dir=None, key=None):
 
 def get_all_hosts():
     hosts = output(key="all_hosts")
-    return list(hosts.keys())
+    return None if hosts is None else list(hosts.keys())
+

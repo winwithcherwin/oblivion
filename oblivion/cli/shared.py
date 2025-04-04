@@ -108,11 +108,14 @@ def streaming_ansible_task_command(task, timeout=5):
             stream_id = str(uuid.uuid4())
             task_args = f(*args, **kwargs)
             task_kwargs = {"stream_id": stream_id}
-            target_queues = (
-                assert_equal(get_all_queues, terraform.get_all_hosts)
-                if fanout
-                else [queue]
-            )
+            try:
+                target_queues = (
+                    assert_equal(get_all_queues, terraform.get_all_hosts)
+                    if fanout
+                    else [queue]
+                )
+            except Exception as e:
+                raise click.ClickException(e)
             results = []
             start_time = time.monotonic()
             for q in target_queues:
