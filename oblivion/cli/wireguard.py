@@ -2,10 +2,12 @@ import click
 import json
 import random
 
+from oblivion.core import wireguard
 from oblivion.cli.shared import get_all_queues
 from oblivion.connections import get_redis_client
 from oblivion.engine.wireguard.tasks import register_wireguard_node, write_wireguard_config, ping, get_wireguard_status
 
+WG_DIR = ".secrets/wireguard"
 WIREGUARD_KEY_PREFIX = "wireguard:public_keys"
 WIREGUARD_IP_PREFIX = "wireguard:ip"
 WIREGUARD_PEERS_PREFIX = "wireguard:peers"
@@ -41,6 +43,9 @@ def get_status(fanout, queues):
 @click.option("--all", "fanout", is_flag=True, help="Register all hosts")
 @click.option("--queues", help="Comma-separated list of queue names")
 def register_nodes(fanout, queues):
+    if fanout and queues:
+        raise click.UsageError("You cannot use --all and --queues together.")
+
     if not fanout and not queues:
         raise click.ClickException("You must specify --all or --queues")
 
@@ -58,7 +63,7 @@ def register_nodes(fanout, queues):
         except Exception as e:
             click.echo(f"  ❌ {q}: Failed with error: {e}")
 
-@cli.command("write-config")
+@cli.command("write-configs")
 @click.option("--all", "fanout", is_flag=True, help="Target all hosts")
 @click.option("--queues", help="Comma-separated list of queue names")
 def write_configs(fanout, queues):
@@ -158,4 +163,39 @@ def do_show_peers():
             continue
 
     print(json.dumps(hosts))
+
+@cli.command("get-peers")
+@click.argument("hostname", type=str)
+def do_get_peers(hostname):
+    result = wireguard.get_peers(hostname)
+    click.echo(result)
+
+@cli.command("ensure-keys")
+@click.option("--dir", "wg_dir", type=str)
+@click.option("--regen", is_flag=True, help="Regenerate keys if already exist")
+def do_ensure_keys(wg_dir=None, regen=False):
+    if not wg_dir:
+        wg_dir = WG_DIR
+
+    public_key = wireguard.ensure_keys(wg_dir=wg_dir, force_regen=regen)
+    click.echo(public_key)
+
+@cli.command("register-self")
+@click.argument("hostname", type=str)
+@click.option("--dir", "wg_dir", type=str)
+def do_register_self(hostname, wg_dir=None):
+    if not wg_dir:
+        wg_dir = WG_DIR
+
+    wireguard.ensure_keys(wg_dir=wg_dir)
+    wireguard.register_node(hostname, wg_dir, with_endpoint=False)
+
+@cli.command("write-config")
+@click.argument("hostname", type=str)
+@click.option("--dir", "wg_dir", type=str)
+def do_write_config(hostname, wg_dir=None):
+    if not wg_dir:
+        wg_dir = WG_DIR
+
+    wireguard.write_config(hostname, wg_dir=wg_dir)
 

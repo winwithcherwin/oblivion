@@ -1,3 +1,5 @@
+import requests
+
 from urllib.parse import urlparse, urlunparse
 
 def mask_uri(uri: str) -> str:
@@ -18,3 +20,10 @@ def mask_uri(uri: str) -> str:
         parsed.query,
         parsed.fragment
     ))
+
+def get_public_ip():
+    try:
+        return requests.get("https://api.ipify.org", timeout=3).text.strip()
+    except requests.RequestException as e:
+        raise RuntimeError(f"Could not determine public IP: {e}")
+

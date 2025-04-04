@@ -20,8 +20,8 @@ def bootstrap_command(endpoint):
         return
     
     result = client.sys.initialize(1, 1)
-    with open("secrets.json", "w") as f:
-        json.dumps(result, f)
+    with open(".secrets/openbao.json", "w") as f:
+        json.dump(result, f)
 
     client.token = result["root_token"]
     unseal_response = client.sys.submit_unseal_keys(result["keys"])

@@ -133,7 +133,7 @@ run-playbooks: when-infra-valid
 # WIREGUARD
 wireguard-init: when-infra-valid ## setup WireGuard
 	$(OBLIVION) wireguard register --all
-	$(OBLIVION) wireguard write-config --all
+	$(OBLIVION) wireguard write-configs --all
 
 bootstrap-wireguard: wireguard-init
 	@if [ ! -f $(BOOTSTRAP_WIREGUARD) ]; then \
@@ -141,14 +141,14 @@ bootstrap-wireguard: wireguard-init
 		sleep 3; \
 	fi
 	$(OBLIVION) ansible run --all wireguard
-	$(OBLIVION) wireguard ping
+	#$(OBLIVION) wireguard sweep
 	$(OBLIVION) ansible run --all wireguard/update-hosts
 	@mkdir -p $(BOOTSTRAP_DIR)
 	@date > $(BOOTSTRAP_WIREGUARD)
 
 wireguard-refresh: when-infra-valid ## removes stale nodes and regenerate WireGuard connections everywhere
-	$(OBLIVION) wireguard ping
-	$(OBLIVION) wireguard write-config --all
+	#$(OBLIVION) wireguard sweep
+	$(OBLIVION) wireguard write-configs --all
 
 ## Teardown WireGuard from a node (removes keys, config, service)
 wireguard-teardown: when-infra-valid ## make teardown-one QUEUE=server3
