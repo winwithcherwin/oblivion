@@ -1,6 +1,26 @@
 - name: Creating OpenBao server
   hosts: all
   tasks:
+  - name: Get WireGuard details in JSON
+    command: ip -j addr show wg0
+    register: wg_json
+    changed_when: false
+
+  - name: Extract WireGuard IPv4 address
+    set_fact:
+      wireguard_ip: >-
+        {{
+          (wg_json.stdout | from_json)[0].addr_info
+          | selectattr('family', 'equalto', 'inet')
+          | map(attribute='local')
+          | list
+          | first
+        }}
+
+  - name: Debug WireGuard IP
+    debug:
+      msg: "WireGuard IP is {{ wireguard_ip }}"
+
   - name: Download OpenBao deb package
     get_url:
       url: https://github.com/openbao/openbao/releases/download/v2.2.0/bao_2.2.0_linux_amd64.deb
