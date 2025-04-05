@@ -1,0 +1,1 @@
+Apr 05 23:24:27 hetzner-2 k3s[59885]: E0405 23:24:27.316583   59885 authentication.go:74] "Unable to authenticate the request" err="[invalid bearer token, token audiences [\"vault\"] is invalid for the target audiences [\"https://kubernetes.default.svc.cluster.local\" \"k3s\"]]"
