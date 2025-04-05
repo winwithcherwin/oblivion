@@ -101,6 +101,9 @@ path "secret/data/*" {{
         "vault_policy": policy_name,
         "k8s_sa": sa_name,
         "namespace": namespace,
+        "kube_host": kube_host,
+        "jwt": jwt,
+        "ca_crt": ca_crt,
     }
 
     click.echo("OpenBao Kubernetes auth backend configured successfully.")
