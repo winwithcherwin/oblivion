@@ -4,5 +4,7 @@ resources:
   - namespace.yaml
   - helmrepository.yaml
   - helmrelease.yaml
-  - clustersecretstore.yaml
+  - rbac.yaml
   - openbao-ca-configmap.yaml
+  - clustersecretstore.yaml
+
