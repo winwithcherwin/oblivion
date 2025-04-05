@@ -2,6 +2,7 @@ amqp==5.3.1
 ansible-runner==2.4.0
 asttokens==3.0.0
 billiard==4.2.1
+cachetools==5.5.2
 celery==5.4.0
 certifi==2025.1.31
 charset-normalizer==3.4.1
@@ -10,8 +11,10 @@ click-didyoumean==0.3.1
 click-plugins==1.1.1
 click-repl==0.3.0
 decorator==5.2.1
+durationpy==0.9
 executing==2.2.0
 funcparserlib==1.0.1
+google-auth==2.38.0
 hvac==2.3.0
 idna==3.10
 ipython==9.0.2
@@ -19,6 +22,7 @@ ipython_pygments_lexers==1.1.1
 jedi==0.19.2
 Jinja2==3.1.6
 kombu==5.5.0
+kubernetes==32.0.1
 linkify-it-py==2.0.3
 lockfile==0.12.2
 markdown-it-py==3.0.0
@@ -26,6 +30,7 @@ MarkupSafe==3.0.2
 matplotlib-inline==0.1.7
 mdit-py-plugins==0.4.2
 mdurl==0.1.2
+oauthlib==3.2.2
 packaging==24.2
 parso==0.8.4
 pexpect==4.9.0
@@ -33,6 +38,8 @@ platformdirs==4.3.7
 prompt_toolkit==3.0.50
 ptyprocess==0.7.0
 pure_eval==0.2.3
+pyasn1==0.6.1
+pyasn1_modules==0.4.2
 Pygments==2.19.1
 pyhcl==0.4.5
 python-daemon==3.1.2
@@ -42,7 +49,9 @@ python-terraform==0.10.1
 PyYAML==6.0.2
 redis==5.2.1
 requests==2.32.3
+requests-oauthlib==2.0.0
 rich==13.9.4
+rsa==4.9
 ruamel.yaml==0.18.10
 ruamel.yaml.clib==0.2.12
 six==1.17.0
@@ -56,3 +65,4 @@ uc-micro-py==1.0.3
 urllib3==2.3.0
 vine==5.1.0
 wcwidth==0.2.13
+websocket-client==1.8.0

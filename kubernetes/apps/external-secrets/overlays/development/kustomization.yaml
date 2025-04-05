@@ -5,3 +5,4 @@ resources:
 
 patches:
   - path: patch-helmrelease.yaml
+  - path: patch-clustersecretstore.yaml
