@@ -11,7 +11,7 @@ def generate_sa_token(sa_name, namespace, expiration_seconds=3600):
     core = client.CoreV1Api()
     token_request = client.AuthenticationV1TokenRequest(
         spec=client.V1TokenRequestSpec(
-            audiences=["vault"],
+            audiences=["k3s"],
             expiration_seconds=expiration_seconds,
         )
     )
@@ -26,7 +26,7 @@ def extract_auth_details(sa_name, namespace):
     core = client.CoreV1Api()
     jwt = generate_sa_token(sa_name, namespace)
     ca_crt = core.read_namespaced_config_map("kube-root-ca.crt", "kube-system").data["ca.crt"]
-    kube_host = client.Configuration().host
+    kube_host = client.Configuration.get_default_copy().host
 
     return jwt, ca_crt, kube_host
 
