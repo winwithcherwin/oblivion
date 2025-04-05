@@ -132,8 +132,11 @@ run-playbooks: when-infra-valid
 
 # WIREGUARD
 wireguard-init: when-infra-valid ## setup WireGuard
+	$(OBLIVION) wireguard register-self $(whoami)
 	$(OBLIVION) wireguard register --all
+	$(OBLIVION) wireguard write-config $(whoami)
 	$(OBLIVION) wireguard write-configs --all
+	@$(MAKE) vpn
 
 bootstrap-wireguard: wireguard-init
 	@if [ ! -f $(BOOTSTRAP_WIREGUARD) ]; then \
@@ -159,6 +162,9 @@ wireguard-status: when-infra-valid ## ping all nodes; remove unreachable ones fr
 
 
 # MISC
+vpn:
+	sudo nmcli connection import type wireguard file .secrets/wireguard/wg0.conf
+
 ssh: ## use fzf to ssh into host
 	@bash ./utils/ssh.sh
 
