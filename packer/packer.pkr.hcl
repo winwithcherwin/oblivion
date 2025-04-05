@@ -64,7 +64,13 @@ build {
   }
 
   provisioner "ansible" {
-    playbook_file   = "oblivion/engine/ansible/playbooks/docker/dokku.yaml"
+    playbook_file   = "oblivion/engine/ansible/playbooks/system/zsh.yaml"
+    user            = "root"
+    extra_arguments = ["--scp-extra-args", "'-O'"]
+  }
+
+  provisioner "ansible" {
+    playbook_file   = "oblivion/engine/ansible/playbooks/system/motd.yaml"
     user            = "root"
     extra_arguments = ["--scp-extra-args", "'-O'"]
   }

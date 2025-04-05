@@ -117,24 +117,19 @@ when-infra-valid:
 
 ## PLAYBOOKS
 test-playbooks: when-terraform-bootstrapped ## test simple playbook
-	# this will revoke INFRA_VALID if ansible fails
 	@if ! $(OBLIVION) ansible run --all echo; then \
 		echo "Ansible run failed"; \
 		rm -f $(BOOTSTRAP_INFRA_VALID); \
 		exit 1; \
 	fi
-
-run-playbooks: when-infra-valid
-	$(OBLIVION) ansible run --all system/motd
-	$(OBLIVION) ansible run --all system/zsh
 	@date > $(BOOTSTRAP_INFRA_VALID)
 
 
 # WIREGUARD
 wireguard-init: when-infra-valid ## setup WireGuard
-	$(OBLIVION) wireguard register-self $(whoami)
+	$(OBLIVION) wireguard register-self $$(whoami)
 	$(OBLIVION) wireguard register --all
-	$(OBLIVION) wireguard write-config $(whoami)
+	$(OBLIVION) wireguard write-config $$(whoami)
 	$(OBLIVION) wireguard write-configs --all
 	@$(MAKE) vpn
 
