@@ -1,0 +1,81 @@
+- name: Install K3s on server node with WireGuard-aware Flannel
+  hosts: all
+  vars:
+    k3s_config_path: /etc/rancher/k3s/config.yaml
+    k3s_service_path: /etc/systemd/system/k3s.service
+    k3s_binary_url: "https://github.com/k3s-io/k3s/releases/download/v1.32.3%2Bk3s1/k3s"
+    k3s_binary_path: /usr/local/bin/k3s
+
+  tasks:
+    - name: Get WireGuard details in JSON
+      command: ip -j addr show wg0
+      register: wg_json
+      changed_when: false
+
+    - name: Extract WireGuard IPv4 address
+      set_fact:
+        wireguard_ip: >-
+          {{
+            (wg_json.stdout | from_json)[0].addr_info
+            | selectattr('family', 'equalto', 'inet')
+            | map(attribute='local')
+            | list
+            | first
+          }}
+
+    - name: Debug WireGuard IP
+      debug:
+        msg: "WireGuard IP is {{ wireguard_ip }}"
+
+    - name: Ensure config directory exists
+      file:
+        path: "{{ k3s_config_path | dirname }}"
+        state: directory
+        mode: '0755'
+
+    - name: Write K3s config.yaml
+      copy:
+        dest: "{{ k3s_config_path }}"
+        mode: '0644'
+        content: |
+          bind-address: {{ wireguard_ip }}
+          flannel-iface: wg0
+          disable:
+            - traefik
+          write-kubeconfig-mode: "0644"
+          tls-san:
+            - {{ wireguard_ip }}
+
+    - name: Download k3s binary
+      get_url:
+        url: "{{ k3s_binary_url }}"
+        dest: "{{ k3s_binary_path }}"
+        mode: '0755'
+
+    - name: Write systemd unit file for k3s
+      copy:
+        dest: "{{ k3s_service_path }}"
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=K3s Server
+          After=network.target
+
+          [Service]
+          Type=simple
+          ExecStart={{ k3s_binary_path }} server
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable and start K3s service
+      systemd:
+        name: k3s
+        enabled: yes
+        state: started
+
