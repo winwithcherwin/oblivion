@@ -11,7 +11,7 @@ def generate_sa_token(sa_name, namespace, expiration_seconds=3600):
     core = client.CoreV1Api()
     token_request = client.AuthenticationV1TokenRequest(
         spec=client.V1TokenRequestSpec(
-            audiences=["k3s"],
+            audiences=["k3s"], # "kubectl get --raw /.well-known/openid-configuration | jq (spoiler, https://kubernetes.default.svc.cluster.local
             expiration_seconds=expiration_seconds,
         )
     )
