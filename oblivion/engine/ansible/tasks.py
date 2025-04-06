@@ -17,7 +17,7 @@ if os.path.exists(ENV_FILE):
     load_dotenv(ENV_FILE, override=True)
 
 @shared_task
-def run_playbook_locally(playbook_path: str, stream_id: str = None):
+def run_playbook_locally(playbook_path: str, stream_id: str = None, extra_vars: dict = None):
     redis_client = get_redis_client()
     hostname = socket.gethostname()
 
@@ -75,6 +75,7 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None):
         },
         limit=hostname,
         envvars=envvars,
+        extravars=extra_vars,
         quiet=True,
         settings=dict(idle_timeout=60),
         event_handler=stream_event,

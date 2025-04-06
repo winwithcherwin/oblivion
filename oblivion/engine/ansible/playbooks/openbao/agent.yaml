@@ -1,0 +1,151 @@
+- name: Creating OpenBao server
+  hosts: all
+  tasks:
+  - name: Check required vars
+    assert:
+      that:
+        - role_name is defined
+        - vault_addr is defined
+
+  - name: Infer linux_user from role_name if not defined
+    set_fact:
+      linux_user: "{{ role_name | regex_replace('-', '_') }}"
+    when: linux_user is not defined
+
+  - name: Get WireGuard details in JSON
+    command: ip -j addr show wg0
+    register: wg_json
+    changed_when: false
+
+  - name: Extract WireGuard IPv4 address
+    set_fact:
+      wireguard_ip: >-
+        {{
+          (wg_json.stdout | from_json)[0].addr_info
+          | selectattr('family', 'equalto', 'inet')
+          | map(attribute='local')
+          | list
+          | first
+        }}
+
+  - name: Debug WireGuard IP
+    debug:
+      msg: "WireGuard IP is {{ wireguard_ip }}"
+
+  - name: Download OpenBao deb package
+    get_url:
+      url: https://github.com/openbao/openbao/releases/download/v2.2.0/bao_2.2.0_linux_amd64.deb
+      dest: /tmp
+
+  - name: Download GPG signature
+    get_url:
+      url: https://github.com/openbao/openbao/releases/download/v2.2.0/bao_2.2.0_linux_amd64.deb.gpgsig
+      dest: /tmp
+
+  - name: Get GPG public key
+    get_url:
+      url: https://openbao.org/assets/openbao-gpg-pub-20240618.asc
+      dest: /tmp
+
+  - name: Import GPG signature
+    command: gpg2 --import /tmp/openbao-gpg-pub-20240618.asc
+
+  - name: Verify GPG signature
+    command: gpg2 --trust-model always --verify /tmp/bao_2.2.0_linux_amd64.deb.gpgsig /tmp/bao_2.2.0_linux_amd64.deb
+
+  - name: Ensure destination directory exists
+    file:
+      path: /opt/openbao-agent
+      state: directory
+      mode: '0755'
+
+  - name: Extract package
+    command: dpkg-deb -x /tmp/bao_2.2.0_linux_amd64.deb /opt/openbao-agent
+    args:
+      creates: /opt/openbao-agent/usr/bin/bao
+      mode: '0755'
+
+  - name: Copy OpenBao binary to /usr/local/bin
+    copy:
+      src: /opt/openbao-agent/usr/bin/bao
+      dest: /usr/local/bin/openbao-agent
+      mode: '0755'
+
+  - name: Ensure config parent directory exists
+    file:
+      path: /etc/openbao-agent
+      state: directory
+      owner: root
+      group: root
+      mode: '0755'
+
+  - name: Ensure config destination directory exists
+    file:
+      path: "/etc/openbao-agent/{{ role_name }}"
+      state: directory
+      owner: "{{ linux_user }}"
+      group: "{{ linux_user }}"
+      mode: '0750'
+
+  - name: Create system user for the agent
+    user:
+      name: "{{ linux_user }}"
+      system: yes
+      shell: /usr/sbin/nologin
+      create_home: no
+      state: present
+
+  - name: Render openbao-agent config
+    command:
+      cmd: >
+        python3 scripts/render_openbao_agent_config.py
+        --input-json "{{ vars | to_json }}"
+        --output-path "/etc/openbao-agent/{{ role_name }}/openbao.hcl"
+      creates: "/etc/openbao-agent/{{ role_name }}/openbao.hcl"
+    notify: Restart OpenBao
+
+  - name: Set permissions on config
+    file:
+      path: "/etc/openbao-agent/{{ role_name }}/openbao.hcl"
+      owner: "{{ linux_user }}"
+      group: "{{ linux_user }}"
+      mode: '0640'
+
+  - name: Configure OpenBao
+    template:
+      src: templates/openbao-agent.service.j2
+      dest: /etc/systemd/system/openbao-agent-{{ role_name }}.service
+      owner: root
+      group: root
+    notify:
+      - Reload systemd
+      - Restart OpenBao
+
+  - name: Write wrapped token to file
+    copy:
+      content: "{{ wrapped_token }}"
+      dest: "/etc/openbao-agent/{{ role_name }}/wrapped_token"
+      owner: "{{ linux_user }}"
+      group: "{{ linux_user }}"
+      mode: '0600'
+
+  - name: Debug wrapped token path
+    stat:
+      path: "/etc/openbao-agent/{{ role_name }}/wrapped_token"
+    register: wrapped_token_file
+
+  - name: Show wrapped token file exists
+    debug:
+      msg: "Token file exists: {{ wrapped_token_file.stat.exists }}"
+
+
+  handlers:
+    - name: Restart OpenBao
+      service:
+        name: openbao-agent-{{ role_name }}
+        state: restarted
+
+    - name: Reload systemd
+      systemd:
+        daemon_reload: true
+
