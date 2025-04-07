@@ -3,7 +3,7 @@ Description=Bao Agent {{ role_name }}
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/openbao-agent -config=/etc/openbao-agent/{{ role_name }}/openbao.hcl
+ExecStart=/usr/local/bin/openbao-agent agent -config=/etc/openbao-agent/{{ role_name }}/openbao.hcl
 Restart=on-failure
 User={{ linux_user }}
 

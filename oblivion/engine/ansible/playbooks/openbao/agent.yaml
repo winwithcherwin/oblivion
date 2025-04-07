@@ -1,4 +1,4 @@
-- name: Creating OpenBao server
+- name: Creating OpenBao Agent
   hosts: all
   tasks:
   - name: Check required vars
@@ -63,7 +63,6 @@
     command: dpkg-deb -x /tmp/bao_2.2.0_linux_amd64.deb /opt/openbao-agent
     args:
       creates: /opt/openbao-agent/usr/bin/bao
-      mode: '0755'
 
   - name: Copy OpenBao binary to /usr/local/bin
     copy:
@@ -95,14 +94,23 @@
       create_home: no
       state: present
 
+  - name: Write vars to temporary JSON file
+    copy:
+      dest: /tmp/openbao_agent_vars.json
+      content: "{{ vars | to_nice_json }}"
+      mode: '0600'
+
   - name: Render openbao-agent config
-    command:
-      cmd: >
-        python3 scripts/render_openbao_agent_config.py
-        --input-json "{{ vars | to_json }}"
-        --output-path "/etc/openbao-agent/{{ role_name }}/openbao.hcl"
-      creates: "/etc/openbao-agent/{{ role_name }}/openbao.hcl"
+    command: >
+      python3 scripts/render_openbao_agent_config.py
+      --input-file /tmp/openbao_agent_vars.json
+      --output-path "/etc/openbao-agent/{{ role_name }}/openbao.hcl"
     notify: Restart OpenBao
+
+  - name: Remove temporary vars file
+    file:
+      path: /tmp/openbao_agent_vars.json
+      state: absent
 
   - name: Set permissions on config
     file:
@@ -137,7 +145,6 @@
   - name: Show wrapped token file exists
     debug:
       msg: "Token file exists: {{ wrapped_token_file.stat.exists }}"
-
 
   handlers:
     - name: Restart OpenBao

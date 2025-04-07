@@ -11,11 +11,13 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization, hashes
 
 from oblivion.core import kubernetes
+from oblivion.core.bao import create_approle, get_vault_token
+from oblivion.cli.callbacks import inject_extra_vars
 
 
 OPENBAO_SECRETS_FILE = ".secrets/openbao.json"
-PKI_PATH = "pki_int"
-ROLE_NAME = "pki_int_rfc1918_wildcard_dns"
+PKI_PATH = "pki-intermediate"
+ROLE_NAME = "pki-intermediate-rfc1918-wildcard-dns"
 COMMON_NAME = "OBLIVION INTERMEDIATE CA"
 TTL = "43800h" # 5 years
 
@@ -46,6 +48,32 @@ for net in RFC1918_IP_SANS:
 def cli():
     """OpenBao operations"""
     pass
+@cli.command("enable-auth-approle")
+@click.option("--vault-addr", envvar="VAULT_ADDR", required=True, help="Vault address")
+@inject_extra_vars([get_vault_token])
+def enable_auth_approle(vault_addr, vault_token):
+    client = hvac.Client(
+        url=vault_addr,
+        token=vault_token,
+        verify=False,
+    )
+
+    if not client.is_authenticated():
+        raise click.ClickException("OpenBao authentication failed.")
+
+    if "approle/" not in client.sys.list_auth_methods():
+        client.sys.enable_auth_method(method_type="approle")
+
+@cli.command("create-approle")
+@click.argument("name")
+@click.option("--vault-addr", envvar="VAULT_ADDR", required=True, help="Vault address")
+@click.option("--wrap-ttl", default="5m", help="TTL for wrapped secret_id")
+@click.option("--override-policy", help="Provide a custom policy to override defaults")
+@inject_extra_vars([get_vault_token])
+def do_create_approle(**kwargs):
+    """Create a Vault AppRole"""
+    result = create_approle(**kwargs)
+    click.echo(json.dumps(result, indent=2))
 
 @cli.command("bootstrap")
 @click.argument("endpoint", type=str)
@@ -72,11 +100,8 @@ def bootstrap_command(endpoint):
 
 @cli.command("delete-intermediate")
 @click.argument("endpoint", type=str)
-def bootstrap_intermediate(endpoint):
-    with open(OPENBAO_SECRETS_FILE, "r") as f:
-        data = json.load(f)
-
-    vault_token = data["root_token"]
+@inject_extra_vars([get_vault_token])
+def bootstrap_intermediate(endpoint, vault_token):
     client = hvac.Client(
         url=endpoint,
         token=vault_token,
@@ -102,17 +127,14 @@ def bootstrap_intermediate(endpoint):
 
 @cli.command("bootstrap-intermediate")
 @click.argument("endpoint", type=str)
-def bootstrap_intermediate(endpoint):
+@inject_extra_vars([get_vault_token])
+def bootstrap_intermediate(endpoint, vault_token):
     with open(ROOT_KEY_PATH, "rb") as f:
         root_key = serialization.load_pem_private_key(f.read(), password=None)
 
     with open(ROOT_CERT_PATH, "rb") as f:
         root_cert = x509.load_pem_x509_certificate(f.read(), backend=default_backend())
 
-    with open(OPENBAO_SECRETS_FILE, "r") as f:
-        data = json.load(f)
-
-    vault_token = data["root_token"]
     client = hvac.Client(
         url=endpoint,
         token=vault_token,
@@ -193,11 +215,8 @@ def bootstrap_intermediate(endpoint):
 
 @cli.command("unseal")
 @click.argument("endpoint", type=str)
-def bootstrap_command(endpoint):
-    with open(OPENBAO_SECRETS_FILE, "r") as f:
-        data = json.load(f)
-
-    vault_token = data["root_token"]
+@inject_extra_vars([get_vault_token])
+def bootstrap_command(endpoint, vault_token):
     client = hvac.Client(
         url=endpoint,
         token=vault_token,
@@ -222,11 +241,8 @@ def integrate():
 @integrate.command("kubernetes")
 @click.option("--endpoint", type=str, required=True, help="The address of OpenBao")
 @click.option("--cluster-name", type=str, required=True, help="The name of the cluster")
-def integrate_kubernetes(endpoint, cluster_name):
-    with open(OPENBAO_SECRETS_FILE) as f:
-        data = json.load(f)
-
-    vault_token = data["root_token"]
+@inject_extra_vars([get_vault_token])
+def integrate_kubernetes(endpoint, cluster_name, vault_token):
     client = hvac.Client(
         url=endpoint,
         token=vault_token,

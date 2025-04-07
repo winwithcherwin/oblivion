@@ -75,7 +75,7 @@ def run_playbook_locally(playbook_path: str, stream_id: str = None, extra_vars: 
         },
         limit=hostname,
         envvars=envvars,
-        extravars=extra_vars,
+        extravars=extra_vars or {},
         quiet=True,
         settings=dict(idle_timeout=60),
         event_handler=stream_event,

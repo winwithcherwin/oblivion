@@ -1,11 +1,13 @@
 import argparse
 import json
 import socket
+import sys
+
 from jinja2 import Environment, FileSystemLoader
 from pyroute2 import IPDB
 
 TEMPLATE_NAME = "openbao-agent.hcl.j2"
-TEMPLATE_DIR = "oblivion/engine/ansible/playbooks/openbao/templates"
+TEMPLATE_DIR = "/opt/oblivion/oblivion/engine/ansible/playbooks/openbao/templates"
 
 def get_wireguard_ip(interface="wg0"):
     try:
@@ -22,10 +24,12 @@ def infer_fields(data):
     if "fqdn" not in data:
         data["fqdn"] = socket.getfqdn()
 
-    if "certificates" in data.get("role_name", ""):
-        if 'wireguard_ip' not in data:
-            data['wireguard_ip'] = get_wireguard_ip()
+    role = data.get("role_name", "")
+    if "pki" in role and "issue" in role:
+        if "wireguard_ip" not in data:
+            data["wireguard_ip"] = get_wireguard_ip()
         data.setdefault("certificate_destination_dir", f"/etc/ssl/{data['role_name']}")
+        data.setdefault("pki_path", "pki-intermediate")
         data.setdefault("crt_name", "tls.crt")
         data.setdefault("key_name", "tls.key")
     return data
@@ -46,6 +50,7 @@ def render_template(data):
         .replace("[[ ROLE_NAME ]]", data["role_name"])
         .replace("[[ FQDN ]]", data["fqdn"])
         .replace("[[ WIREGUARD_IP ]]", data["wireguard_ip"])
+        .replace("[[ PKI_PATH ]]", data["pki_path"])
     )
     return rendered
 
@@ -61,9 +66,12 @@ def main():
         with open(args.input_file) as f:
             raw_data = json.load(f)
     elif args.input_json:
-        raw_data = json.loads(args.input_json)
+        if args.input_json.strip() == "-":
+            raw_data = json.load(sys.stdin)
+        else:
+            raw_data = json.loads(args.input_json)
     else:
-        raise ValueError("You must provide --input-file, --input-json, or --extra-vars")
+        raise ValueError("You must provide --input-file, --input-json")
 
     if "role_name" not in raw_data:
         raise ValueError("role_name is required")

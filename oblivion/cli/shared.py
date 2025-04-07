@@ -1,6 +1,8 @@
 import click
+import importlib
 import uuid
 import time
+
 from functools import wraps
 from rich import print as rich_print
 from rich.text import Text
@@ -15,6 +17,12 @@ from oblivion.control.runtime import (
 )
 from oblivion.settings import ENABLE_CLI_COLOR
 
+
+def resolve_callback(path, kwargs):
+    module_path, func_name = path.rsplit(".", 1)
+    module = importlib.import_module(module_path)
+    func = getattr(module, func_name)
+    return func(**kwargs)
 
 def create_log_output_fn():
     """
@@ -92,11 +100,7 @@ def task_command(task, timeout=10):
         return wrapper
     return decorator
 
-
 def streaming_ansible_task_command(task, timeout=5):
-    """
-    For Ansible-style tasks that return a dict with rc/status/stats/stdout.
-    """
     def decorator(f):
         @click.option("--queue", help="Target queue name")
         @click.option("--all", "fanout", is_flag=True, help="Run on all queues")
@@ -105,25 +109,47 @@ def streaming_ansible_task_command(task, timeout=5):
             if not fanout and not queue:
                 raise click.ClickException("You must provide --queue <name> or use --all.")
 
-            stream_id = str(uuid.uuid4())
-            task_args = f(*args, **kwargs)
-            task_kwargs = {"stream_id": stream_id}
+            result = f(*args, **kwargs)
+
+            if not isinstance(result, dict):
+                raise click.UsageError("Expected command to return a dict")
+
+            playbook_path = result["playbook_path"]
+            base_vars = result.get("extra_vars", {})
+            callback_chain = result.get("extra_vars_callback", [])
+
             try:
                 target_queues = (
                     assert_equal(get_all_queues, terraform.get_all_hosts)
-                    if fanout
-                    else [queue]
+                    if fanout else [queue]
                 )
             except Exception as e:
                 raise click.ClickException(e)
+
             results = []
+            stream_id = str(uuid.uuid4())
             start_time = time.monotonic()
+
             for q in target_queues:
+                chained_vars = {}
+                for path, cb_kwargs in callback_chain:
+                    combined_kwargs = {**chained_vars, **cb_kwargs}
+                    cb_result = resolve_callback(path, combined_kwargs)
+                    chained_vars.update(cb_result)
+
+                chained_vars.pop("vault_token", None)
+                final_vars = {**base_vars, **chained_vars}
+
+                task_kwargs = {
+                    "playbook_path": playbook_path,
+                    "extra_vars": final_vars,
+                    "stream_id": stream_id,
+                }
+
                 click.echo(f"→ Dispatching to: {q}")
-                res = task.apply_async(args=task_args, kwargs=task_kwargs, queue=q)
+                res = task.apply_async(args=(), kwargs=task_kwargs, queue=q)
                 results.append((q, res))
 
-            # Create an output function that applies host coloring and our formatting logic.
             output_fn = create_log_output_fn()
             follow_logs(stream_id, expected_hosts=target_queues, output_fn=output_fn)
 
@@ -147,8 +173,10 @@ def streaming_ansible_task_command(task, timeout=5):
                     )
                 except Exception as e:
                     rich_print(f"[red]✗ {q} | error: {e}[/red]")
+
             total_time = time.monotonic() - start_time
             click.secho(f"\nTotal duration: {total_time:.2f}s", fg="cyan")
+
         return wrapper
     return decorator
 

@@ -6,10 +6,14 @@ vault {
   address = "[[ vault_addr ]]"
 }
 
+api_proxy {
+  disable = true
+}
+
 auto_auth {
   method "approle" {
     config = {
-      role_name     = [[ role_name ]]
+      role_name     = "[[ role_name ]]"
       secret_file   = "/etc/openbao-agent/[[ role_name ]]/wrapped_token"
       remove_secret = true
     }
@@ -27,12 +31,12 @@ cache {
   use_auto_auth_token = true
 }
 
-{% if 'certificates' in role_name %}
+{% if 'issue' in role_name and 'pki' in role_name %}
 template {
   destination = "[[ certificate_destination_dir ]]/[[ crt_name ]]"
   contents = <<EOT
 {% raw %}
-{{ with secret "pki_int/issue/[[ ROLE_NAME ]]" "common_name=[[ FQDN ]]" "ip_sans=[[ WIREGUARD_IP ]]" }}
+{{ with secret "[[ PKI_PATH ]]/issue/[[ ROLE_NAME ]]" "common_name=[[ FQDN ]]" "ip_sans=[[ WIREGUARD_IP ]]" }}
   {{ .Data.certificate }}
   {{ .Data.issuing_ca }}
 {{ end }}
@@ -44,7 +48,7 @@ template {
   destination = "[[ certificate_destination_dir ]]/[[ key_name ]]"
   contents = <<EOT
 {% raw %}
-{{ with secret "pki_int/issue/[[ ROLE_NAME ]]" "common_name=[[ FQDN ]]" "ip_sans=[[ WIREGUARD_IP ]]" }}
+{{ with secret "[[ PKI_PATH ]]/issue/[[ ROLE_NAME ]]" "common_name=[[ FQDN ]]" "ip_sans=[[ WIREGUARD_IP ]]" }}
   {{ .Data.private_key }}
 {{ end }}
 {% endraw %}
