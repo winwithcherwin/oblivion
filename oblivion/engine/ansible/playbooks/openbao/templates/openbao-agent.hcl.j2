@@ -36,7 +36,7 @@ template {
   destination = "[[ certificate_destination_dir ]]/[[ crt_name ]]"
   contents = <<EOT
 {% raw %}
-{{ with secret "[[ PKI_PATH ]]/issue/[[ ROLE_NAME ]]" "common_name=[[ FQDN ]]" "ip_sans=[[ WIREGUARD_IP ]]" }}
+{{ with secret "[[ PKI_PATH ]]/issue/[[ PKI_ROLE_NAME ]]" "common_name=[[ FQDN ]]" "ip_sans=[[ WIREGUARD_IP ]]" }}
   {{ .Data.certificate }}
   {{ .Data.issuing_ca }}
 {{ end }}
@@ -48,7 +48,7 @@ template {
   destination = "[[ certificate_destination_dir ]]/[[ key_name ]]"
   contents = <<EOT
 {% raw %}
-{{ with secret "[[ PKI_PATH ]]/issue/[[ ROLE_NAME ]]" "common_name=[[ FQDN ]]" "ip_sans=[[ WIREGUARD_IP ]]" }}
+{{ with secret "[[ PKI_PATH ]]/issue/[[ PKI_ROLE_NAME ]]" "common_name=[[ FQDN ]]" "ip_sans=[[ WIREGUARD_IP ]]" }}
   {{ .Data.private_key }}
 {{ end }}
 {% endraw %}

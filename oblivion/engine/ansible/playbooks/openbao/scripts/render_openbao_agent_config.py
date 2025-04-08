@@ -28,8 +28,10 @@ def infer_fields(data):
     if "pki" in role and "issue" in role:
         if "wireguard_ip" not in data:
             data["wireguard_ip"] = get_wireguard_ip()
-        data.setdefault("certificate_destination_dir", f"/etc/ssl/{data['role_name']}")
+        role_name = data["role_name"]
+        data.setdefault("certificate_destination_dir", f"/etc/ssl/{role_name}")
         data.setdefault("pki_path", "pki-intermediate")
+        data.setdefault("pki_role_name", role_name.split("-")[3]
         data.setdefault("crt_name", "tls.crt")
         data.setdefault("key_name", "tls.key")
     return data
@@ -45,13 +47,16 @@ def render_template(data):
     )
     template = env.get_template(TEMPLATE_NAME)
     rendered = template.render(data)
-    rendered = (
-        rendered
-        .replace("[[ ROLE_NAME ]]", data["role_name"])
-        .replace("[[ FQDN ]]", data["fqdn"])
-        .replace("[[ WIREGUARD_IP ]]", data["wireguard_ip"])
-        .replace("[[ PKI_PATH ]]", data["pki_path"])
-    )
+    
+    if "pki" in role and "issue" in role:
+        rendered = (
+            rendered
+            .replace("[[ ROLE_NAME ]]", data["role_name"])
+            .replace("[[ FQDN ]]", data["fqdn"])
+            .replace("[[ WIREGUARD_IP ]]", data["wireguard_ip"])
+            .replace("[[ PKI_PATH ]]", data["pki_path"])
+            .replace("[[ PKI_ROLE_NAME ]]", data["pki_role_name"])
+        )
     return rendered
 
 def main():

@@ -9,7 +9,7 @@ SECRETS_PATH = Path(".secrets/openbao.json")
 
 POLICY_TEMPLATES = {
     "pki-intermediate-issue": """
-path "pki-intermediate/issue/{{ role_name }}" {
+path "pki-intermediate/issue/{{ pki_role_name }}" {
   capabilities = ["update"]
 }
 """,
@@ -38,7 +38,7 @@ def parse_role_name(name):
         return "sys", {"mount_path": f"{parts[1]}-{parts[2]}"}
     elif name.startswith("pki-intermediate-issue-"):
         parts = name.split("-", 3)
-        return "pki-intermediate-issue", {"role_name": parts[3]}
+        return "pki-intermediate-issue", {"pki_role_name": parts[3]}
     else:
         raise ValueError(f"Unsupported role naming convention: {name}")
 

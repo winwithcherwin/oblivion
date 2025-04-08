@@ -17,7 +17,8 @@ from oblivion.cli.callbacks import inject_extra_vars
 
 OPENBAO_SECRETS_FILE = ".secrets/openbao.json"
 PKI_PATH = "pki-intermediate"
-ROLE_NAME = "pki-intermediate-rfc1918-wildcard-dns"
+PKI_ROLE_NAME = "rfc1918-wildcard-dns"
+ROLE_NAME = f"pki-intermediate-{PKI_ROLE_NAME}"
 COMMON_NAME = "OBLIVION INTERMEDIATE CA"
 TTL = "43800h" # 5 years
 
