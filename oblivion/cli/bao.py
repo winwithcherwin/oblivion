@@ -76,9 +76,9 @@ def do_create_approle(**kwargs):
     result = create_approle(**kwargs)
     click.echo(json.dumps(result, indent=2))
 
-@cli.command("bootstrap")
+@cli.command("init")
 @click.argument("endpoint", type=str)
-def bootstrap_command(endpoint):
+def init_command(endpoint):
     client = hvac.Client(
         url=endpoint,
         verify=False,

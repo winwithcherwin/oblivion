@@ -12,6 +12,8 @@
     pkgs.fluxcd
     pkgs.redis
     pkgs.vault
+    pkgs.packer
+    pkgs.ansible
   ];
   languages.python = {
     enable = true;
