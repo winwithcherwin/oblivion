@@ -1,0 +1,8 @@
+- name: Refresh OpenBao Server
+  hosts: all
+  tasks:
+    - name: Restart OpenBao
+      service:
+        name: openbao
+        state: restarted
+
