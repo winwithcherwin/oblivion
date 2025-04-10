@@ -2,8 +2,28 @@
 
 With great power comes great responsibility.
 
-### Requirements
-* python
-* make
-* wireguard
+## Install OpenBao server
 
+```
+ob pki init
+ob ansible run openbao --queue do-1 # 10.8.0.3 in my case
+ob bao init https://10.8.0.3:8200
+ob bao bootstrap-intermediate https://10.8.0.3:8200
+cat .secrets/openbao.json | jq -r '.root_token' | pbcopy
+# login to openbao to verify that everything is working correctly
+ob bao enable-auth-approle
+ob ansible run openbao/agent --queue do-1 \
+  --extra-vars-callback "oblivion.core.bao.get_vault_token"
+  --extra-vars-callback "oblivion.core.bao.create_approle:name=pki-intermediate-issue-rfc1918-wildcard-dns,vault_addr=https://10.8.0.3:8200" \
+  -e "linux_user=openbao" \
+  -e "certificate_destination_dir=/opt/openbao/tls"
+ob ansible run openbao/refresh-server
+ob bao unseal https://10.8.0.3:8200
+ob ansible run k3s --queue hetzner-2 # 10.8.0.5 in my case
+# TODO:
+#   * provision approle and openbao-agent
+#   * give credentials to write kubeconfig to secrets path
+#   * write kubeconfig to path
+scp root@10.8.0.5:/etc/rancher/k3s/k3s.yaml $PWD/.secrets/k3s.yaml
+export KUBECONFIG=$PWD/.secrets/k3s.yaml
+```
