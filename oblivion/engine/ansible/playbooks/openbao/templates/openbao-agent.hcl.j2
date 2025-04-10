@@ -4,6 +4,7 @@ log_level = "info"
 
 vault {
   address = "[[ vault_addr ]]"
+  tls_skip_verify = true
 }
 
 api_proxy {
@@ -13,8 +14,9 @@ api_proxy {
 auto_auth {
   method "approle" {
     config = {
-      role_name     = "[[ role_name ]]"
-      secret_file   = "/etc/openbao-agent/[[ role_name ]]/wrapped_token"
+      role_id_file_path = "/etc/openbao-agent/[[ role_name ]]/role-id"
+      secret_id_file_path = "/etc/openbao-agent/[[ role_name ]]/wrapped_token"
+      secret_id_response_wrapping_path = "auth/approle/role/[[ role_name ]]/secret-id"
       remove_secret = true
     }
   }
@@ -22,7 +24,7 @@ auto_auth {
   sink "file" {
     config = {
       path = "/etc/openbao-agent/[[ role_name ]]/.vault-token"
-      mode = "0600"
+      mode = 0600
     }
   }
 }
@@ -31,27 +33,29 @@ cache {
   use_auto_auth_token = true
 }
 
+listener "tcp" {
+  address = "127.0.0.1:8100"
+  tls_disable = true
+}
+
 {% if 'issue' in role_name and 'pki' in role_name %}
 template {
+  
   destination = "[[ certificate_destination_dir ]]/[[ crt_name ]]"
+  create_dest_dirs = true
   contents = <<EOT
-{% raw %}
-{{ with secret "[[ PKI_PATH ]]/issue/[[ PKI_ROLE_NAME ]]" "common_name=[[ FQDN ]]" "ip_sans=[[ WIREGUARD_IP ]]" }}
-  {{ .Data.certificate }}
-  {{ .Data.issuing_ca }}
-{{ end }}
-{% endraw %}
+{% raw %}{{ with secret "[[ PKI_PATH ]]/issue/[[ PKI_ROLE_NAME ]]" "common_name=[[ FQDN ]].lan" "ip_sans=[[ WIREGUARD_IP ]]" }}{{ .Data.certificate }}
+{{ .Data.issuing_ca }}{{ end }}{% endraw %}
+
 EOT
 }
 
 template {
   destination = "[[ certificate_destination_dir ]]/[[ key_name ]]"
+  create_dest_dirs = true
   contents = <<EOT
-{% raw %}
-{{ with secret "[[ PKI_PATH ]]/issue/[[ PKI_ROLE_NAME ]]" "common_name=[[ FQDN ]]" "ip_sans=[[ WIREGUARD_IP ]]" }}
-  {{ .Data.private_key }}
-{{ end }}
-{% endraw %}
+{% raw %}{{ with secret "[[ PKI_PATH ]]/issue/[[ PKI_ROLE_NAME ]]" "common_name=[[ FQDN ]].lan" "ip_sans=[[ WIREGUARD_IP ]]" }}{{ .Data.private_key }}{{ end }}{% endraw %}
+
 EOT
 }
 {% endif %}

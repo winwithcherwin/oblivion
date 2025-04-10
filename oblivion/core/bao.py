@@ -49,7 +49,7 @@ def infer_policy(name, override=None):
     template = Template(POLICY_TEMPLATES[role_type])
     return template.render(**ctx)
 
-def create_approle(name: str, vault_addr: str, vault_token: str, wrap_ttl: str = "5m", override_policy: str = None) -> dict:
+def create_approle(name: str, vault_addr: str, vault_token: str, wrap_ttl: str = "100m", override_policy: str = None) -> dict:
     client = hvac.Client(url=vault_addr, token=vault_token, verify=False)
     if not client.is_authenticated():
         raise RuntimeError("Vault authentication failed")
@@ -88,4 +88,12 @@ def get_vault_token() -> dict:
 
     secrets = json.loads(SECRETS_PATH.read_text())
     return {"vault_token": secrets["root_token"]}
+
+def get_unseal_keys():
+    if not SECRETS_PATH.exists():
+        raise RuntimeError(f"Missing {SECRETS_PATH}")
+
+    secrets = json.loads(SECRETS_PATH.read_text())
+    return {"keys": secrets["keys"]}
+
 

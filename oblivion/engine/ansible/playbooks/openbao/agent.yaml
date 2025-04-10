@@ -77,7 +77,14 @@
       owner: root
       group: root
       mode: '0755'
-
+      
+  - name: Ensure pid parent directory exists
+    file:
+      path: /var/run/openbao-agent
+      state: directory
+      owner: openbao
+      group: openbao
+      mode: '0755'
   - name: Ensure config destination directory exists
     file:
       path: "/etc/openbao-agent/{{ role_name }}"
@@ -128,6 +135,23 @@
     notify:
       - Reload systemd
       - Restart OpenBao
+        
+  - name: Write role to file
+    copy:
+      content: "{{ role_id }}"
+      dest: "/etc/openbao-agent/{{ role_name }}/role-id"
+      owner: "{{ linux_user }}"
+      group: "{{ linux_user }}"
+      mode: '0600'
+
+  - name: Debug role_id path
+    stat:
+      path: "/etc/openbao-agent/{{ role_name }}/role-id"
+    register: role_id_file
+
+  - name: Show role_id_file exists
+    debug:
+      msg: "Token file exists: {{ role_id_file.stat.exists }}"
 
   - name: Write wrapped token to file
     copy:

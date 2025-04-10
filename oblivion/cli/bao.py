@@ -11,7 +11,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization, hashes
 
 from oblivion.core import kubernetes
-from oblivion.core.bao import create_approle, get_vault_token
+from oblivion.core.bao import create_approle, get_vault_token, get_unseal_keys
 from oblivion.cli.callbacks import inject_extra_vars
 
 
@@ -199,7 +199,7 @@ def bootstrap_intermediate(endpoint, vault_token):
 
     # we always want to update the rule in case there are changes
     client.secrets.pki.create_or_update_role(
-        name=ROLE_NAME,
+        name=PKI_ROLE_NAME,
         mount_point=PKI_PATH,
         extra_params=dict(
             allowed_domains=ALLOWED_DOMAINS,
@@ -216,18 +216,14 @@ def bootstrap_intermediate(endpoint, vault_token):
 
 @cli.command("unseal")
 @click.argument("endpoint", type=str)
-@inject_extra_vars([get_vault_token])
-def bootstrap_command(endpoint, vault_token):
+@inject_extra_vars([get_unseal_keys])
+def unseal_command(endpoint, keys):
     client = hvac.Client(
         url=endpoint,
-        token=vault_token,
         verify=False,
     )
 
-    if not client.is_authenticated():
-        raise click.ClickException("OpenBao authentication failed.")
-
-    unseal_response = client.sys.submit_unseal_keys(data["keys"])
+    unseal_response = client.sys.submit_unseal_keys(keys)
     click.echo(f"unseal response: {unseal_response}")
 
     if not client.sys.is_sealed():

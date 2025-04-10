@@ -31,7 +31,7 @@ def infer_fields(data):
         role_name = data["role_name"]
         data.setdefault("certificate_destination_dir", f"/etc/ssl/{role_name}")
         data.setdefault("pki_path", "pki-intermediate")
-        data.setdefault("pki_role_name", role_name.split("-")[3]
+        data.setdefault("pki_role_name", "-".join(role_name.split("-")[3:]))
         data.setdefault("crt_name", "tls.crt")
         data.setdefault("key_name", "tls.key")
     return data
@@ -48,6 +48,7 @@ def render_template(data):
     template = env.get_template(TEMPLATE_NAME)
     rendered = template.render(data)
     
+    role = data.get("role_name")
     if "pki" in role and "issue" in role:
         rendered = (
             rendered
