@@ -10,3 +10,13 @@ terraform.tfstate.backup
 bao.json
 secrets.json
 .secrets
+# Devenv
+.devenv*
+devenv.local.nix
+
+# direnv
+.direnv
+.envrc
+
+# pre-commit
+.pre-commit-config.yaml
