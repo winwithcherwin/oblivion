@@ -72,6 +72,7 @@ bootstrap-packer:
 ## TERRAFORM
 terraform-init: ## initialize terraform
 	@terraform -chdir=terraform init
+	@mkdir -p $(BOOTSTRAP_DIR)
 	
 terraform-check-vars:
 	@if [ -z "$(MY_SSH_KEY_NAME)" ] || [ -z "$(MY_SOURCE_IP)" ]; then \
