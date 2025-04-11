@@ -23,6 +23,13 @@ ob ansible run k3s --queue hetzner-2 # 10.8.0.5 in my case
 #   * write kubeconfig to path
 scp root@10.8.0.5:/etc/rancher/k3s/k3s.yaml $PWD/.secrets/k3s.yaml
 export KUBECONFIG=$PWD/.secrets/k3s.yaml
+
+kubectl create --dry-run=client -n kube-system configmap oblivion-ca-certificate --from-file=certificate=.secrets/pki/root/oblivion-ca.crt -o yaml > kubernetes/apps/oblivion/base/certificates/oblivion-ca-certificate.yaml
+
+# git add -A .. && git push
+
 flux bootstrap github --owner=winwithcherwin --repository=oblivion --branch=main --path=kubernetes/clusters/development # needs GITHUB PAT
 kubectl kustomize kubernetes/apps/external-secrets/overlays/development | kubectl apply -f - # somehow flux get stuck so we need to help it along
+
+flux reconcile kustomization oblivion --with-source
 ```

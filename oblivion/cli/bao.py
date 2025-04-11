@@ -230,6 +230,93 @@ def unseal_command(endpoint, keys):
         click.echo("successfully unsealed bao")
         return
 
+@cli.command("update-kubernetes-backend")
+@click.option("--vault-address", required=True, type=str)
+@click.option("--cluster-name", required=True, type=str)
+@click.option("--kube-host", required=True, type=str)
+def do_update_kubernetes_backend(cluster_name, vault_address, kube_host):
+    auth_mount = f"kubernetes-{cluster_name}"
+    sa_name = "token-reviewer"
+    namespace = "oblivion"
+    kubernetes.load_config()
+
+    jwt, ca_crt, _ = kubernetes.extract_auth_details(sa_name, namespace)
+
+    print(jwt, ca_crt, kube_host)
+    client = hvac.Client(
+        url=vault_address,
+        verify=False,
+    )
+    # get vault_token for own service account
+    data = client.auth.kubernetes.login(role=sa_name, jwt=jwt, mount_point=auth_mount)
+    vault_token = data["auth"]["client_token"]
+
+    client.token = vault_token
+
+
+    # configure backend - make sure kubernetes can authenticate users
+    client.write(
+        f"auth/{auth_mount}/config",
+        token_reviewer_jwt=jwt,
+        kubernetes_host=kube_host,
+        kubernetes_ca_cert=ca_crt,
+    )
+
+    click.echo(f"updated backend: {auth_mount}")
+
+@cli.command("mount-kubernetes-backend")
+@click.option("--vault-address", required=True, type=str)
+@click.option("--cluster-name", required=True, type=str)
+@inject_extra_vars([get_vault_token])
+def do_mount_kubernetes_backend(cluster_name, vault_address, vault_token):
+    # meant to be run outside of cluster
+    client = hvac.Client(
+        url=vault_address,
+        token=vault_token,
+        verify=False,
+    )
+
+    # mount the backend idempotently
+    auth_mount = f"kubernetes-{cluster_name}"
+    auth_methods = client.sys.list_auth_methods()
+    if f"{auth_mount}/" not in auth_methods:
+        client.sys.enable_auth_method(
+            method_type="kubernetes",
+            path=auth_mount,
+            description=f"Kubernetes auth for cluster '{cluster_name}'",
+        )
+    
+    sa_name = "token-reviewer"
+    namespace = "oblivion"
+    kubernetes.load_config()
+    jwt, ca_crt, kube_host = kubernetes.extract_auth_details(sa_name, namespace)
+
+    print(jwt, ca_crt, kube_host)
+
+    # configure backend - make sure kubernetes can authenticate users
+    client.write(
+        f"auth/{auth_mount}/config",
+        token_reviewer_jwt=jwt,
+        kubernetes_host=kube_host,
+        kubernetes_ca_cert=ca_crt,
+    )
+
+    policy_name = f"{auth_mount}"
+    policy = f'''
+path "auth/{auth_mount}/config" {{
+  capabilities = ["read", "update"]
+}}
+'''
+    client.sys.create_or_update_policy(name=policy_name, policy=policy)
+
+    client.write(
+        f"auth/{auth_mount}/role/{sa_name}",
+        bound_service_account_names=sa_name,
+        bound_service_account_namespaces=namespace,
+        policies=policy_name,
+        ttl="24h",
+    )
+
 @cli.group()
 def integrate():
     """Integrate backends"""

@@ -83,11 +83,12 @@ def get_vault_token() -> dict:
     if token:
         return {"vault_token": token}
 
-    if not SECRETS_PATH.exists():
-        raise RuntimeError(f"Missing {SECRETS_PATH}")
+    if SECRETS_PATH.exists():
+        secrets = json.loads(SECRETS_PATH.read_text())
+        return {"vault_token": secrets["root_token"]}
 
-    secrets = json.loads(SECRETS_PATH.read_text())
-    return {"vault_token": secrets["root_token"]}
+
+
 
 def get_unseal_keys():
     if not SECRETS_PATH.exists():

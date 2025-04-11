@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: bao-update-kubernetes-auth-method
+  namespace: oblivion
+spec:
+  schedule: "*/2 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: token-reviewer
+          containers:
+          - name: shell
+            image: python:3.12.3
+            imagePullPolicy: IfNotPresent
+            env:
+              - name: PYTHONPATH
+                value: /opt/oblivion
+            volumeMounts:
+              - name: host-root
+                mountPath: /
+                readOnly: true
+            command:
+            - /bin/bash
+            - -c
+            - source /opt/oblivion-venv/bin/activate; python -m oblivion bao update-kubernetes-backend --vault-address=https://10.8.0.3:8200 --cluster-name=development --kube-host=https://10.8.0.4:6443
+          volumes:
+            - name: host-root
+              hostPath:
+                path: /
+                type: Directory
+
+
+
+          
+

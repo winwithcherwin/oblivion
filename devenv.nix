@@ -9,6 +9,8 @@
     pkgs.bc
     pkgs.nmap
     pkgs.kubectl
+    pkgs.kubecolor
+    pkgs.kubectx
     pkgs.fluxcd
     pkgs.redis
     pkgs.vault
@@ -16,6 +18,7 @@
     pkgs.ansible
     pkgs.k9s
     pkgs.tree
+    pkgs.openssl
   ];
   languages.python = {
     enable = true;

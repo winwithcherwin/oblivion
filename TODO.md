@@ -14,3 +14,12 @@
         * Then use a provisoned server
         * Bonus points, hook it up with hashicorp vault!!!
 * Cleanup stale wireguard peers from /etc/wireguard.conf
+
+
+* Create cronjob that continiously updates (or create) the kubernetes auth backend
+* First time with wrapped response
+    * Consecutive times with service-account
+* Deploy reflector with flux
+* Create oblivion-ca-certificate in kube-system with reflector annotations
+* Install reflector
+
