@@ -14,6 +14,8 @@
     pkgs.vault
     pkgs.packer
     pkgs.ansible
+    pkgs.k9s
+    pkgs.tree
   ];
   languages.python = {
     enable = true;
