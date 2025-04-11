@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: bao-update-kubernetes-auth-method
+  namespace: oblivion
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: token-reviewer
+          containers:
+          - name: shell
+            image: python:3.12.3
+            imagePullPolicy: IfNotPresent
+            env:
+              - name: PYTHONPATH
+                value: /opt/oblivion
+              - name: KUBECONFIG
+                value: /etc/rancher/k3s/k3s.yaml
+            volumeMounts:
+              - name: host-root
+                mountPath: /
+                readOnly: true
+            command:
+            - /bin/bash
+            - -c
+            - source /opt/oblivion-venv/bin/activate; python -m oblivion
+          volumes:
+            - name: host-root
+              hostPath:
+                path: /
+                type: Directory
+
+
+
+          
+
