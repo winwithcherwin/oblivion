@@ -19,19 +19,31 @@ spec:
               - name: PYTHONPATH
                 value: /opt/oblivion
             volumeMounts:
-              - name: host-root
-                mountPath: /
+              - name: oblivion-source
+                mountPath: /opt/oblivion
+                readOnly: true
+              - name: oblivion-venv
+                mountPath: /opt/oblivion-venv
                 readOnly: true
             command:
-            - /bin/bash
-            - -c
-            - source /opt/oblivion-venv/bin/activate; python -m oblivion bao update-kubernetes-backend --vault-address=https://10.8.0.3:8200 --cluster-name=development --kube-host=https://10.8.0.4:6443
-          volumes:
-            - name: host-root
-              hostPath:
-                path: /
-                type: Directory
+            - /opt/oblivion-venv/bin/python
+            - -m
+            - oblivion
+            - bao
+            - update-kubernetes-backend
+            - --vault-addres=https://10.8.0.3:8200
+            - --cluster-name=development
+            - --kube-host=https://10.8.0.4:6443
 
+          volumes:
+            - name: oblivion-source
+              hostPath:
+                path: /opt/oblivion
+                type: Directory
+            - name: oblivion-venv
+              hostPath:
+                path: /opt/oblivion-venv
+                type: Directory
 
 
           
