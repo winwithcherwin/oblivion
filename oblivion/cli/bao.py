@@ -49,6 +49,62 @@ for net in RFC1918_IP_SANS:
 def cli():
     """OpenBao operations"""
     pass
+
+@cli.command("enable-secrets-engine")
+@click.option("--vault-addr", envvar="VAULT_ADDR", required=True, help="Vault address")
+@click.option("--cluster-name", required=True, help="Cluster name")
+@inject_extra_vars([get_vault_token])
+def enable_secrets_engine(vault_addr, vault_token, cluster_name):
+    client = hvac.Client(
+        url=vault_addr,
+        token=vault_token,
+        verify=False,
+    )
+
+    if not client.is_authenticated():
+        raise click.ClickException("OpenBao authentication failed.")
+
+    secrets_mount = f"kubernetes-{cluster_name}"
+    if f"{secrets_mount}/" not in client.sys.list_mounted_secrets_engines():
+        client.sys.enable_secrets_engine(
+            backend_type="kv",
+            path=secrets_mount,
+            options={"version": "2"},
+        )
+
+@cli.command("create-role-vault-secrets-operator")
+@click.option("--vault-addr", envvar="VAULT_ADDR", required=True, help="Vault address")
+@click.option("--cluster-name", required=True, help="Cluster name")
+@inject_extra_vars([get_vault_token])
+def create_role_for_sa(vault_addr, vault_token, cluster_name):
+    client = hvac.Client(
+        url=vault_addr,
+        token=vault_token,
+        verify=False,
+    )
+
+    if not client.is_authenticated():
+        raise click.ClickException("OpenBao authentication failed.")
+
+    service_account_name = "vault-secrets-operator-controller-manager"
+    policy_name = f"kubernetes-{cluster_name}-{service_account_name}"
+    policy = f'''
+path "kubernetes-{cluster_name}/data/apps/{{identity.entity.metadata.kubernetes_namespace}}/*" {{
+  capabilities = ["read", "list"]
+}}
+'''
+
+    client.sys.create_or_update_policy(name=policy_name, policy=policy)
+
+    client.write(
+        f"auth/kubernetes-{cluster_name}/role/{service_account_name}",
+        bound_service_account_names=service_account_name,
+        bound_service_account_namespaces="*",
+        policies=policy_name,
+        audience="vault",
+        ttl="24h",
+    )
+
 @cli.command("enable-auth-approle")
 @click.option("--vault-addr", envvar="VAULT_ADDR", required=True, help="Vault address")
 @inject_extra_vars([get_vault_token])
@@ -242,7 +298,6 @@ def do_update_kubernetes_backend(cluster_name, vault_address, kube_host):
 
     jwt, ca_crt, _ = kubernetes.extract_auth_details(sa_name, namespace)
 
-    print(jwt, ca_crt, kube_host)
     client = hvac.Client(
         url=vault_address,
         verify=False,
@@ -290,8 +345,6 @@ def do_mount_kubernetes_backend(cluster_name, vault_address, vault_token):
     namespace = "oblivion"
     kubernetes.load_config()
     jwt, ca_crt, kube_host = kubernetes.extract_auth_details(sa_name, namespace)
-
-    print(jwt, ca_crt, kube_host)
 
     # configure backend - make sure kubernetes can authenticate users
     client.write(

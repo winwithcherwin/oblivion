@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: bao-update-kubernetes-auth-method
+  name: bao-update-kubernetes-backend
   namespace: oblivion
 spec:
   schedule: "*/2 * * * *"

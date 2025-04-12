@@ -19,7 +19,17 @@
     pkgs.k9s
     pkgs.tree
     pkgs.openssl
+    pkgs.bat
   ];
+  scripts.k.exec = ''
+    kubectl "$@";
+  '';
+  scripts.ktx.exec = ''
+    kubectx "$@";
+  '';
+  scripts.kns.exec = ''
+    kubens "$@";
+  '';
   languages.python = {
     enable = true;
     version = "3.12.3";
