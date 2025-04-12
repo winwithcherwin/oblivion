@@ -89,7 +89,7 @@ def create_role_for_sa(vault_addr, vault_token, cluster_name):
     service_account_name = "vault-secrets-operator-controller-manager"
     policy_name = f"kubernetes-{cluster_name}-{service_account_name}"
     policy = f'''
-path "kubernetes-{cluster_name}/data/apps/{{identity.entity.metadata.kubernetes_namespace}}/*" {{
+path "kubernetes-{cluster_name}/data/*" {{
   capabilities = ["read", "list"]
 }}
 '''
@@ -98,7 +98,7 @@ path "kubernetes-{cluster_name}/data/apps/{{identity.entity.metadata.kubernetes_
 
     client.write(
         f"auth/kubernetes-{cluster_name}/role/{service_account_name}",
-        bound_service_account_names=service_account_name,
+        bound_service_account_names="*",
         bound_service_account_namespaces="*",
         policies=policy_name,
         audience="vault",

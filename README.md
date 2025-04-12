@@ -32,4 +32,7 @@ flux bootstrap github --owner=winwithcherwin --repository=oblivion --branch=main
 kubectl kustomize kubernetes/apps/external-secrets/overlays/development | kubectl apply -f - # somehow flux get stuck so we need to help it along
 
 flux reconcile kustomization oblivion --with-source
+
+ob bao mount-kubernetes-backend
+ob bao create-role-vault-secrets-operator --cluster-name development
 ```

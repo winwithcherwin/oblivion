@@ -3,6 +3,7 @@
   dotenv.enable = true;
   packages = [
     pkgs.direnv
+    pkgs.dnsutils
     pkgs.yq
     pkgs.jq
     pkgs.fzf
