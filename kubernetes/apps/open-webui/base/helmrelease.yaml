@@ -19,6 +19,12 @@ spec:
     serviceAccount:
       enable: true
       name: open-webui
+    ollama:
+      enabled: false
+    pipelines:
+      enabled: false
+    websocket:
+      enabled: true
     ingress:
       enabled: true
       class: nginx
