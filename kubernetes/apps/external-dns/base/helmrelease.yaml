@@ -21,6 +21,10 @@ spec:
     loglevel: debug
     policy: upsert-only
     registry: txt
+    sources:
+      - ingress
+    extraArgs:
+      - --annotation-filter=external-dns.alpha.kubernetes.io/hostname
     env:
       - name: DO_TOKEN
         valueFrom:

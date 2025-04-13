@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - vault-secrets-operator.yaml
   - external-dns.yaml
+  - ingress-nginx.yaml
   - oblivion.yaml
   # - external-secrets.yaml
 
