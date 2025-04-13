@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: localhost-service
+  namespace: localhost
+spec:
+  ports:
+    - port: 80
+      targetPort: 8080
+  clusterIP: None
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: localhost-service
+  namespace: localhost
+subsets:
+  - addresses:
+      - ip: 10.8.0.2
+    ports:
+      - port: 8001
+

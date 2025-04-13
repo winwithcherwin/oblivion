@@ -8,5 +8,5 @@ resources:
   - open-webui.yaml
   - cert-manager.yaml
   - reflector.yaml
-  #- external-secrets.yaml
+  - localhost.yaml
 
