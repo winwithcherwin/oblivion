@@ -16,7 +16,7 @@ spec:
         name: external-dns
         namespace: flux-system
   values:
-    provider: digitalocean
+    provider: cloudflare
     textOwnerId: oblivion
     loglevel: debug
     policy: upsert-only
@@ -26,9 +26,9 @@ spec:
     extraArgs:
       - --annotation-filter=external-dns.alpha.kubernetes.io/hostname
     env:
-      - name: DO_TOKEN
+      - name: CF_API_TOKEN
         valueFrom:
           secretKeyRef:
-            name: digitalocean-dns
+            name: external-dns
             key: token
 
