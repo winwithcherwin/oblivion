@@ -1,33 +1,24 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ingress-nginx
-  namespace: ingress-nginx
+  name: open-webui
+  namespace: open-webui
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
-    external-dns.alpha.kubernetes.io/hostname: "*.lab.winwithcherwin.com"
-    external-dns.alpha.kubernetes.io/target: 138.199.163.162
-    nginx.ingress.kubernetes.io/server-snippet: |
-      location = / {
-        return 200 "All systems go!";
-        add_header Content-Type text/plain;
-      }
 spec:
   ingressClassName: nginx
   tls:
     - secretName: wildcard-tls-lab-winwithcherwin-com
       hosts:
         - "*.lab.winwithcherwin.com"
-        - lab.winwithcherwin.com
   rules:
-    - host: lab.winwithcherwin.com
+    - host: chat.lab.winwithcherwin.com
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: dummy
+                name: open-webui
                 port:
                   number: 80
-
