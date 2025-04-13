@@ -28,4 +28,3 @@ spec:
         useHostPort: true
       service:
         type: ClusterIP
-        externalTrafficPolicy: Local
