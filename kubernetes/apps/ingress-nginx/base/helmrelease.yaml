@@ -17,6 +17,7 @@ spec:
         namespace: flux-system
   values:
     controller:
+      allowSnippetAnnotations: true
       ingressClassResource:
         name: nginx
         enabled: true
@@ -28,6 +29,3 @@ spec:
       service:
         type: ClusterIP
         externalTrafficPolicy: Local
-      annotations:
-        external-dns.alpha.kubernetes.io/hostname: winwithcherwin.com
-        external-dns.alpha.kubernetes.io/target: 138.199.163.162
