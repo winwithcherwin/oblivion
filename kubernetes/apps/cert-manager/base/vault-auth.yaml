@@ -1,0 +1,14 @@
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: cert-manager
+  namespace: cert-manager
+spec:
+  method: kubernetes
+  mount: kubernetes-development
+  kubernetes:
+    role: vault-secrets-operator-controller-manager
+    serviceAccount: cert-manager
+    audiences:
+      - vault
+

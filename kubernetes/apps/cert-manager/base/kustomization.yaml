@@ -4,6 +4,7 @@ resources:
   - namespace.yaml
   - helmrepository.yaml
   - helmrelease.yaml
-  - ingress.yaml
-  - certificate.yaml
+  - secret.yaml
+  - vault-auth.yaml
+  - clusterissuer.yaml
 

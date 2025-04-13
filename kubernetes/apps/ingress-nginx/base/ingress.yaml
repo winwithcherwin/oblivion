@@ -9,6 +9,10 @@ metadata:
     external-dns.alpha.kubernetes.io/target: 138.199.163.162
 spec:
   ingressClassName: nginx
+  tls:
+    - secretName: wildcard-tls-lab-winwithcherwin-com
+      hosts:
+        - "*.lab.winwithcherwin.com"
   rules:
     - host: oblivion.lab.winwithcherwin.com
       http:

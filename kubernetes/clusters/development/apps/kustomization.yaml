@@ -6,5 +6,6 @@ resources:
   - ingress-nginx.yaml
   - oblivion.yaml
   - open-webui.yaml
+  - cert-manager.yaml
   #- external-secrets.yaml
 

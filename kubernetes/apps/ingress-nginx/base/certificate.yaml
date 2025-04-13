@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wildcard-winwithcherwin-com
+  namespace: ingress-nginx
+spec:
+  secretName: wildcard-tls-lab-winwithcherwin-com
+  dnsNames:
+    - "*.lab.winwithcherwin.com"
+  issuerRef:
+    name: letsencrypt-cloudflare
+    kind: ClusterIssuer
+
