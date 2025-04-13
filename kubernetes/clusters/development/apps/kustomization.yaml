@@ -5,5 +5,6 @@ resources:
   - external-dns.yaml
   - ingress-nginx.yaml
   - oblivion.yaml
-  # - external-secrets.yaml
+  #- open-webui.yaml
+  #- external-secrets.yaml
 

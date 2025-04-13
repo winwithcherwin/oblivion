@@ -29,10 +29,11 @@ kubectl create --dry-run=client -n kube-system configmap oblivion-ca-certificate
 # git add -A .. && git push
 
 flux bootstrap github --owner=winwithcherwin --repository=oblivion --branch=main --path=kubernetes/clusters/development # needs GITHUB PAT
-kubectl kustomize kubernetes/apps/external-secrets/overlays/development | kubectl apply -f - # somehow flux get stuck so we need to help it along
+kubectl kustomize kubernetes/clusters/development | kubectl apply -f - # somehow flux get stuck so we need to help it along
 
 flux reconcile kustomization oblivion --with-source
 
-ob bao mount-kubernetes-backend
+ob bao mount-kubernetes-backend --vault-address https://10.8.0.3:8200 --cluster-name development
 ob bao create-role-vault-secrets-operator --cluster-name development
+ob bao enable-secrets-engine --cluster-name development
 ```

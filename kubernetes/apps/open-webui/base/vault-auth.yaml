@@ -1,0 +1,14 @@
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: open-webui
+  namespace: open-webui
+spec:
+  method: kubernetes
+  mount: kubernetes-development
+  kubernetes:
+    role: vault-secrets-operator-controller-manager
+    serviceAccount: open-webui
+    audiences:
+      - vault
+
