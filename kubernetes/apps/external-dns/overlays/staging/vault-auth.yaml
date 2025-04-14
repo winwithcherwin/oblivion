@@ -1,0 +1,14 @@
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: external-dns
+  namespace: external-dns
+spec:
+  method: kubernetes
+  mount: kubernetes-staging
+  kubernetes:
+    role: vault-secrets-operator-controller-manager
+    serviceAccount: external-dns
+    audiences:
+      - vault
+

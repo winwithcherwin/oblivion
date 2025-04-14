@@ -11,4 +11,6 @@ patches:
       kind: Ingress
       name: open-webui
 
+  - path: vault-auth.yaml
+  - path: secret.yaml
 
