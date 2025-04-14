@@ -6,4 +6,5 @@ resources:
 patches:
   - path: vault-auth.yaml
   - path: secret.yaml
+  - path: clusterissuer.yaml
 
