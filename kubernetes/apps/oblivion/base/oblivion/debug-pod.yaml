@@ -1,0 +1,66 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    volumeType: local
+  namespace: oblivion
+  name: local-path-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 128Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: debug-pod
+  namespace: oblivion
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - name: shell
+    image: python:3.12.3
+    securityContext:
+      privileged: true
+    imagePullPolicy: IfNotPresent
+    env:
+      - name: PYTHONPATH
+        value: /opt/oblivion:/opt/oblivion-venv/lib/python3.12/site-packages:/usr/lib/python3.12/lib-dynload
+      - name: KUBECONFIG
+        value: /etc/rancher/k3s/k3s.yaml
+    volumeMounts:
+      - name: oblivion-source
+        mountPath: /opt/oblivion
+        readOnly: true
+      - name: oblivion-venv
+        mountPath: /opt/oblivion-venv
+        readOnly: true
+      - name: kubeconfig
+        mountPath: /etc/rancher/k3s/k3s.yaml
+      - name: local-storage
+        mountPath: /data
+    command:
+    - /bin/sh
+    - -c
+    - tail -f /dev/null
+  volumes:
+    - name: oblivion-source
+      hostPath:
+        path: /opt/oblivion
+        type: Directory
+    - name: oblivion-venv
+      hostPath:
+        path: /opt/oblivion-venv
+        type: Directory
+    - name: kubeconfig
+      hostPath:
+        path: /etc/rancher/k3s/k3s.yaml
+        type: File
+    - name: local-storage
+      persistentVolumeClaim:
+        claimName: local-path-pvc
+
