@@ -23,7 +23,7 @@ EOT
 
 resource "digitalocean_ssh_key" "this" {
   name       = var.ssh_key_name
-  public_key = file("~/.ssh/id_rsa.pub")
+  public_key = file(var.ssh_public_key_path)
 }
 
 data "digitalocean_images" "this" {

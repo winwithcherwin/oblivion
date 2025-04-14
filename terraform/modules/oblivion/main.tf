@@ -9,7 +9,7 @@ resource "null_resource" "provision" {
     type        = "ssh"
     host        = each.value
     user        = "root"
-    private_key = file("~/.ssh/id_rsa")
+    private_key = file(var.ssh_private_key_path)
   }
 
   provisioner "file" {

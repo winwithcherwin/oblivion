@@ -1,4 +1,6 @@
-redis_cluster_name = "redis-cluster-0"
+redis_cluster_name   = "redis-cluster-0"
+ssh_public_key_path  = "~/.ssh/id_rsa.pub"
+ssh_private_key_path = "~/.ssh/id_rsa"
 
 clouds = ["digitalocean", "hetzner"]
 

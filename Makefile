@@ -80,10 +80,10 @@ terraform-check-vars:
 	fi
 
 terraform-plan: terraform-check-vars terraform-init ## terraform plan
-	@terraform -chdir=terraform plan -var-file=$(OB_ENVIRONMENT).tfvars -var="ssh_key_name=$(MY_SSH_KEY_NAME)" -var="my_source_ip=$(MY_SOURCE_IP)/32"
+	@terraform -chdir=terraform plan -var-file="$(OB_ENVIRONMENT).tfvars" -var="ssh_key_name=$(MY_SSH_KEY_NAME)" -var="my_source_ip=$(MY_SOURCE_IP)/32"
 
 terraform-apply: terraform-check-vars terraform-init ## terraform apply
-	@terraform -chdir=terraform apply -auto-approve -var-file=$(OB_ENVIRONMENT) -var="ssh_key_name=$(MY_SSH_KEY_NAME)" -var="my_source_ip=$(MY_SOURCE_IP)/32"
+	@terraform -chdir=terraform apply -auto-approve -var-file="$(OB_ENVIRONMENT).tfvars" -var="ssh_key_name=$(MY_SSH_KEY_NAME)" -var="my_source_ip=$(MY_SOURCE_IP)/32"
 	@date > $(BOOTSTRAP_TERRAFORM)
 
 when-terraform-bootstrapped:
@@ -93,7 +93,7 @@ when-terraform-bootstrapped:
 	fi
 
 terraform-destroy: ## terraform destroy
-	@terraform -chdir=terraform destroy -var-file=$(OB_ENVIRONMENT) -var="ssh_key_name=$(MY_SSH_KEY_NAME)" -var="my_source_ip=$(MY_SOURCE_IP)/32"
+	@terraform -chdir=terraform destroy -var-file="$(OB_ENVIRONMENT).tfvars" -var="ssh_key_name=$(MY_SSH_KEY_NAME)" -var="my_source_ip=$(MY_SOURCE_IP)/32"
 
 
 ## VALIDATE

@@ -1,6 +1,6 @@
 variable "hosts" {
   description = "Map of hostname => { ip, name }"
-  type = map(string)
+  type        = map(string)
 }
 
 variable "git_repo_url" {
@@ -13,4 +13,9 @@ variable "git_clone_dir" {
 
 variable "redis_uri" {
   type = string
+}
+
+variable "ssh_private_key_path" {
+  type        = string
+  description = "Path of the SSH public key"
 }

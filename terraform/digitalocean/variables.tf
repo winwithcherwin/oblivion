@@ -8,5 +8,10 @@ variable "servers" {
 
 variable "ssh_key_name" {
   type        = string
-  description = "Name of the SSH key"
+  description = "Name of the SSH public key"
+}
+
+variable "ssh_public_key_path" {
+  type = string
+  description = "Path of the SSH public key"
 }

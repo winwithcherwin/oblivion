@@ -13,24 +13,27 @@ module "digitalocean" {
   source = "./digitalocean"
   count  = contains(var.clouds, "digitalocean") ? 1 : 0
 
-  servers      = lookup(var.servers, "digitalocean", {})
-  ssh_key_name = var.ssh_key_name
+  servers             = lookup(var.servers, "digitalocean", {})
+  ssh_key_name        = var.ssh_key_name
+  ssh_public_key_path = var.ssh_public_key_path
 }
 
 module "hetzner" {
   source = "./hetzner"
   count  = contains(var.clouds, "hetzner") ? 1 : 0
 
-  servers      = lookup(var.servers, "hetzner", {})
-  ssh_key_name = var.ssh_key_name
+  servers             = lookup(var.servers, "hetzner", {})
+  ssh_key_name        = var.ssh_key_name
+  ssh_public_key_path = var.ssh_public_key_path
 }
 
 module "oblivion" {
   source = "./modules/oblivion"
   hosts  = local.all_hosts
 
-  git_repo_url  = var.git_repo_url
-  git_clone_dir = var.git_clone_dir
+  git_repo_url        = var.git_repo_url
+  git_clone_dir       = var.git_clone_dir
+  ssh_private_key_path = var.ssh_private_key_path
 
   redis_uri = module.redis.uri
 }
