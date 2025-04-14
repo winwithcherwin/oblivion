@@ -7,11 +7,6 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
     external-dns.alpha.kubernetes.io/hostname: "*.lab.winwithcherwin.com,lab.winwithcherwin.com"
     external-dns.alpha.kubernetes.io/target: 138.199.163.162
-    nginx.ingress.kubernetes.io/server-snippet: |
-      location = / {
-        return 200 "All systems go!";
-        add_header Content-Type text/plain;
-      }
 spec:
   ingressClassName: nginx
 
