@@ -33,7 +33,12 @@ kubectl kustomize kubernetes/clusters/development | kubectl apply -f - # somehow
 
 flux reconcile kustomization oblivion --with-source
 
+# you should now have most things running. The things that aren't running are waiting for secrets / credentials
+
+# This integrates kubernetes backend with vault and makes sure the backend gets a new jwt periodically
 ob bao mount-kubernetes-backend --vault-address https://10.8.0.3:8200 --cluster-name development
 ob bao create-role-vault-secrets-operator --cluster-name development
 ob bao enable-secrets-engine --cluster-name development
+
+# now we need to copy the secrets
 ```

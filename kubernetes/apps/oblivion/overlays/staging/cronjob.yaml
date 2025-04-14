@@ -1,0 +1,12 @@
+- op: replace
+  path: /spec/jobTemplate/spec/template/spec/containers/0/command
+  value:
+    - python3
+    - -m
+    - oblivion
+    - bao
+    - update-kubernetes-backend
+    - --vault-address=https://10.8.0.3:8200
+    - --cluster-name=staging
+    - --kube-host=https://10.8.0.4:6443
+

@@ -5,4 +5,9 @@ resources:
 
 patches:
   - path: certificates/oblivion-ca-certificate.yaml
+  - path: cronjob.yaml
+    target:
+      group: batch
+      version: v1
+      name: bao-update-kubernetes-backend
 
