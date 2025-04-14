@@ -3,3 +3,18 @@ kind: Kustomization
 resources:
   - ../../base
 
+patches:
+  - path: ingress.yaml
+    target:
+      group: networking.k8s.io
+      version: v1
+      kind: Ingress
+      name: ingress-nginx
+
+  - path: certificate.yaml
+    target:
+      group: cert-manager.io
+      version: v1
+      kind: Certificate
+      name: wildcard-winwithcherwin-com
+

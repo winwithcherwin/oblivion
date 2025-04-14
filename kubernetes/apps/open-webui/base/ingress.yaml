@@ -8,9 +8,9 @@ metadata:
 spec:
   ingressClassName: nginx
   tls:
-    - secretName: wildcard-tls-lab-winwithcherwin-com
+    - secretName: wildcard-winwithcherwin-com
       hosts:
-        - "*.lab.winwithcherwin.com"
+        - chat.lab.winwithcherwin.com
   rules:
     - host: chat.lab.winwithcherwin.com
       http:

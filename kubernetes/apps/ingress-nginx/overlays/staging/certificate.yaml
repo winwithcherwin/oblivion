@@ -12,8 +12,8 @@ spec:
       reflector.v1.k8s.emberstack.com/reflection-auto-namespaces: "open-webui,localhost"
   secretName: wildcard-winwithcherwin-com
   dnsNames:
-    - "*.lab.winwithcherwin.com"
-    - lab.winwithcherwin.com
+    - "*.staging.winwithcherwin.com"
+    - staging.winwithcherwin.com
   issuerRef:
     name: letsencrypt-cloudflare
     kind: ClusterIssuer
