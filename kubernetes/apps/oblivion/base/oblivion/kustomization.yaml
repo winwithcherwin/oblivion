@@ -4,4 +4,6 @@ resources:
   - namespace.yaml
   - cronjob.yaml
   - debug-pod.yaml
+  - registry-secret.yaml
+  - vault-auth.yaml
 
