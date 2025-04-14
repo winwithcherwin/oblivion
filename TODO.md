@@ -22,4 +22,4 @@
 * Deploy reflector with flux
 * Create oblivion-ca-certificate in kube-system with reflector annotations
 * Install reflector
-
+* Turnoff SKIP_VERIFY *everywhere*
