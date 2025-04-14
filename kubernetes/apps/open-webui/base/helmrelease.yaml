@@ -25,10 +25,6 @@ spec:
       enabled: false
     websocket:
       enabled: true
-    ingress:
-      enabled: true
-      class: nginx
-      host: chat.lab.winwithcherwin.com
     enableOpenaiApi: true
     extraEnvVars:
       - name: OPENAI_API_KEY
