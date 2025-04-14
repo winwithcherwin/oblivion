@@ -9,4 +9,18 @@ metadata:
     external-dns.alpha.kubernetes.io/target: 91.99.2.195
 spec:
   ingressClassName: nginx
-
+  tls:
+    - secretName: wildcard-winwithcherwin-com
+      hosts:
+        - staging.winwithcherwin.com
+  rules:
+    - host: staging.winwithcherwin.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dummy
+                port:
+                  number: 80
