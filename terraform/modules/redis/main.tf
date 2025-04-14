@@ -1,5 +1,5 @@
 resource "digitalocean_database_cluster" "this" {
-  name       = "redis-cluster-0"
+  name       = var.cluster_name
   engine     = "redis"
   version    = "7"
   size       = var.size

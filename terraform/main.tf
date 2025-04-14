@@ -36,7 +36,8 @@ module "oblivion" {
 }
 
 module "redis" {
-  source = "./modules/redis"
+  source       = "./modules/redis"
+  cluster_name = var.redis_cluster_name
 
   my_source_ip = var.my_source_ip
   external_ips = values(local.all_hosts)

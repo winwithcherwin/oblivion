@@ -16,3 +16,8 @@ variable "external_ips" {
   type = list(string)
   description = "IP addresses allowed to access Redis"
 }
+
+variable "cluster_name" {
+  type = string
+  default = "redis-cluster-0"
+}

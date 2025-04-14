@@ -33,3 +33,8 @@ variable "git_repo_url" {
   default = "https://github.com/winwithcherwin/oblivion"
 }
 
+variable "redis_cluster_name" {
+  type    = string
+  default = "redis-cluster-0"
+}
+
