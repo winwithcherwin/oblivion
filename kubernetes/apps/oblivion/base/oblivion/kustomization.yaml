@@ -4,6 +4,6 @@ resources:
   - namespace.yaml
   - cronjob.yaml
   - debug-pod.yaml
-  - registry-secret.yaml
+  - docker-pull-secret.yaml
   - vault-auth.yaml
 

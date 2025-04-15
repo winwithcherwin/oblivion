@@ -21,6 +21,7 @@
     pkgs.tree
     pkgs.openssl
     pkgs.bat
+    pkgs.docker
   ];
   scripts.k.exec = ''
     kubectl "$@";
