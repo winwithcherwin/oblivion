@@ -1,4 +1,6 @@
 import click
+from rich import print
+from rich.pretty import pretty_repr
 import inspect
 from pathlib import Path
 from lupa import LuaRuntime
@@ -52,6 +54,27 @@ def extract_args(func, previous_output, explicit_args=None):
 
     return kwargs
 
+def execute_pipeline_with_context(steps):
+    results = []
+    global context
+
+    for step in steps.values():
+        func_path = step["func"]
+        explicit_args = step["args"] if "args" in step else {}
+
+        func = resolve_function(func_path)
+        kwargs = extract_args(func, context, explicit_args)
+        print(f"[bold green]{func_path}[/bold green]:[bold magenta]{kwargs}")
+
+        result = func(**kwargs)
+
+        # Save output for next step
+        if isinstance(result, dict):
+            context.update(result)
+        results.append(result)
+
+    return results
+
 def execute_pipeline(steps):
     results = []
     previous_output = {}
@@ -68,9 +91,13 @@ def execute_pipeline(steps):
         if isinstance(result, dict):
             previous_output.update(result)
         results.append(result)
+    print(previous_output)
 
     return results
 
+def unset(key):
+    global context
+    print(context)
 
 @click.command("run")
 @click.argument("file", type=str, required=True)
@@ -79,7 +106,8 @@ def cli(file):
     lua = LuaRuntime(unpack_returned_tuples=True)
     lua.globals().unseal_vault = unseal_vault
     lua.globals().create_approle = create_approle
-    lua.globals().execute_pipeline = execute_pipeline
+    lua.globals().execute_pipeline = execute_pipeline_with_context
+    lua.globals().unset = unset
     lua.execute(Path("dsl.lua").read_text())
 
     code = Path(file).read_text()

@@ -102,7 +102,14 @@ def get_vault_token() -> dict:
         return {"vault_token": secrets["root_token"]}
 
 def get_vault_address():
-    return {"vault_address": "https://10.8.0.3:8200"}
+    return {"vault_addr": "https://10.8.0.3:8200"}
+
+def mask_vault_token():
+    return {"vault_token": "********"}
+
+def mask_vault_unseal_keys():
+    return {"vault_unseal_keys": "********"}
+
 
 
 def get_unseal_keys():
@@ -110,7 +117,7 @@ def get_unseal_keys():
         raise RuntimeError(f"Missing {SECRETS_PATH}")
 
     secrets = json.loads(SECRETS_PATH.read_text())
-    return {"keys": secrets["keys"]}
+    return {"vault_unseal_keys": secrets["keys"]}
 
 
 OPENBAO_SECRETS_FILE = ".secrets/openbao.json"
@@ -204,9 +211,9 @@ def enable_auth_approle(vault_addr, vault_token):
         client.sys.enable_auth_method(method_type="approle")
 
 
-def init(vault_address):
+def init(vault_addr):
     client = hvac.Client(
-        url=vault_address,
+        url=vault_addr,
         verify=False,
     )
 
@@ -224,9 +231,9 @@ def init(vault_address):
     if not client.sys.is_sealed():
         return "successfully unsealed bao"
 
-def delete_intermediate(endpoint, vault_token):
+def delete_intermediate(vault_addr, vault_token):
     client = hvac.Client(
-        url=endpoint,
+        url=vault_addr,
         token=vault_token,
         verify=False,
     )
@@ -248,7 +255,7 @@ def delete_intermediate(endpoint, vault_token):
         raise Exception(f"Could not disable secrets engine: {e}")
 
 
-def bootstrap_intermediate(vault_address, vault_token):
+def bootstrap_intermediate(vault_addr, vault_token):
     with open(ROOT_KEY_PATH, "rb") as f:
         root_key = serialization.load_pem_private_key(f.read(), password=None)
 
@@ -256,7 +263,7 @@ def bootstrap_intermediate(vault_address, vault_token):
         root_cert = x509.load_pem_x509_certificate(f.read(), backend=default_backend())
 
     client = hvac.Client(
-        url=vault_address,
+        url=vault_addr,
         token=vault_token,
         verify=False,
     )
@@ -313,8 +320,8 @@ def bootstrap_intermediate(vault_address, vault_token):
     client.secrets.pki.set_urls(
         mount_point=PKI_PATH,
         params=dict(
-            issuing_certificates=f"{endpoint}/v1/{PKI_PATH}/ca",
-            crl_distribution_points=f"{endpoint}/v1/{PKI_PATH}/crl",
+            issuing_certificates=f"{vault_addr}/v1/{PKI_PATH}/ca",
+            crl_distribution_points=f"{vault_addr}/v1/{PKI_PATH}/crl",
         )
     )
 
@@ -335,20 +342,20 @@ def bootstrap_intermediate(vault_address, vault_token):
         )
     )
 
-def unseal(endpoint, keys):
+def unseal(vault_addr, vault_unseal_keys):
     client = hvac.Client(
-        url=endpoint,
+        url=vault_addr,
         verify=False,
     )
 
-    unseal_response = client.sys.submit_unseal_keys(keys)
+    unseal_response = client.sys.submit_unseal_keys(vault_unseal_keys)
     print(f"unseal response: {unseal_response}")
 
     if not client.sys.is_sealed():
         print("successfully unsealed bao")
         return
 
-def update_kubernetes_backend(cluster_name, vault_address, kube_host):
+def update_kubernetes_backend(cluster_name, vault_addr, kube_host):
     auth_mount = f"kubernetes-{cluster_name}"
     sa_name = "token-reviewer"
     namespace = "oblivion"
@@ -357,7 +364,7 @@ def update_kubernetes_backend(cluster_name, vault_address, kube_host):
     jwt, ca_crt, _ = kubernetes.extract_auth_details(sa_name, namespace)
 
     client = hvac.Client(
-        url=vault_address,
+        url=vault_addr,
         verify=False,
     )
     # get vault_token for own service account
@@ -377,10 +384,10 @@ def update_kubernetes_backend(cluster_name, vault_address, kube_host):
 
     print(f"updated backend: {auth_mount}")
 
-def mount_kubernetes_backend(cluster_name, vault_address, vault_token):
+def mount_kubernetes_backend(cluster_name, vault_addr, vault_token):
     # meant to be run outside of cluster
     client = hvac.Client(
-        url=vault_address,
+        url=vault_addr,
         token=vault_token,
         verify=False,
     )

@@ -30,3 +30,8 @@ def extract_auth_details(sa_name, namespace):
 
     return jwt, ca_crt, kube_host
 
+
+def copy_kube_config(kube_host, path, dest):
+    import subprocess
+    command = ["scp", f"root@{kube_host}:{path}", dest]
+    subprocess.run(' '.join(command))

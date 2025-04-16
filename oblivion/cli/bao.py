@@ -133,10 +133,10 @@ def do_create_approle(**kwargs):
     click.echo(json.dumps(result, indent=2))
 
 @cli.command("init")
-@click.argument("endpoint", type=str)
-def init_command(endpoint):
+@click.argument("vault-addr", type=str)
+def init_command(vault_addr):
     client = hvac.Client(
-        url=endpoint,
+        url=vault_addr,
         verify=False,
     )
 
@@ -156,11 +156,11 @@ def init_command(endpoint):
         return
 
 @cli.command("delete-intermediate")
-@click.argument("endpoint", type=str)
+@click.argument("vault-addr", type=str)
 @inject_extra_vars([get_vault_token])
-def bootstrap_intermediate(endpoint, vault_token):
+def bootstrap_intermediate(vault_addr, vault_token):
     client = hvac.Client(
-        url=endpoint,
+        url=vault_addr,
         token=vault_token,
         verify=False,
     )
@@ -183,9 +183,9 @@ def bootstrap_intermediate(endpoint, vault_token):
 
 
 @cli.command("bootstrap-intermediate")
-@click.argument("endpoint", type=str)
+@click.argument("vault_addr", type=str)
 @inject_extra_vars([get_vault_token])
-def bootstrap_intermediate(endpoint, vault_token):
+def bootstrap_intermediate(vault_addr, vault_token):
     with open(ROOT_KEY_PATH, "rb") as f:
         root_key = serialization.load_pem_private_key(f.read(), password=None)
 
@@ -193,7 +193,7 @@ def bootstrap_intermediate(endpoint, vault_token):
         root_cert = x509.load_pem_x509_certificate(f.read(), backend=default_backend())
 
     client = hvac.Client(
-        url=endpoint,
+        url=vault_addr,
         token=vault_token,
         verify=False,
     )
@@ -248,8 +248,8 @@ def bootstrap_intermediate(endpoint, vault_token):
     client.secrets.pki.set_urls(
         mount_point=PKI_PATH,
         params=dict(
-            issuing_certificates=f"{endpoint}/v1/{PKI_PATH}/ca",
-            crl_distribution_points=f"{endpoint}/v1/{PKI_PATH}/crl",
+            issuing_certificates=f"{vault_addr}/v1/{PKI_PATH}/ca",
+            crl_distribution_points=f"{vault_addr}/v1/{PKI_PATH}/crl",
         )
     )
 
@@ -271,15 +271,15 @@ def bootstrap_intermediate(endpoint, vault_token):
     )
 
 @cli.command("unseal")
-@click.argument("endpoint", type=str)
+@click.argument("vault-addr", type=str)
 @inject_extra_vars([get_unseal_keys])
-def unseal_command(endpoint, keys):
+def unseal_command(vault_addr, vault_unseal_keys):
     client = hvac.Client(
-        url=endpoint,
+        url=vault_addr,
         verify=False,
     )
 
-    unseal_response = client.sys.submit_unseal_keys(keys)
+    unseal_response = client.sys.submit_unseal_keys(vault_unseal_keys)
     click.echo(f"unseal response: {unseal_response}")
 
     if not client.sys.is_sealed():
@@ -287,10 +287,10 @@ def unseal_command(endpoint, keys):
         return
 
 @cli.command("update-kubernetes-backend")
-@click.option("--vault-address", required=True, type=str)
+@click.option("--vault-addr", required=True, type=str)
 @click.option("--cluster-name", required=True, type=str)
 @click.option("--kube-host", required=True, type=str)
-def do_update_kubernetes_backend(cluster_name, vault_address, kube_host):
+def do_update_kubernetes_backend(cluster_name, vault_addr, kube_host):
     auth_mount = f"kubernetes-{cluster_name}"
     sa_name = "token-reviewer"
     namespace = "oblivion"
@@ -299,7 +299,7 @@ def do_update_kubernetes_backend(cluster_name, vault_address, kube_host):
     jwt, ca_crt, _ = kubernetes.extract_auth_details(sa_name, namespace)
 
     client = hvac.Client(
-        url=vault_address,
+        url=vault_addr,
         verify=False,
     )
     # get vault_token for own service account
@@ -323,10 +323,10 @@ def do_update_kubernetes_backend(cluster_name, vault_address, kube_host):
 @click.option("--vault-address", required=True, type=str)
 @click.option("--cluster-name", required=True, type=str)
 @inject_extra_vars([get_vault_token])
-def do_mount_kubernetes_backend(cluster_name, vault_address, vault_token):
+def do_mount_kubernetes_backend(cluster_name, vault_addr, vault_token):
     # meant to be run outside of cluster
     client = hvac.Client(
-        url=vault_address,
+        url=vault_addr,
         token=vault_token,
         verify=False,
     )
@@ -376,12 +376,12 @@ def integrate():
     pass
 
 @integrate.command("kubernetes")
-@click.option("--endpoint", type=str, required=True, help="The address of OpenBao")
+@click.option("--vault-addr", type=str, required=True, help="The address of OpenBao")
 @click.option("--cluster-name", type=str, required=True, help="The name of the cluster")
 @inject_extra_vars([get_vault_token])
-def integrate_kubernetes(endpoint, cluster_name, vault_token):
+def integrate_kubernetes(vault_addr, cluster_name, vault_token):
     client = hvac.Client(
-        url=endpoint,
+        url=vault_addr,
         token=vault_token,
         verify=False,
     )
