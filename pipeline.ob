@@ -1,0 +1,8 @@
+pipeline "greeting" {
+  step "say_hello_rocc" {
+    hello_world("Rocc")
+  }
+}
+step "say_hello_world" {
+    hello_world()
+}
