@@ -101,7 +101,8 @@ def get_vault_token() -> dict:
         secrets = json.loads(SECRETS_PATH.read_text())
         return {"vault_token": secrets["root_token"]}
 
-
+def get_vault_address():
+    return {"vault_address": "https://10.8.0.3:8200"}
 
 
 def get_unseal_keys():
@@ -205,7 +206,7 @@ def enable_auth_approle(vault_addr, vault_token):
 
 def init(vault_address):
     client = hvac.Client(
-        url=endpoint,
+        url=vault_address,
         verify=False,
     )
 
@@ -247,7 +248,7 @@ def delete_intermediate(endpoint, vault_token):
         raise Exception(f"Could not disable secrets engine: {e}")
 
 
-def bootstrap_intermediate(endpoint, vault_token):
+def bootstrap_intermediate(vault_address, vault_token):
     with open(ROOT_KEY_PATH, "rb") as f:
         root_key = serialization.load_pem_private_key(f.read(), password=None)
 
@@ -255,7 +256,7 @@ def bootstrap_intermediate(endpoint, vault_token):
         root_cert = x509.load_pem_x509_certificate(f.read(), backend=default_backend())
 
     client = hvac.Client(
-        url=endpoint,
+        url=vault_address,
         token=vault_token,
         verify=False,
     )
@@ -263,12 +264,14 @@ def bootstrap_intermediate(endpoint, vault_token):
     if not client.is_authenticated():
         raise Exception("OpenBao authentication failed.")
 
-    if f"{PKI_PATH}/" not in client.sys.list_mounted_secrets_engines():
-        client.sys.enable_secrets_engine(
-            backend_type="pki",
-            path=PKI_PATH,
-            config={"max_lease_ttl": TTL},
-        )
+    if f"{PKI_PATH}/" in client.sys.list_mounted_secrets_engines():
+        return "Already bootstrapped intermediate"
+
+    client.sys.enable_secrets_engine(
+        backend_type="pki",
+        path=PKI_PATH,
+        config={"max_lease_ttl": TTL},
+    )
 
     # create and sign intermediate
     csr_resp = client.secrets.pki.generate_intermediate(

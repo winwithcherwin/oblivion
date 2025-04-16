@@ -1,4 +1,5 @@
 import click
+import inspect
 from pathlib import Path
 from lupa import LuaRuntime
 import lupa
@@ -36,15 +37,38 @@ def resolve_function(func_path):
     func = getattr(module, func_name)
     return func
 
+def extract_args(func, previous_output, explicit_args=None):
+    sig = inspect.signature(func)
+    kwargs = {}
+
+    # Start with explicit args
+    if explicit_args:
+        kwargs.update(explicit_args)
+
+    # Fill in missing kwargs from previous output
+    for name in sig.parameters:
+        if name not in kwargs and previous_output and name in previous_output:
+            kwargs[name] = previous_output[name]
+
+    return kwargs
+
 def execute_pipeline(steps):
     results = []
+    previous_output = {}
+
     for step in steps.values():
         func_path = step["func"]
-        args = step["args"] if "args" in step else {}
-        
+        explicit_args = step["args"] if "args" in step else {}
+
         func = resolve_function(func_path)
-        result = func(**args)
+        kwargs = extract_args(func, previous_output, explicit_args)
+        result = func(**kwargs)
+
+        # Save output for next step
+        if isinstance(result, dict):
+            previous_output.update(result)
         results.append(result)
+
     return results
 
 
