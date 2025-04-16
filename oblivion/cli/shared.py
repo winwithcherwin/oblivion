@@ -70,7 +70,6 @@ def create_log_output_fn():
 
     return output_fn
 
-
 def task_command(task, timeout=10):
     def decorator(f):
         @click.option("--queue", help="Target queue name")
