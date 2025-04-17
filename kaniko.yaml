@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kaniko
+spec:
+  volumes:
+    - name: kaniko-output
+      emptyDir: {}
+    - name: containerd-sock
+      hostPath:
+        path: /run/k3s/containerd/containerd.sock
+        type: Socket
+  initContainers:
+    - name: kaniko
+      image: gcr.io/kaniko-project/executor:latest
+      args:
+        - --context=git://github.com/winwithcherwin/oblivion.git#refs/heads/main
+        - --dockerfile=Dockerfile
+        - --verbosity=info
+        - --tarPath=/workspace/image.tar
+        - --destination=winwithcherwin.com/oblivion:latest
+        - --no-push
+      volumeMounts:
+        - name: kaniko-output
+          mountPath: /workspace
+  containers:
+    - name: k3s
+      image: rancher/k3s:latest
+      command: ["/bin/sh", "-c", "ctr images import /kaniko/output/image.tar"]
+      securityContext:
+        privileged: true
+      volumeMounts:
+        - name: kaniko-output
+          mountPath: /kaniko/output
+        - name: containerd-sock
+          mountPath: /run/k3s/containerd/containerd.sock
+          readOnly: false
+
