@@ -72,7 +72,7 @@ orjson==3.10.7
 packaging==24.1
 paramiko==3.5.0
 parso==0.8.4
-passlib==1.7.4.post19800102000000
+passlib==1.7.4
 pexpect==4.9.0
 platformdirs==4.3.7
 poetry-core==1.9.1
@@ -84,7 +84,6 @@ pyasn1==0.6.1
 pyasn1_modules==0.4.2
 pycares==4.4.0
 pycparser==2.22
-pycrypto==3.20.0
 pycryptodome==3.20.0
 Pygments==2.19.1
 pyhcl==0.4.5
@@ -92,7 +91,7 @@ PyNaCl==1.5.0
 pyroute2==0.9.1
 pyserial==3.5
 python-daemon==3.1.2
-python-dateutil==2.9.0.post0
+python-dateutil==2.9.0
 python-dotenv==1.0.1
 python-terraform==0.10.1
 PyYAML==6.0.2
@@ -107,7 +106,7 @@ rsa==4.9
 ruamel.yaml==0.18.10
 ruamel.yaml.clib==0.2.12
 scp==0.15.0
-setuptools==75.1.1.post0
+setuptools==75.1.1
 six==1.16.0
 stack-data==0.6.3
 tabulate==0.9.0
