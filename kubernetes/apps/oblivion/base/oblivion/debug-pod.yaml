@@ -33,6 +33,9 @@ spec:
       - name: KUBECONFIG
         value: /etc/rancher/k3s/k3s.yaml
     volumeMounts:
+      - name: docker-config
+        mountPath: /root/.docker/config.json
+        subPath: config.json
       - name: oblivion-source
         mountPath: /opt/oblivion
         readOnly: true
@@ -43,11 +46,24 @@ spec:
         mountPath: /etc/rancher/k3s/k3s.yaml
       - name: local-storage
         mountPath: /data
+      - name: containerd-sock
+        mountPath: /run/k3s/containerd/containerd.sock
+        readOnly: false
     command:
     - /bin/sh
     - -c
     - tail -f /dev/null
   volumes:
+    - name: docker-config
+      secret:
+        secretName: docker-pull-secret
+        items:
+          - key: .dockerconfigjson
+            path: config.json
+    - name: containerd-sock
+      hostPath:
+        path: /run/k3s/containerd/containerd.sock
+        type: Socket
     - name: oblivion-source
       hostPath:
         path: /opt/oblivion
