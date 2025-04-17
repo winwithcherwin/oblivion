@@ -1,3 +1,6 @@
+import subprocess
+from pathlib import Path
+
 from kubernetes import client, config
 
 
@@ -30,8 +33,30 @@ def extract_auth_details(sa_name, namespace):
 
     return jwt, ca_crt, kube_host
 
+def copy_kube_config(host, source, dest):
+    command = ["scp", f"root@{host}:{source}", dest]
+    subprocess.run(command, check=True)
 
-def copy_kube_config(kube_host, path, dest):
-    import subprocess
-    command = ["scp", f"root@{kube_host}:{path}", dest]
-    subprocess.run(' '.join(command))
+def publish_root_ca(name, source, destination, namespace):
+    if Path(destination).exists():
+        return {"publish_root_ca", False}
+
+    with open(destination, "w") as f:
+        command = [
+            "kubectl",
+            "create",
+            "--dry-run=client",
+            "-n",
+            namespace,
+            "configmap",
+            name,
+            f"--from-file=certificate={source}",
+            "-o"
+            "yaml",
+        ]
+        subprocess.run(command, stdout=f)
+
+    return {"publish_root_ca", True}
+
+def kustomize_apply(path):
+    pass

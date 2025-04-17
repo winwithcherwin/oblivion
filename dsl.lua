@@ -1,19 +1,28 @@
 function step(func_name)
-    return function(args)
-        args = args or {}
-        return {func = func_name, args = args}
+    return function(config)
+        config = config or {}
+
+        return {
+            func = func_name,
+            args = config.args or nil,
+            register = config.register or nil,
+	    enabled = config.enabled,
+            name = config.name,
+        }
     end
 end
 
+var = function(name)
+  return function() return _G[name] end
+end
+
 function pipeline(steps)
-    local formatted_steps = {}
+    local formatted = {}
     for _, s in ipairs(steps) do
-        if type(s) == "function" then
-            table.insert(formatted_steps, s())
-        else
-            table.insert(formatted_steps, s)
-        end
+        local result = type(s) == "function" and s() or s
+        print("→ Added step", result.func)
+        table.insert(formatted, result)
     end
-    execute_pipeline(formatted_steps)
+    execute_pipeline(formatted)
 end
 

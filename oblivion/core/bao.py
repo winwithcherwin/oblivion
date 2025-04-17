@@ -430,4 +430,5 @@ path "auth/{auth_mount}/config" {{
         policies=policy_name,
         ttl="24h",
     )
+    return {"cluster_name": cluster_name}
 

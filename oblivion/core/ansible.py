@@ -72,12 +72,12 @@ def create_log_output_fn():
 
 
 
-def stream_task(*args, queue=None, fanout=False, **kwargs):
+def stream_task(*args, queue=None, fanout=False, extra_vars=None, **kwargs):
     if not fanout and not queue:
         raise Exception("You must provide --queue <name> or use --all.")
 
     playbook_path = kwargs["playbook_path"]
-    base_vars = kwargs.get("extra_vars", {})
+    base_vars = extra_vars or {}
     callback_chain = kwargs.get("extra_vars_callback", [])
 
     target_queues = (
