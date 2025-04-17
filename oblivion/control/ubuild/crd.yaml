@@ -1,0 +1,91 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: dockerbuilds.ubuild.winwithcherwin.com
+spec:
+  group: ubuild.winwithcherwin.com
+  names:
+    kind: DockerBuild
+    plural: dockerbuilds
+    singular: dockerbuild
+    shortNames:
+      - dockerbuilds
+      - ubuilds
+      - ubuild
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          required:
+            - spec
+          properties:
+            spec:
+              type: object
+              required:
+                - git
+                - image
+              properties:
+                git:
+                  type: object
+                  required:
+                    - url
+                    - revision
+                  properties:
+                    url:
+                      type: string
+                      description: Public Git URL (https)
+                    revision:
+                      type: string
+                      description: Branch, tag, or SHA to build
+                    contextDir:
+                      type: string
+                      default: "."
+                      description: Subdirectory to use as Docker build context
+                    dockerfile:
+                      type: string
+                      default: "Dockerfile"
+                      description: Path to Dockerfile, relative to contextDir
+
+                image:
+                  type: object
+                  required:
+                    - name
+                  properties:
+                    name:
+                      type: string
+                      description: Target image name, e.g. ghcr.io/user/app
+                    tagStrategy:
+                      type: string
+                      enum: [sha, timestamp]
+                      default: sha
+                      description: How to tag the image
+                    tagPrefix:
+                      type: string
+                      description: Optional prefix to prepend to tag
+
+                secretRef:
+                  type: string
+                  description: Name of Kubernetes secret with Docker config (used by Kaniko)
+
+            status:
+              type: object
+              properties:
+                buildPhase:
+                  type: string
+                  enum: [Pending, Building, Succeeded, Failed]
+                lastCommit:
+                  type: string
+                lastImage:
+                  type: string
+                lastBuildTime:
+                  type: string
+                  format: date-time
+                recentLogs:
+                  type: array
+                  items:
+                    type: string
+

@@ -1,0 +1,19 @@
+apiVersion: ubuild.winwithcherwin.com/v1alpha1
+kind: DockerBuild
+metadata:
+  name: oblivion
+  namespace: default
+spec:
+  git:
+    url: https://github.com/winwithcherwin/oblivion
+    revision: main
+    contextDir: ./
+    dockerfile: ./Dockerfile
+
+  image:
+    name: ghcr.io/winwithcherwin/oblivion
+    tagStrategy: sha
+    tagPrefix: dev-
+
+  secretRef: docker-pull-secret
+

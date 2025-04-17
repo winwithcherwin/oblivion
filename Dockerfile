@@ -1,3 +1,2 @@
-FROM ubuntu
+FROM python:3.12.3
 
-CMD ["echo", "hello", "world"]
