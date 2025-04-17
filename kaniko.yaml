@@ -1,4 +1,16 @@
 apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kaniko-cache-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: local-path
+---
+apiVersion: v1
 kind: Pod
 metadata:
   name: kaniko
@@ -10,6 +22,15 @@ spec:
       hostPath:
         path: /run/k3s/containerd/containerd.sock
         type: Socket
+    - name: docker-config
+      secret:
+        secretName: docker-pull-secret
+        items:
+          - key: .dockerconfigjson
+            path: config.json
+    - name: kaniko-cache
+      persistentVolumeClaim:
+        claimName: kaniko-cache-pvc
   initContainers:
     - name: kaniko
       image: gcr.io/kaniko-project/executor:latest
@@ -20,9 +41,17 @@ spec:
         - --tarPath=/workspace/image.tar
         - --destination=winwithcherwin.com/oblivion:latest
         - --no-push
+        - --verbosity=debug
+        - --cache-repo=ghcr.io/winwithcherwin/oblivion
+        - --cache=true
+        - --cache-dir=/build/cache
       volumeMounts:
         - name: kaniko-output
           mountPath: /workspace
+        - name: kaniko-cache
+          mountPath: /build
+        - name: docker-config
+          mountPath: /kaniko/.docker/config.json
   containers:
     - name: k3s
       image: rancher/k3s:latest
