@@ -1,15 +1,22 @@
-FROM python:3.12.3
+FROM python:3.12.3-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONBUFFERED=1
 
 WORKDIR /app
 
-RUN apt-get update -y
-RUN apt-get install -y
-
 COPY oblivion/requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
+
+RUN \
+	apt-get update -y && apt-get upgrade -y && apt-get install -y \
+	libgit2-dev -y && \
+	apt-get clean && \
+	rm -rf /var/lib/apt/lists/*
+
+RUN \
+	pip install --upgrade pip && \
+	pip install --no-cache-dir -r requirements.txt && \
+	rm -rf /root/.cache
 
 COPY . .
 
