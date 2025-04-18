@@ -15,6 +15,7 @@ kind: Pod
 metadata:
   name: kaniko
 spec:
+  restartPolicy: Never
   volumes:
     - name: kaniko-output
       emptyDir: {}
@@ -52,6 +53,7 @@ spec:
           mountPath: /build
         - name: docker-config
           mountPath: /kaniko/.docker/config.json
+          subPath: config.json
   containers:
     - name: k3s
       image: rancher/k3s:latest
