@@ -1,5 +1,6 @@
 from rich import print
 from datetime import datetime
+from oblivion import VERSION
 import click
 
 
@@ -12,7 +13,7 @@ def cli():
 def ubuild():
     """Run ubuild"""
 
-    print("running ubuild...")
+    print(f"running ubuild v{VERSION}...")
     while True:
         print(datetime.now())
         import time
