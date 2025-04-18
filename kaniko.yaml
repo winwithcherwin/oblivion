@@ -17,12 +17,6 @@ metadata:
 spec:
   restartPolicy: Never
   volumes:
-    - name: kaniko-output
-      emptyDir: {}
-    - name: containerd-sock
-      hostPath:
-        path: /run/k3s/containerd/containerd.sock
-        type: Socket
     - name: docker-config
       secret:
         secretName: docker-pull-secret
@@ -32,38 +26,22 @@ spec:
     - name: kaniko-cache
       persistentVolumeClaim:
         claimName: kaniko-cache-pvc
-  initContainers:
+  containers:
     - name: kaniko
       image: gcr.io/kaniko-project/executor:latest
       args:
         - --context=git://github.com/winwithcherwin/oblivion.git#refs/heads/main
         - --dockerfile=Dockerfile
-        - --verbosity=info
-        - --tarPath=/workspace/image.tar
-        - --destination=winwithcherwin.com/oblivion:latest
-        - --no-push
+        - --destination=registry.registry.svc.cluster.local:5000/oblivion:latest
         - --verbosity=debug
-        - --cache-repo=ghcr.io/winwithcherwin/oblivion
+        - --cache-repo=registry.registry.svc.cluster.local:5000/oblivion
         - --cache=true
         - --cache-dir=/build/cache
       volumeMounts:
-        - name: kaniko-output
-          mountPath: /workspace
         - name: kaniko-cache
           mountPath: /build
         - name: docker-config
           mountPath: /kaniko/.docker/config.json
           subPath: config.json
-  containers:
-    - name: k3s
-      image: rancher/k3s:latest
-      command: ["/bin/sh", "-c", "ctr images import /kaniko/output/image.tar"]
-      securityContext:
-        privileged: true
-      volumeMounts:
-        - name: kaniko-output
-          mountPath: /kaniko/output
-        - name: containerd-sock
-          mountPath: /run/k3s/containerd/containerd.sock
-          readOnly: false
+
 
