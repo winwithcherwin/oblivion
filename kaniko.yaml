@@ -10,38 +10,39 @@ spec:
       storage: 20Gi
   storageClassName: local-path
 ---
-apiVersion: v1
-kind: Pod
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: kaniko
 spec:
-  restartPolicy: Never
-  volumes:
-    - name: docker-config
-      secret:
-        secretName: docker-pull-secret
-        items:
-          - key: .dockerconfigjson
-            path: config.json
-    - name: kaniko-cache
-      persistentVolumeClaim:
-        claimName: kaniko-cache-pvc
-  containers:
-    - name: kaniko
-      image: gcr.io/kaniko-project/executor:latest
-      args:
-        - --context=git://github.com/winwithcherwin/oblivion.git#refs/heads/main
-        - --dockerfile=Dockerfile
-        - --destination=registry.registry.svc.cluster.local:5000/oblivion:latest
-        - --verbosity=debug
-        - --cache-repo=registry.registry.svc.cluster.local:5000/oblivion
-        - --cache=true
-        - --cache-dir=/build/cache
-      volumeMounts:
-        - name: kaniko-cache
-          mountPath: /build
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: kaniko
+          image: gcr.io/kaniko-project/executor:latest
+          args:
+            - --context=git://github.com/winwithcherwin/oblivion.git#refs/heads/main
+            - --dockerfile=Dockerfile
+            - --destination=registry.registry.svc.cluster.local:5000/oblivion:latest
+            - --verbosity=debug
+            - --cache-repo=registry.registry.svc.cluster.local:5000/oblivion
+            - --cache=true
+            - --cache-dir=/build/cache
+          volumeMounts:
+            - name: kaniko-cache
+              mountPath: /build
+            - name: docker-config
+              mountPath: /kaniko/.docker/config.json
+              subPath: config.json
+      volumes:
         - name: docker-config
-          mountPath: /kaniko/.docker/config.json
-          subPath: config.json
-
-
+          secret:
+            secretName: docker-pull-secret
+            items:
+              - key: .dockerconfigjson
+                path: config.json
+        - name: kaniko-cache
+          persistentVolumeClaim:
+            claimName: kaniko-cache-pvc
