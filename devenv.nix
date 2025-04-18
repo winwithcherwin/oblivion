@@ -22,6 +22,7 @@
     pkgs.openssl
     pkgs.bat
     pkgs.docker
+    pkgs.libgit2
   ];
   scripts.k.exec = ''
     kubectl "$@";
