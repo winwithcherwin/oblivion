@@ -6,4 +6,5 @@ resources:
   - debug-pod.yaml
   - docker-pull-secret.yaml
   - vault-auth.yaml
+  - registry.yaml
 
