@@ -23,3 +23,6 @@
 * Create oblivion-ca-certificate in kube-system with reflector annotations
 * Install reflector
 * Turnoff SKIP_VERIFY *everywhere*
+
+* Make sure to update registries.yaml
+* Make sure to update resolve.conf with k3s dns (remove symlink first and disable systemd-resolved)

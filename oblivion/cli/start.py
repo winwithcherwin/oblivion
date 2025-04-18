@@ -1,8 +1,17 @@
-from rich import print
-from datetime import datetime
-from oblivion import VERSION
 import click
+import threading
+import uvicorn
 
+from datetime import datetime
+from rich import print
+
+from oblivion import VERSION
+from oblivion.control.ubuild.webhook import app as ubuild_webhook
+from oblivion.control.ubuild import runner as ubuild
+
+
+def run_ubuild_webhook():
+    uvicorn.run(ubuild_webhook, host="0.0.0.0", port=8080, log_level="info")
 
 @click.group()
 def cli():
@@ -10,12 +19,15 @@ def cli():
     pass
 
 @cli.command("ubuild")
-def ubuild():
+@click.option("--enable-webhook", is_flag=True, required=False, default=True)
+def run_ubuild(enable_webhook):
     """Run ubuild"""
 
     print(f"running ubuild v{VERSION}...")
-    while True:
-        print(datetime.now())
-        import time
-        time.sleep(5)
+
+    if enable_webhook:
+        webhook = threading.Thread(target=run_ubuild_webhook, daemon=True)
+        webhook.start()
+
+    ubuild.run()
 

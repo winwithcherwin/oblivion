@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ubuild
+  namespace: oblivion
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ubuild
+  template:
+    metadata:
+      labels:
+        app: ubuild
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: controller
+          image: registry.registry.svc.cluster.local:5000/oblivion:latest
+          imagePullPolicy: Always
+          command:
+            - python3
+            - -m
+            - oblivion
+            - start
+            - ubuild
+

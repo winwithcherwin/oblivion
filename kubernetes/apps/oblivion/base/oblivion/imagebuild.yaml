@@ -1,0 +1,13 @@
+apiVersion: ubuild.winwithcherwin.com/v1alpha1
+kind: ImageBuild
+metadata:
+  name: oblivion
+  namespace: oblivion
+spec:
+  secretRef: docker-pull-secret
+  git:
+    url: https://github.com/winwithcherwin/oblivion
+    revision: main
+  image:
+    name: registry.registry.svc.cluster.local:5000/oblivion
+
