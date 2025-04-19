@@ -24,8 +24,9 @@ def handle_build(spec, meta, status, namespace, name, logger, patch, **kwargs):
     branch = spec['git'].get('revision', 'main')
     last_commit = status.get('lastCommit')
 
-    current_sha = get_latest_commit_sha(git_url, branch)
-
+    # TODO: Make generic
+    https_git_url = f"https://{git_url}" # is necessary for the git fetch
+    current_sha = get_latest_commit_sha(https_git_url, branch)
 
     if current_sha == last_commit:
         info(f"🔁 No new commit on {branch}. Skipping build.")
