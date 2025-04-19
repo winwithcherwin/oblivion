@@ -28,10 +28,10 @@ def handle_build(spec, meta, status, namespace, name, logger, patch, **kwargs):
 
 
     if current_sha == last_commit:
-        logger.info(f"🔁 No new commit on {branch}. Skipping build.")
+        info(f"🔁 No new commit on {branch}. Skipping build.")
         return
 
-    logger.info(f"🚀 New commit detected: {current_sha[:7]} — triggering build.")
+    info(f"🚀 New commit detected: {current_sha[:7]} — triggering build.")
     info(f"⏳ Starting DockerBuild for {git['url']} @ {git['revision']}")
 
     patch.status["buildPhase"] = "Building"
@@ -46,7 +46,7 @@ def handle_build(spec, meta, status, namespace, name, logger, patch, **kwargs):
 
     # Output job result for inspection
     job_result = kaniko.create_job(f"imagebuild-{current_sha[:5]}", git_url, image["name"])
-    logger.info(f"would apply: {job_result}")
+    info(f"would apply: {job_result}")
 
     # Simulate a successful build
     patch.status["buildPhase"] = "Succeeded"
