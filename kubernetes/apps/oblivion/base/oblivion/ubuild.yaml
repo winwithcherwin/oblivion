@@ -91,6 +91,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: kaniko-cache-pvc
+  namespace: oblivion
 spec:
   accessModes:
     - ReadWriteOnce
