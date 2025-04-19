@@ -1,0 +1,65 @@
+- name: Installing PowerDNS
+  hosts: all
+  tasks:
+  - name: Get WireGuard details in JSON
+    command: ip -j addr show wg0
+    register: wg_json
+    changed_when: false
+
+  - name: Extract WireGuard IPv4 address
+    set_fact:
+      wireguard_ip: >-
+        {{
+          (wg_json.stdout | from_json)[0].addr_info
+          | selectattr('family', 'equalto', 'inet')
+          | map(attribute='local')
+          | list
+          | first
+        }}
+
+  - name: Debug WireGuard IP
+    debug:
+      msg: "WireGuard IP is {{ wireguard_ip }}"
+
+  - name: Install PowerDNS
+    apt:
+      name: pdns-server
+      update_cache: yes
+
+  - name: Install PowerDNS Backend
+    apt:
+      name: pdns-backend-sqlite3
+      update_cache: yes
+
+  - name: Install PowerDNS Recursor
+    apt:
+      name: pdns-recursor
+      update_cache: yes
+
+  - name: Disable systemd-resolved
+    systemd_service:
+      name: systemd-resolved
+      state: stopped
+      enabled: false
+
+  - name: Delete /etc/resolve.conf
+    file:
+      path: /etc/resolve.conf
+      state: absent
+
+  - name: Set up /etc/resolv.conf
+    vars:
+      nameservers:
+        - "1.1.1.1"
+    template:
+      src: templates/resolv.conf.j2
+      dest: /etc/resolv.conf
+      owner: root
+      group: root
+
+  handlers:
+    - name: Restart PowerDNS
+      service:
+        name: pds
+        state: restarted
+

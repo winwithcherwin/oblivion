@@ -10,3 +10,6 @@
 [submodule "oblivion/engine/ansible/playbooks/openbao/roles/cherwin.openbao"]
 	path = oblivion/engine/ansible/playbooks/openbao/roles/cherwin.openbao
 	url = https://github.com/winwithcherwin/ansible-openbao
+[submodule "oblivion/engine/ansible/playbooks/powerdns/roles/iay.resolve_conf"]
+	path = oblivion/engine/ansible/playbooks/powerdns/roles/iay.resolve_conf
+	url = https://github.com/winwithcherwin/ansible-role-resolv_conf.git
