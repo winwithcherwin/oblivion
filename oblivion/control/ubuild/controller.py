@@ -101,7 +101,9 @@ def handle_build(spec, meta, status, namespace, name, logger, patch, **kwargs):
     info(f"📄 Dockerfile: {git.get('dockerfile', 'Dockerfile')}")
 
     # Output job result for inspection
-    job_result = kaniko.create_job(f"imagebuild-{current_sha[:5]}", git_url, image["name"])
+    now = datetime.now().timestamp()
+    tag = f"{branch}-{current_sha}-{now}"
+    job_result = kaniko.create_job(f"imagebuild-{branch}-{current_sha[:5]}", git_url, image["name"], tag=tag, dry_run=False)
     info(f"would apply: {job_result}")
 
     # Simulate a successful build

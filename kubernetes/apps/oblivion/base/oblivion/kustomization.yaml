@@ -10,5 +10,6 @@ resources:
   - ubuild.yaml
   - imagebuild.yaml
   - imagebuild-ubuild-crd.yaml
+  - ubuild-imagepolicy.yaml
   - ubuild-imagerepository.yaml
 
