@@ -31,12 +31,14 @@ async def receive_webhook(request: Request):
 
         print(f"Would have patched {ns}:{name}")
 
+    print("Processed trigger successfully.")
     return {"status": "ok"}
 
 def find_matching_imagebuilds(repo_url, branch, namespace="default"):
     config.load_incluster_config()
     crd_api = client.CustomObjectsApi()
 
+    print("Looking for image builds")
     all_ib = crd_api.list_namespaced_custom_object(
         group="ubuild.winwithcherwin.com",
         version="v1alpha1",
@@ -52,7 +54,7 @@ def find_matching_imagebuilds(repo_url, branch, namespace="default"):
             spec["git"].get("revision", "main") == branch
         ):
             matches.append(item)
-
+    print(f"found matches: {len(matches)}")
     return matches
 
 def was_path_triggered(payload, trigger_paths):
