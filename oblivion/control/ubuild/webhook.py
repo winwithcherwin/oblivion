@@ -13,6 +13,9 @@ async def receive_webhook(request: Request):
     print("🔐 Headers:", headers)
     print("📦 Payload:", payload)
 
+    if payload.get("zen", None):
+        return {"status": "ok"}
+
     repo_url = payload["repository"]["clone_url"]
     branch = payload["ref"].split("/")[-1]  # refs/heads/main → main
     commit = payload["after"]
