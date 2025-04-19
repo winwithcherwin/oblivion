@@ -81,7 +81,7 @@ spec:
       restartPolicy: Always
       containers:
         - name: controller
-          image: "registry.registry.svc.cluster.local:5000/oblivion@sha256:4b6e63bee8e6b7d1a6649842524e72ccd062c222487767c78720ffdb60588e59"
+          image: registry.registry.svc.cluster.local:5000/oblivion@sha256:4b6e63bee8e6b7d1a6649842524e72ccd062c222487767c78720ffdb60588e59
           imagePullPolicy: IfNotPresent
           command:
             - python3
@@ -131,7 +131,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: kaniko-cache-pvc:
+  name: kaniko-cache-pvc
   namespace: oblivion
 spec:
   accessModes:
