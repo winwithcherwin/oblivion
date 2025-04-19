@@ -1,5 +1,21 @@
 - name: Installing PowerDNS
   hosts: all
+  vars:
+    loglevel: 7
+    server_local_port: 5300
+    recursor_local_port: 53
+    recursor_ip: "127.0.0.1"
+    forward_zones:
+      - "cluster.local=10.43.0.18:53"
+      - "lan=127.0.0.1:5300"
+    allow_from:
+      - "127.0.0.1"
+      - "10.0.0.0/8"
+    local_address:
+      - "{{ wireguard_ip }}"
+      - "127.0.0.1"
+    nameservers:
+      - "127.0.0.1"
   tasks:
   - name: Get WireGuard details in JSON
     command: ip -j addr show wg0
@@ -36,6 +52,18 @@
       name: pdns-recursor
       update_cache: yes
 
+  - name: Configure PowerDNS
+    template:
+      src: templates/pdns.conf.j2
+      dest: /etc/powerdns/pdns.conf
+    notify: Restart PowerDNS
+
+  - name: Configure Recursor
+    template:
+      src: templates/pdns-recursor.conf.j2
+      dest: /etc/powerdns/recursor.conf
+    notify: Restart Recursor
+
   - name: Disable systemd-resolved
     systemd_service:
       name: systemd-resolved
@@ -48,9 +76,6 @@
       state: absent
 
   - name: Set up /etc/resolv.conf
-    vars:
-      nameservers:
-        - "1.1.1.1"
     template:
       src: templates/resolv.conf.j2
       dest: /etc/resolv.conf
@@ -60,6 +85,10 @@
   handlers:
     - name: Restart PowerDNS
       service:
-        name: pds
+        name: pdns
         state: restarted
 
+    - name: Restart Recursor
+      service:
+        name: pdns-recursor
+        state: restarted
