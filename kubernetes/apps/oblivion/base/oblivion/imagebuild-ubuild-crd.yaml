@@ -68,7 +68,12 @@ spec:
                     ingressRef:
                       type: string
                     secretRef:
-                      type: string
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        key:
+                          type: string
 
             status:
               type: object
