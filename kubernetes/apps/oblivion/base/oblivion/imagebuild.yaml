@@ -4,12 +4,19 @@ metadata:
   name: oblivion
   namespace: oblivion
 spec:
-  secretRef: docker-pull-secret
+  image:
+    name: registry.registry.svc.cluster.local:5000/oblivion
+    secretRef: docker-pull-secret
   git:
     url: github.com/winwithcherwin/oblivion
     revision: main
     triggerPaths:
       - oblivion/
-  image:
-    name: registry.registry.svc.cluster.local:5000/oblivion
+  webhook:
+    type: github
+    enabled: false
+    ingressRef: ubuild-ingress
+    secretRef:
+      name: docker-pull-secret
+      key: password
 

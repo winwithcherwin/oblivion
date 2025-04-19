@@ -54,8 +54,22 @@ spec:
                   properties:
                     name:
                       type: string
-                secretRef:
-                  type: string
+                    secretRef:
+                      type: string
+
+                webhook:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [github]
+                    enabled:
+                      type: boolean
+                    ingressRef:
+                      type: string
+                    secretRef:
+                      type: string
+
             status:
               type: object
               properties:
@@ -69,6 +83,9 @@ spec:
                 buildPhase:
                   type: string
                   enum: [Pending, Building, Succeeded, Failed]
+                webhookSecret:
+                  type: string
+                  description: "Secret token used to validate incoming webhooks"
                 recentLogs:
                   type: array
                   items:

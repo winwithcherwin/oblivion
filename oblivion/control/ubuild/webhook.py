@@ -5,7 +5,7 @@ from datetime import datetime
 
 app = FastAPI()
 
-@app.post("/webhook/github")
+@app.post("/")
 async def receive_webhook(request: Request):
     headers = dict(request.headers)
     payload = await request.json()

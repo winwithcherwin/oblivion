@@ -1,8 +1,17 @@
+import base64
 import kopf
 import datetime
 import logging
 import pygit2
 import tempfile
+import secrets
+import re
+
+from urllib.parse import urlparse
+from kubernetes import client
+
+from github import Github
+from github import Auth
 
 from oblivion.control.ubuild import kaniko
 
@@ -10,6 +19,52 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(levelname)s:%(name)s:%(message)s",
 )
+
+
+@kopf.on.create('ubuild.winwithcherwin.com', 'v1alpha1', 'imagebuilds')
+def create_webhook(spec, meta, status, namespace, name, logger, patch, **kwargs): 
+    webhook_spec = spec["webhook"]
+    if not webhook_spec["enabled"]:
+        logger.info(f"{namespace}.{name}: webhook configured but not enabled")
+        return
+
+    secret = status.get("webhookSecret")
+    if not secret:
+        secret = secrets.token_hex(32)
+        patch.status["webhookSecret"] = secret
+        logger.info(f"{namespace}.{name}: Generated webhook secret")
+
+    git_spec = spec["git"]
+
+    webhook_type = webhook_spec["type"]
+
+    if webhook_type == "github":
+        # Only Github supported currently
+        secret_ref = webhook_spec["secretRef"]
+        secret_name = secret_ref["name"]
+        secret_key = secret_ref["key"]
+        token = get_secret_key(secret_name, secret_key, namespace)
+
+        auth = Auth.Token(token)
+        g = Github(auth=auth)
+
+        url = resolve_webhook_url(spec, namespace)
+        config = {
+          "url": url,
+          "content_type": "json",
+          "secret": secret,
+        }
+
+        events = ["push"]
+
+        owner, project = parse_github_url(git_spec["url"])
+        repo = g.get_repo(f"{owner}/{project}")
+        repo.create_hook("oblivion.ubuild", config, events, active=True)
+
+        g.close()
+        return
+
+    logger.info(f"{namespace}.{name}: webhook type {webhook_type} not supported")
 
 @kopf.timer('ubuild.winwithcherwin.com', 'v1alpha1', 'imagebuilds', interval=30)
 @kopf.on.create('ubuild.winwithcherwin.com', 'v1alpha1', 'imagebuilds')
@@ -78,4 +133,56 @@ def get_latest_commit_sha(repo_url: str, branch: str = "main", username=None, to
 
         sha = repo.references[refname].target
         return str(sha)
+
+def resolve_webhook_url(spec, namespace):
+    webhook = spec.get("webhook", {})
+    if not webhook.get("enabled"):
+        return None
+
+    ingress_name = webhook["ingressRef"]
+
+    networking = NetworkingV1Api()
+    ingress = networking.read_namespaced_ingress(ingress_name, namespace)
+
+    host = ingress.spec.rules[0].host
+    path = ingress.spec.rules[0].paths[0].path
+    return f"https://{host}{path}"
+
+def get_secret_key(secret_name, key, namespace):
+    v1 = client.CoreV1Api()
+    secret = v1.read_namespaced_secret(secret_name, namespace)
+    
+    if key not in secret.data:
+        raise ValueError(f"Key '{key}' not found in secret '{secret_name}'")
+    
+    # Secrets are base64-encoded, so decode them
+    return base64.b64decode(secret.data[key]).decode("utf-8")
+
+def parse_github_url(url):
+    """Extract owner and repo from a GitHub URL (https, ssh, or raw)."""
+    url = url.strip()
+
+    # Case 1: git@github.com:owner/repo.git
+    ssh_match = re.match(r"git@github\.com:(?P<owner>[^/]+)/(?P<repo>[^/]+?)(\.git)?$", url)
+    if ssh_match:
+        return ssh_match.group("owner"), ssh_match.group("repo")
+
+    # Case 2: git://github.com/owner/repo.git or https://github.com/...
+    if "://" not in url:
+        url = "https://" + url  # Add scheme if missing for urlparse
+
+    parsed = urlparse(url)
+    if "github.com" not in parsed.netloc:
+        raise ValueError("Only GitHub URLs are supported")
+
+    parts = parsed.path.strip("/").split("/")
+    if len(parts) < 2:
+        raise ValueError("URL must be in the form github.com/owner/repo")
+
+    owner = parts[0]
+    repo = parts[1]
+    if repo.endswith(".git"):
+        repo = repo[:-4]
+
+    return owner, repo
 
