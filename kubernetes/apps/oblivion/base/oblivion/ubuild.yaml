@@ -131,7 +131,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: kaniko-cache-pv:c
+  name: kaniko-cache-pvc:
   namespace: oblivion
 spec:
   accessModes:
