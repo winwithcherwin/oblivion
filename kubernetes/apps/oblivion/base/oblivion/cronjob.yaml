@@ -31,7 +31,7 @@ spec:
             - oblivion
             - bao
             - update-kubernetes-backend
-            - --vault-address=https://10.8.0.3:8200
+            - --vault-addr=https://10.8.0.3:8200
             - --cluster-name=development
             - --kube-host=https://10.8.0.4:6443
           volumes:
