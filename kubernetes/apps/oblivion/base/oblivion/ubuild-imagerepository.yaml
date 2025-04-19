@@ -5,7 +5,5 @@ metadata:
   name: oblivion
   namespace: flux-system
 spec:
-  secretRef:
-    name: docker-pull-secret
   image: registry.registry.svc.cluster.local:5000/oblivion
   interval: 5m0s
