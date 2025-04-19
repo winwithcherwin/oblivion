@@ -320,7 +320,7 @@ def do_update_kubernetes_backend(cluster_name, vault_addr, kube_host):
     click.echo(f"updated backend: {auth_mount}")
 
 @cli.command("mount-kubernetes-backend")
-@click.option("--vault-address", required=True, type=str)
+@click.option("--vault-addr", required=True, type=str)
 @click.option("--cluster-name", required=True, type=str)
 @inject_extra_vars([get_vault_token])
 def do_mount_kubernetes_backend(cluster_name, vault_addr, vault_token):
