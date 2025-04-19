@@ -1,3 +1,58 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ubuild
+  namespace: oblivion
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ubuild-controller
+rules:
+  - apiGroups: ["ubuild.winwithcherwin.com"]
+    resources: ["imagebuilds"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["ubuild.winwithcherwin.com"]
+    resources: ["imagebuilds/status"]
+    verbs: ["get", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ubuild-builder
+  namespace: oblivion
+rules:
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "get", "list", "watch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ubuild-controller
+subjects:
+  - kind: ServiceAccount
+    name: ubuild
+    namespace: oblivion
+roleRef:
+  kind: ClusterRole
+  name: ubuild-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ubuild-builder
+  namespace: oblivion
+subjects:
+  - kind: ServiceAccount
+    name: ubuild
+    namespace: oblivion
+roleRef:
+  kind: Role
+  name: ubuild-builder
+  apiGroup: rbac.authorization.k8s.io
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -13,11 +68,12 @@ spec:
       labels:
         app: ubuild
     spec:
+      serviceAccountName: ubuild
       restartPolicy: Always
       containers:
         - name: controller
           image: registry.registry.svc.cluster.local:5000/oblivion@sha256:f7188347ad9536282b57e4a741e932352329b52b25066456f24c627f55b9fe4b
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           command:
             - python3
             - -m
