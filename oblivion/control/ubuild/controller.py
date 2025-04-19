@@ -4,6 +4,8 @@ import logging
 import pygit2
 import tempfile
 
+from oblivion.control.ubuild import kaniko
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(levelname)s:%(name)s:%(message)s",
@@ -23,6 +25,8 @@ def handle_build(spec, meta, status, namespace, name, logger, patch, **kwargs):
     last_commit = status.get('lastCommit')
 
     current_sha = get_latest_commit_sha(git_url, branch)
+
+    kaniko.create_job(f"imagebuild-{current_sha[:5]}", git_url, image["name"])
 
     if current_sha == last_commit:
         logger.info(f"🔁 No new commit on {branch}. Skipping build.")
