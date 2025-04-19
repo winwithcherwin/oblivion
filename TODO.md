@@ -26,3 +26,6 @@
 
 * Make sure to update registries.yaml
 * Make sure to update resolve.conf with k3s dns (remove symlink first and disable systemd-resolved)
+
+* Trigger image build after webhook by modifying CR <- webhook
+* After image build trigger flux image automation
