@@ -78,7 +78,7 @@ spec:
       restartPolicy: Always
       containers:
         - name: controller
-          image: registry.registry.svc.cluster.local:5000/oblivion@sha256:acd8c3da1acdc4c1f2c060c7dc7af416c52da6e46683382fdb5ace03ce589701
+          image: registry.registry.svc.cluster.local:5000/oblivion@sha256:ca0ffd779e9bf68aedb407c67b779595c30970418020ebab153476dcb6d5b5d1
           imagePullPolicy: IfNotPresent
           command:
             - python3
