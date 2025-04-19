@@ -67,8 +67,7 @@ def create_job(name, git_url, image_dest, revision="main", tag="latest", dockerf
 
     if dry_run:
         job_dict = ApiClient().sanitize_for_serialization(job)
-        print(json.dumps(job_dict, indent=2))
-        return
+        return json.dumps(job_dict, indent=2)
 
     batch = k8s.BatchV1Api()
     batch.create_namespaced_job(namespace=namespace, body=job)

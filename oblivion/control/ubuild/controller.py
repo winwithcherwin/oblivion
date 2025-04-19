@@ -26,7 +26,6 @@ def handle_build(spec, meta, status, namespace, name, logger, patch, **kwargs):
 
     current_sha = get_latest_commit_sha(git_url, branch)
 
-    kaniko.create_job(f"imagebuild-{current_sha[:5]}", git_url, image["name"])
 
     if current_sha == last_commit:
         logger.info(f"🔁 No new commit on {branch}. Skipping build.")
@@ -44,6 +43,10 @@ def handle_build(spec, meta, status, namespace, name, logger, patch, **kwargs):
     info(f"📦 Would build {image['name']}:{git['revision'][:7]}")
     info(f"📂 Context dir: {git.get('contextDir', '.')}")
     info(f"📄 Dockerfile: {git.get('dockerfile', 'Dockerfile')}")
+
+    # Output job result for inspection
+    job_result = kaniko.create_job(f"imagebuild-{current_sha[:5]}", git_url, image["name"])
+    logger.info(f"would apply: {job_result}")
 
     # Simulate a successful build
     patch.status["buildPhase"] = "Succeeded"
