@@ -9,7 +9,7 @@ logging.basicConfig(
     format="%(levelname)s:%(name)s:%(message)s",
 )
 
-@kopf.timer('ubuild.winwithcherwin.com', 'v1alpha1', 'imagebuilds', interval=5.0)
+@kopf.timer('ubuild.winwithcherwin.com', 'v1alpha1', 'imagebuilds', interval=30)
 @kopf.on.create('ubuild.winwithcherwin.com', 'v1alpha1', 'imagebuilds')
 @kopf.on.update('ubuild.winwithcherwin.com', 'v1alpha1', 'imagebuilds')
 def handle_build(spec, meta, status, namespace, name, logger, patch, **kwargs):
