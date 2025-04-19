@@ -40,5 +40,8 @@ ob bao mount-kubernetes-backend --vault-address https://10.8.0.3:8200 --cluster-
 ob bao create-role-vault-secrets-operator --cluster-name development
 ob bao enable-secrets-engine --cluster-name development
 
+somewhere I did this
+flux bootstrap github   --components-extra=image-reflector-controller,image-automation-controller   --owner=$GITHUB_USER   --repository=oblivion   --branch=main   --path=kubernetes/clusters/staging   --read-write-key   --personal
+
 # now we need to copy the secrets
 ```
