@@ -1,37 +1,17 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: test
+  name: ubuild
 spec:
   restartPolicy: OnFailure
   containers:
   - name: ubuild
-    image: winwithcherwin.com/oblivion:latest  # no pull needed
-    imagePullPolicy: Never
-    env:
-      - name: PYTHONPATH
-        value: /opt/oblivion:/opt/oblivion-venv/lib/python3.12/site-packages:/usr/lib/python3.12/lib-dynload
-    volumeMounts:
-      - name: oblivion-source
-        mountPath: /opt/oblivion
-        readOnly: true
-      - name: oblivion-venv
-        mountPath: /opt/oblivion-venv
-        readOnly: true
+    image: registry.registry.svc.cluster.local:5000/oblivion:latest
+    imagePullPolicy: Always
     command:
     - python3
     - -m
     - oblivion
     - start
     - ubuild
-  volumes:
-    - name: oblivion-source
-      hostPath:
-        path: /opt/oblivion
-        type: Directory
-    - name: oblivion-venv
-      hostPath:
-        path: /opt/oblivion-venv
-        type: Directory
-
 
