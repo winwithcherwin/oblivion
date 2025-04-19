@@ -115,7 +115,7 @@ spec:
   tls:
     - secretName: wildcard-winwithcherwin-com
       hosts:
-        - "*.staging.winwithcherwin.com"
+        - ubuild.staging.winwithcherwin.com
   rules:
     - host: ubuild.staging.winwithcherwin.com
       http:
