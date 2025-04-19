@@ -8,6 +8,8 @@ spec:
   git:
     url: github.com/winwithcherwin/oblivion
     revision: main
+    triggerPaths:
+      - oblivion/
   image:
     name: registry.registry.svc.cluster.local:5000/oblivion
 

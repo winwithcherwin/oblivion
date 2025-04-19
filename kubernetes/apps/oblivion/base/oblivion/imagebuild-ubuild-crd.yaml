@@ -41,6 +41,13 @@ spec:
                     dockerfile:
                       type: string
                       default: Dockerfile
+                    triggerPaths:
+                      type: array
+                      items:
+                        type: string
+                      description: >
+                        List of directory prefixes. The build will only be triggered if a changed file
+                        in a push event starts with one of these paths. If omitted, all changes will trigger.
                 image:
                   type: object
                   required: [name]

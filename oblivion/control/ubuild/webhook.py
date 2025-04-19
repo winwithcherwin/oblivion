@@ -20,6 +20,12 @@ async def receive_webhook(request: Request):
     for crd in find_matching_imagebuilds(repo_url, branch):
         name = crd["metadata"]["name"]
         ns = crd["metadata"]["namespace"]
+
+        trigger_paths = crd["spec"]["git"].get("triggerPaths", [])
+        if not was_path_triggered(payload, trigger_paths):
+            # return early
+            return print("Nothing to do here, no path triggered")
+
         print(f"Would have patched {ns}:{name}")
 
     return {"status": "ok"}
@@ -45,3 +51,16 @@ def find_matching_imagebuilds(repo_url, branch, namespace="default"):
             matches.append(item)
 
     return matches
+
+def was_path_triggered(payload, trigger_paths):
+    if not trigger_paths:
+        # Trigger path not defined so assume always triggered
+        return True
+
+    all_paths = []
+    for commit in payload.get("commits", []):
+        all_paths  += commit.get("added", [])
+        all_paths  += commit.get("modified", [])
+        all_paths  += commit.get("removed", [])
+
+    return any(any(path.startswith(trigger) for trigger in trigger_paths) for path in all_paths)
