@@ -4,7 +4,10 @@ from kubernetes import client as k8s
 from kubernetes.client import ApiClient
 from kubernetes import config
 
-def create_job(name, git_url, image_dest, revision="main", tag="latest", dockerfile="Dockerfile", dry_run=True):
+def create_job(name, git_url, image_dest, revision="main", tag="latest", dockerfile="Dockerfile", namespace=None, dry_run=True):
+    if namespace is None:
+        raise Exception("No namespace specified")
+
     context_uri = f"git://{git_url}#refs/heads/{revision}"
     image_uri = f"{image_dest}:{tag}"
 
