@@ -5,6 +5,10 @@ from datetime import datetime
 
 app = FastAPI()
 
+def get_current_namespace():
+    with open("/var/run/secrets/kubernetes.io/serviceaccount/namespace", "r") as f:
+        return f.read().strip()
+
 @app.post("/")
 async def receive_webhook(request: Request):
     headers = dict(request.headers)
@@ -20,7 +24,9 @@ async def receive_webhook(request: Request):
     branch = payload["ref"].split("/")[-1]  # refs/heads/main → main
     commit = payload["after"]
 
-    for crd in find_matching_imagebuilds(repo_url, branch):
+    namespace = get_current_namespace()
+
+    for crd in find_matching_imagebuilds(repo_url, branch, namespace):
         name = crd["metadata"]["name"]
         ns = crd["metadata"]["namespace"]
 

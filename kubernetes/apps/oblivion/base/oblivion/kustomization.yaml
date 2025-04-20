@@ -12,4 +12,5 @@ resources:
   - imagebuild-ubuild-crd.yaml
   - ubuild-imagepolicy.yaml
   - ubuild-imagerepository.yaml
+  - ubuild-imageupdateautomation.yaml
 

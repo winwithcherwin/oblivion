@@ -73,7 +73,8 @@ def create_job(name, git_url, image_dest, revision="main", tag="latest", dockerf
         return json.dumps(job_dict, indent=2)
 
     batch = k8s.BatchV1Api()
-    batch.create_namespaced_job(namespace=namespace, body=job)
+    output = batch.create_namespaced_job(namespace=namespace, body=job)
+    return output
 
 
 if __name__ == '__main__':
