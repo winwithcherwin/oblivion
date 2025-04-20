@@ -1,13 +1,15 @@
 import base64
 import kopf
-import datetime
+import time
 import logging
 import pygit2
 import tempfile
 import secrets
 import re
 
+from datetime import datetime
 from urllib.parse import urlparse
+
 from kubernetes import client
 
 from github import Github
@@ -66,12 +68,15 @@ def create_webhook(spec, meta, status, namespace, name, logger, patch, **kwargs)
 
     logger.info(f"{namespace}.{name}: webhook type {webhook_type} not supported")
 
-@kopf.timer('ubuild.winwithcherwin.com', 'v1alpha1', 'imagebuilds', interval=30)
 @kopf.on.create('ubuild.winwithcherwin.com', 'v1alpha1', 'imagebuilds')
 @kopf.on.update('ubuild.winwithcherwin.com', 'v1alpha1', 'imagebuilds')
 def handle_build(spec, meta, status, namespace, name, logger, patch, **kwargs):
     def info(message):
         logger.info(f"{namespace}.{name}: {f'{message}'}")
+
+    if status.get("buildPhase", "") == "Building":
+        info(f"Skipping build, already in process.")
+        return
 
     git = spec["git"]
     image = spec["image"]
@@ -80,6 +85,14 @@ def handle_build(spec, meta, status, namespace, name, logger, patch, **kwargs):
     last_commit = status.get('lastCommit')
 
     # TODO: Make generic
+    # TODO: We need to build based on the commit we set in the annotation
+    # TODO: Reason being, we then make sure the commit that triggered us is the one we build
+    # Otherwise you might build a different commit. We fall back to latest commit if there
+    # Is no annotation that specifies the commit to build
+    annotations = meta.get("annotations", {})
+    info(f"[DEBUG] Annotations: {annotations}")
+
+    # Not just take the latest commit
     https_git_url = f"https://{git_url}" # is necessary for the git fetch
     current_sha = get_latest_commit_sha(https_git_url, branch)
 
@@ -90,31 +103,52 @@ def handle_build(spec, meta, status, namespace, name, logger, patch, **kwargs):
     info(f"🚀 New commit detected: {current_sha[:7]} — triggering build.")
     info(f"⏳ Starting DockerBuild for {git['url']} @ {git['revision']}")
 
+    utc_now = datetime.utcnow().isoformat() + "Z"
     patch.status["buildPhase"] = "Building"
     patch.status["lastCommit"] = current_sha
-    patch.status["lastBuildTime"] = datetime.datetime.utcnow().isoformat() + "Z"
+    patch.status["lastBuildTime"] = utc_now
 
-    # Placeholder logic — no real build yet
-    # Normally you'd trigger a Kaniko Job here
-    info(f"📦 Would build {image['name']}:{git['revision'][:7]}")
+    info(f"📦 Build {image['name']}:{git['revision'][:7]}")
     info(f"📂 Context dir: {git.get('contextDir', '.')}")
     info(f"📄 Dockerfile: {git.get('dockerfile', 'Dockerfile')}")
 
     # Output job result for inspection
-    now = datetime.datetime.now().timestamp()
+    now = datetime.now().timestamp()
     tag = f"{branch}-{current_sha}-{now}"
-    job_result = kaniko.create_job(f"imagebuild-{branch}-{current_sha[:5]}", git_url, image["name"], tag=tag, namespace=namespace, dry_run=False)
-    info(f"would apply: {job_result}")
+    job_name = f"imagebuild-{branch}-{current_sha[:5]}"
+    try:
+        job_result = kaniko.create_job(job_name, git_url, image["name"], tag=tag, namespace=namespace, dry_run=False)
+    except Exception as e:
+        info(f"Exception occured: {e}")
+        patch.status["buildPhase"] = "Failed"
+        return
 
-    # Simulate a successful build
-    patch.status["buildPhase"] = "Succeeded"
-    patch.status["lastImage"] = f"{image['name']}:{git['revision'][:7]}"
+    info(f"Ran: {job_result}")
+
     patch.status["recentLogs"] = [
         f"Started build for {git['url']} at {git['revision']}",
         f"Image tag: {image['name']}:{git['revision'][:7]}"
     ]
 
-    info(f"✅ Build succeeded.")
+    batch = client.BatchV1Api()
+    while True:
+        # TODO: Figure out how to gracefully restart while build is in progress
+        info(f"Waiting for `{job_name}` to finish...")
+        job = batch.read_namespaced_job_status(job_name, namespace)
+        if job.status.succeeded:
+            print(f"[DEBUG] {job_name} Build succeeded. Triggering flux")
+            patch.status["buildPhase"] = "Succeeded"
+            patch.status["lastImage"] = f"{image['name']}:{git['revision'][:7]}"
+            info(f"✅ Build succeeded.")
+
+            annotate_flux_imagerepository(name, "flux-system", "reconcile.fluxcd.io/requestedAt", utc_now) 
+            info("Annotated imagerepository.")
+            break
+        elif job.status.failed:
+            patch.status["buildPhase"] = "Failed"
+            info(f"Build failed.")
+            break
+        time.sleep(3)
 
 def get_latest_commit_sha(repo_url: str, branch: str = "main", username=None, token=None):
     if username and token:
@@ -187,4 +221,24 @@ def parse_github_url(url):
         repo = repo[:-4]
 
     return owner, repo
+
+def annotate_flux_imagerepository(name, namespace, key, value):
+    api = client.CustomObjectsApi()
+
+    patch = {
+        "metadata": {
+            "annotations": {
+                key: value
+            }
+        }
+    }
+
+    return api.patch_namespaced_custom_object(
+        group="image.toolkit.fluxcd.io",
+        version="v1beta2",
+        namespace=namespace,
+        plural="imagerepositories",
+        name=name,
+        body=patch
+    )
 

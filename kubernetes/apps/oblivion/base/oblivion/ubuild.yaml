@@ -21,6 +21,9 @@ rules:
   - apiGroups: ["apiextensions.k8s.io"]
     resources: ["customresourcedefinitions"]
     verbs: ["get", "list", "watch"]
+  - apiGroups: ["image.toolkit.fluxcd.io"]
+    resources: ["imagerepositories", "imagepolicies", "kustomizations"]
+    verbs: ["get", "patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -34,6 +37,9 @@ rules:
   - apiGroups: [""]
     resources: ["secrets", "persistentvolumeclaims"]
     verbs: ["get"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "jobs/status"]
+    verbs: ["get", "list", "watch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -76,12 +82,13 @@ spec:
     metadata:
       labels:
         app: ubuild
+        ubuild: controller
     spec:
       serviceAccountName: ubuild
       restartPolicy: Always
       containers:
         - name: controller
-          image: registry.registry.svc.cluster.local:5000/oblivion@sha256:bdaa63f92dc652c4e9e022359b57a74f493b2a35f10892424918b86792228977 # {"$imagepolicy": "flux-system:oblivion"}
+          image: registry.registry.svc.cluster.local:5000/oblivion:main-5886d055a8329d5f24410d1e8dceda13fc610601-1745271251.13699 # {"$imagepolicy": "flux-system:oblivion"}
           imagePullPolicy: IfNotPresent
           command:
             - python3
@@ -140,4 +147,3 @@ spec:
     requests:
       storage: 20Gi
   storageClassName: local-path
-

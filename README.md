@@ -40,8 +40,19 @@ ob bao mount-kubernetes-backend --vault-address https://10.8.0.3:8200 --cluster-
 ob bao create-role-vault-secrets-operator --cluster-name development
 ob bao enable-secrets-engine --cluster-name development
 
-somewhere I did this
+# Install reflector and automation controller
 flux bootstrap github   --components-extra=image-reflector-controller,image-automation-controller   --owner=$GITHUB_USER   --repository=oblivion   --branch=main   --path=kubernetes/clusters/staging   --read-write-key   --personal
 
+# Create an image update automation
+flux create image update flux-system --interval=30m --git-repo-ref=flux-system --git-repo-ref=flux-system --git-repo-path="./kubernetes/clusters/staging" --checkout-branch=main --push-branch=main --author-name=fluxcdbot --author-email=fluxcdbot@noreply.winwithcherwin.com --commit-template="{{range .Changed.Changes}}{{print .OldValue}} -> {{println .NewValue}}{{end}}" --export > kubernetes/apps/oblivion/base/oblivion/ubuild-imageupdateautomation.yaml
+
+# Start a build
+kubectl annotate imagebuild oblivion trigger-build=$(date +%s) --overwrite
+
 # now we need to copy the secrets
+# TODO: save and provision secrets
+
+# cleanup k3s node
+k3s ctr images ls
+k3s ctr images prune --all
 ```

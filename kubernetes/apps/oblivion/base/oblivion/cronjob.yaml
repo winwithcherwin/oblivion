@@ -5,11 +5,13 @@ metadata:
   namespace: oblivion
 spec:
   schedule: "*/2 * * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 5
   jobTemplate:
     spec:
       template:
         spec:
-          restartPolicy: OnFailure
+          restartPolicy: Never
           serviceAccountName: token-reviewer
           containers:
           - name: shell

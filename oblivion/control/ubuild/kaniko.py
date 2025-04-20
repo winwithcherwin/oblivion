@@ -14,10 +14,11 @@ def create_job(name, git_url, image_dest, revision="main", tag="latest", dockerf
     job = k8s.V1Job(
         api_version="batch/v1",
         kind="Job",
-        metadata=k8s.V1ObjectMeta(name=name),
+        metadata=k8s.V1ObjectMeta(name=name, labels={"app": "ubuild", "ubuild": "job"}),
         spec=k8s.V1JobSpec(
             backoff_limit=0,
             template=k8s.V1PodTemplateSpec(
+                metadata=k8s.V1ObjectMeta(name=name, labels={"app": "ubuild", "ubuild": "job"}),
                 spec=k8s.V1PodSpec(
                     restart_policy="Never",
                     containers=[
