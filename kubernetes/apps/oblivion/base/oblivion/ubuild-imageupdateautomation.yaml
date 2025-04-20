@@ -22,5 +22,5 @@ spec:
     kind: GitRepository
     name: flux-system
   update:
-    path: ./kubernetes/clusters/staging
+    path: ./kubernetes/apps/oblivion/overlays/staging
     strategy: Setters
