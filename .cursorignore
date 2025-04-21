@@ -1,0 +1,22 @@
+.env
+.terraform
+.terraform.lock.hcl
+.terraform.tfstate.lock.info
+terraform.tfstate
+terraform.tfstate.backup
+*.bak
+*.pyc
+.bootstrap/
+bao.json
+secrets.json
+.secrets
+# Devenv
+.devenv*
+devenv.local.nix
+
+# direnv
+.direnv
+.envrc
+
+# pre-commit
+.pre-commit-config.yaml
