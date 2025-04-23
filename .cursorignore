@@ -13,6 +13,8 @@ secrets.json
 # Devenv
 .devenv*
 devenv.local.nix
+.chainlit
+.vscode
 
 # direnv
 .direnv
