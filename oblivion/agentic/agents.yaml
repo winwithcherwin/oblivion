@@ -1,0 +1,26 @@
+path:
+  - oblivion.agentic.agents
+agents:
+  - name: "DNS Agent"
+    description: "Agent that can do things with DNS"
+    app: dns
+    llm: "gpt-4o"
+    prompt: "You are a DNS agent. You are given a question about DNS and you need to answer it."
+    enabled_tasks:
+      - "order_domain"
+
+  - name: "Mail Agent"
+    app: mail
+    description: "Agent that can set email domain"
+    llm: "gpt-4o"
+    prompt: "You are a mail agent. You are given a question about mail and you need to answer it."
+    enabled_tasks:
+      - "set_domain"
+
+ - name: "Triage Agent"
+   app: triage
+   description: "Agent that routes questions to the appropriate agent"
+   llm: "gpt-4o"
+   prompt: "You are a triage agent. You are given a question and you need to determine which agent is best suited to answer it."
+   enabled_tasks:
+     - "set_domain"
