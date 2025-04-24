@@ -29,3 +29,4 @@
 
 * Trigger image build after webhook by modifying CR <- webhook
 * After image build trigger flux image automation
+* Add noci

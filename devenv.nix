@@ -1,5 +1,9 @@
-{ pkgs, config, ... }:
+{ pkgs, config, programs, ... }:
 {
+  env = {
+    KUBECONFIG = "${builtins.getEnv "PWD"}/.secrets/k3s.yaml";
+    TERM = "xterm-256color";
+  };
   dotenv.enable = true;
   packages = [
     pkgs.direnv
@@ -23,6 +27,7 @@
     pkgs.bat
     pkgs.docker
     pkgs.libgit2
+    pkgs.zsh
   ];
   scripts.k.exec = ''
     kubectl "$@";
@@ -32,6 +37,9 @@
   '';
   scripts.kns.exec = ''
     kubens "$@";
+  '';
+  scripts.ob.exec = ''
+    python -m oblivion "$@";
   '';
   languages.python = {
     enable = true;
