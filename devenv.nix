@@ -28,6 +28,7 @@
     pkgs.docker
     pkgs.libgit2
     pkgs.zsh
+    pkgs.kdash
   ];
   scripts.k.exec = ''
     kubectl "$@";
