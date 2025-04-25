@@ -3,10 +3,10 @@
     "devenv": {
       "locked": {
         "dir": "src/modules",
-        "lastModified": 1744228912,
+        "lastModified": 1745587665,
         "owner": "cachix",
         "repo": "devenv",
-        "rev": "e077ae7326e3867e6857247da9de951cb57d66a4",
+        "rev": "94d377b83c4719e91973f96cd34751828a52e4cc",
         "type": "github"
       },
       "original": {
@@ -95,10 +95,10 @@
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1744164289,
+        "lastModified": 1745255241,
         "owner": "stackbuilders",
         "repo": "nixpkgs-terraform",
-        "rev": "9fdddb5b09520d4c4a4cd79c4eca9e98ed6d4d82",
+        "rev": "0d1a5910763ed3ff9db91fc9c6e237df0f79de5a",
         "type": "github"
       },
       "original": {
@@ -190,10 +190,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1743514126,
+        "lastModified": 1745481253,
         "owner": "cachix",
         "repo": "nixpkgs-python",
-        "rev": "40d2237867f219de1c1362e3d067a1673afa5f82",
+        "rev": "04de4e5da5e55a0af5dc28ed4058a63e4458e73a",
         "type": "github"
       },
       "original": {
@@ -210,10 +210,10 @@
         "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1744164289,
+        "lastModified": 1745255241,
         "owner": "stackbuilders",
         "repo": "nixpkgs-terraform",
-        "rev": "9fdddb5b09520d4c4a4cd79c4eca9e98ed6d4d82",
+        "rev": "0d1a5910763ed3ff9db91fc9c6e237df0f79de5a",
         "type": "github"
       },
       "original": {
