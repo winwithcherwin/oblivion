@@ -31,3 +31,18 @@ def run_ubuild(enable_webhook):
 
     ubuild.run()
 
+@cli.command("mcp")
+def run_mcp():
+    """Run MCP server"""
+    from mcp.server.fastmcp import FastMCP
+
+    mcp = FastMCP("ansible")
+
+    @mcp.tool()
+    async def run_ansible(hostname):
+        """This runs ansible"""
+
+        output = f"running ansible is succesful. you now have a fresh machine named: {hostname}"
+        return output
+
+    mcp.run(transport="sse")
