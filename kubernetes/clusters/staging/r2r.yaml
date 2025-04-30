@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: r2r
+  namespace: oblivion
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: r2r
+  namespace: oblivion
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: r2r
+  template:
+    metadata:
+      labels:
+        app: r2r
+    spec:
+      serviceAccountName: r2r
+      restartPolicy: Always
+      containers:
+        - name: controller
+          image: registry.registry.svc.cluster.local:5000/oblivion:main-fa64d2c793594b852f570cfaf4c7ad36e5eb89ff-1745974109.151174 # {"$imagepolicy": "flux-system:oblivion"}
+          imagePullPolicy: IfNotPresent
+          command:
+            - python3
+            - -m
+            - r2r.serve
+          env:
+            - name: R2R_POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-staging-app
+                  key: user
+            - name: R2R_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-staging-app
+                  key: password
+            - name: R2R_POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: db-staging-app
+                  key: host
+            - name: R2R_POSTGRES_PORT
+              value: "5432"
+            - name: R2R_POSTGRES_DBNAME
+              valueFrom:
+                secretKeyRef:
+                  name: db-staging-app
+                  key: dbname
+            - name: R2R_POSTGRES_NAME
+              value: oblivion
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: r2r-service
+  namespace: oblivion
+spec:
+  selector:
+    app: r2r
+  ports:
+    - protocol: TCP
+      port: 7272
+      targetPort: 7272

@@ -1,6 +1,7 @@
 aiodns==3.2.0
 tiktoken
 chromadb
+r2r[core]
 PyGithub==2.6.1
 fastapi==0.115.12
 uvicorn==0.34.1
