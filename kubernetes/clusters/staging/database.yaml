@@ -5,6 +5,12 @@ metadata:
   namespace: oblivion
 spec:
   instances: 1
+  imageName: winwithcherwin/pgvector:15.12-13
+
+  bootstrap:
+    initdb:
+      postInitSQL:
+        - CREATE EXTENSION VECTOR
 
   storage:
     size: 5Gi
