@@ -88,7 +88,7 @@ spec:
       restartPolicy: Always
       containers:
         - name: controller
-          image: registry.registry.svc.cluster.local:5000/oblivion:main-03a606ae58e52406752ecf68766736165ada7824-1745791394.881139 # {"$imagepolicy": "flux-system:oblivion"}
+          image: registry.registry.svc.cluster.local:5000/oblivion:main-fa64d2c793594b852f570cfaf4c7ad36e5eb89ff-1745974109.151174 # {"$imagepolicy": "flux-system:oblivion"}
           imagePullPolicy: IfNotPresent
           command:
             - python3
