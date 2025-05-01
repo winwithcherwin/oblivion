@@ -13,6 +13,8 @@ secrets.json
 # Devenv
 .devenv*
 devenv.local.nix
+.chainlit
+.vscode
 
 # direnv
 .direnv
@@ -20,3 +22,6 @@ devenv.local.nix
 
 # pre-commit
 .pre-commit-config.yaml
+chroma
+chroma.bak*
+.vscode

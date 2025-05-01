@@ -24,3 +24,4 @@ devenv.local.nix
 .pre-commit-config.yaml
 chroma
 chroma.bak*
+.vscode
