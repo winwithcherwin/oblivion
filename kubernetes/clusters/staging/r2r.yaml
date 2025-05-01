@@ -4,6 +4,29 @@ metadata:
   name: r2r
   namespace: oblivion
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: r2r
+  namespace: oblivion
+spec:
+  selector:
+    app: r2r
+  ports:
+    - protocol: TCP
+      port: 7272
+      targetPort: 7272
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: r2r-config 
+  namespace: oblivion
+data:
+  r2r.toml: |
+    [database]
+    disable_create_extension = true
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -23,12 +46,16 @@ spec:
       restartPolicy: Always
       containers:
         - name: controller
-          image: registry.registry.svc.cluster.local:5000/oblivion:main-fa64d2c793594b852f570cfaf4c7ad36e5eb89ff-1745974109.151174 # {"$imagepolicy": "flux-system:oblivion"}
+          image: winwithcherwin/r2r:latest
           imagePullPolicy: IfNotPresent
           command:
             - python3
             - -m
             - r2r.serve
+          volumeMounts:
+            - name: r2r-config-volume
+              mountPath: /etc/r2r
+              readOnly: true
           env:
             - name: R2R_POSTGRES_USER
               valueFrom:
@@ -54,16 +81,12 @@ spec:
                   key: dbname
             - name: R2R_POSTGRES_NAME
               value: oblivion
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: r2r-service
-  namespace: oblivion
-spec:
-  selector:
-    app: r2r
-  ports:
-    - protocol: TCP
-      port: 7272
-      targetPort: 7272
+            - name: R2R_CONFIG_PATH
+              value: /etc/r2r/r2r.toml
+            - name: R2R_PORT
+              value: "7272"
+      volumes:
+        - name: r2r-config-volume
+          configMap:
+            name: r2r-config
+

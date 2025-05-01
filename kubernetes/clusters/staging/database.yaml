@@ -9,8 +9,11 @@ spec:
 
   bootstrap:
     initdb:
-      postInitSQL:
-        - CREATE EXTENSION VECTOR
-
+      database: app
+      postInitApplicationSQL:
+        - "CREATE EXTENSION \"uuid-ossp\";"
+        - "CREATE EXTENSION vector;"
+        - "CREATE EXTENSION pg_trgm;"
+        - "CREATE EXTENSION fuzzystrmatch;"
   storage:
     size: 5Gi
