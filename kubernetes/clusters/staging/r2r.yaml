@@ -14,8 +14,27 @@ spec:
     app: r2r
   ports:
     - protocol: TCP
+      name: server
       port: 7272
       targetPort: 7272
+    - protocol: TCP
+      name: hatchet
+      port: 7274
+      targetPort: 7274
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: r2r-dashboard
+  namespace: oblivion
+spec:
+  selector:
+    app: r2r
+  ports:
+    - protocol: TCP
+      name: http
+      port: 7273
+      targetPort: 3000
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -45,8 +64,19 @@ spec:
       serviceAccountName: r2r
       restartPolicy: Always
       containers:
-        - name: controller
-          image: winwithcherwin/r2r:latest
+        - name: dashboard
+          image: sciphiai/r2r-dashboard:1.0.3
+          env:
+            - name: NEXT_PUBLIC_R2R_DEPLOYMENT_URL
+              value: "http://r2r:7272"
+            - name: NEXT_PUBLIC_HATCHET_DASHBOARD_URL
+              value: "http://r2r:7274"
+            - name: NEXT_PUBLIC_R2R_DEFAULT_EMAIL
+              value: "admin@example.com"
+            - name: NEXT_PUBLIC_R2R_DEFAULT_PASSWORD
+              value: "Admin123!!"
+        - name: server
+          image: sciphiai/r2r:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
