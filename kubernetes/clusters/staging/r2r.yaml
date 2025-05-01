@@ -68,13 +68,15 @@ spec:
           image: sciphiai/r2r-dashboard:1.0.3
           env:
             - name: NEXT_PUBLIC_R2R_DEPLOYMENT_URL
-              value: "http://r2r:7272"
+              value: "http://r2r.oblivion.svc.cluster.local:7272"
             - name: NEXT_PUBLIC_HATCHET_DASHBOARD_URL
-              value: "http://r2r:7274"
+              value: "http://r2r.oblivion.svc.cluster.local:7274"
             - name: NEXT_PUBLIC_R2R_DEFAULT_EMAIL
-              value: "admin@example.com"
+              value: "winwithcherwin@gmail.com"
+              #value: "admin@example.com"
             - name: NEXT_PUBLIC_R2R_DEFAULT_PASSWORD
-              value: "Admin123!!"
+              value: "rag"
+              #value: "change_me_immediately"
         - name: server
           image: sciphiai/r2r:latest
           imagePullPolicy: IfNotPresent
