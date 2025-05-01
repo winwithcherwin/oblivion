@@ -48,6 +48,13 @@ spec:
         - name: controller
           image: winwithcherwin/r2r:latest
           imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 7272
+          livenessProbe:
+            httpGet:
+              path: /v3/health
+              port: http
           command:
             - python3
             - -m
