@@ -1,4 +1,4 @@
-# Paths
+# How to use the OpenBao API
 
 ```
 list sys policy
