@@ -57,6 +57,11 @@ spec:
               mountPath: /etc/r2r
               readOnly: true
           env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai
+                  key: token
             - name: R2R_POSTGRES_USER
               valueFrom:
                 secretKeyRef:
