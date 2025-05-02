@@ -1,0 +1,27 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: victoria-logs
+  namespace: logging
+spec:
+  interval: 5m
+  install:
+    disableWait: true
+    createNamespace: true
+  chart:
+    spec:
+      chart: victoria-logs-single
+      sourceRef:
+        kind: HelmRepository
+        name: victoria
+        namespace: flux-system
+  values:
+    vector:
+      enabled: true
+    server:
+      enabled: true
+      retentionPeriod: 3d  # store logs for 3 days
+      service:
+        type: ClusterIP
+        clusterIP: ""
+
