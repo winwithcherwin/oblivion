@@ -10,5 +10,4 @@ resources:
   - reflector.yaml
   - localhost.yaml
   - cnpg.yaml
-  - loki.yaml
 
