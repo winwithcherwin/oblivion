@@ -1,6 +1,7 @@
 import click
 import threading
 import uvicorn
+import subprocess
 
 from datetime import datetime
 from rich import print
@@ -36,13 +37,16 @@ def run_mcp():
     """Run MCP server"""
     from mcp.server.fastmcp import FastMCP
 
-    mcp = FastMCP("ansible")
+    mcp = FastMCP("kubernetes")
 
     @mcp.tool()
-    async def run_ansible(hostname):
-        """This runs ansible"""
+    async def kubectl_get_pods(namespace):
+        """Get all pods in a kubernetes namespace"""
+        return subprocess.check_output(["kubectl", "get", "pods", "-n", namespace])
 
-        output = f"running ansible is succesful. you now have a fresh machine named: {hostname}"
-        return output
+    @mcp.tool()
+    async def kubectl_delete_pod(name, namespace):
+        """Delete pod in namespace"""
+        return subprocess.check_output(["kubectl", "delete", "pod", "-n", namespace, name])
 
     mcp.run(transport="sse")
