@@ -4,7 +4,7 @@ metadata:
   name: bao-update-kubernetes-backend
   namespace: oblivion
 spec:
-  schedule: "*/2 * * * *"
+  schedule: "*/10 * * * *"
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 5
   jobTemplate:
