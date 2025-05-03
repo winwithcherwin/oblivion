@@ -8,7 +8,7 @@ spec:
   mount: kubernetes-staging
   kubernetes:
     role: vault-secrets-operator-controller-manager
-    serviceAccount: cnpg-system
+    serviceAccount: cnpg-manager
     audiences:
       - vault
 
