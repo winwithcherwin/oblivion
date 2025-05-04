@@ -5,4 +5,5 @@ resources:
   - apps/
   - database.yaml
   - r2r.yaml
+  - yopass.yaml
 
