@@ -107,4 +107,28 @@ spec:
     - protocol: TCP
       port: 5678
       targetPort: 5678
-
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: n8n
+  namespace: oblivion
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "false"
+spec:
+  ingressClassName: nginx
+  tls:
+    - secretName: wildcard-winwithcherwin-com
+      hosts:
+        - n8n.staging.winwithcherwin.com
+  rules:
+    - host: n8n.staging.winwithcherwin.com
+      http:
+        paths:
+          - path: /rest/oauth2-credential/callback
+            pathType: Exact
+            backend:
+              service:
+                name: n8n
+                port:
+                  number: 80
