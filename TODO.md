@@ -32,3 +32,6 @@
 * Add noci
 
 * Implement simple RAG for readmes
+* Deploy form.io
+* Deploy searxng
+* Deploy wekan
