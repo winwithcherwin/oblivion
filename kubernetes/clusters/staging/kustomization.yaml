@@ -8,3 +8,4 @@ resources:
   - database.yaml
   - r2r.yaml
   - yopass.yaml
+  - k0smotron.yaml
