@@ -4,6 +4,7 @@ resources:
   - flux-system/
   - apps/
   - n8n/
+  - crossplane/
   - database.yaml
   - r2r.yaml
   - yopass.yaml
