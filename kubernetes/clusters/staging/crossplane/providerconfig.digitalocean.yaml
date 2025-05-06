@@ -1,0 +1,13 @@
+# providerconfig-digitalocean.yaml
+apiVersion: digitalocean.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default          # becomes the implicit default
+  namespace: crossplane-system
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: crossplane
+      key: digitalocean

@@ -7,3 +7,4 @@ resources:
   - vault-auth.yaml
   - secret.yaml
   - provider.digitalocean.yaml
+  - providerconfig.digitalocean.yaml
