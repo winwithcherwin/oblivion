@@ -5,3 +5,14 @@ metadata:
   name: provider-digitalocean
 spec:
   package: xpkg.upbound.io/crossplane-contrib/provider-upjet-digitalocean:v0.3.0
+  runtimeConfigRef:
+    name: set-serviceaccount
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: set-serviceaccount
+spec:
+  serviceAccountTemplate:
+    metadata:
+      name: crossplane
