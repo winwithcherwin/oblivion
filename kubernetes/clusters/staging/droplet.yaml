@@ -3,7 +3,6 @@ kind: Droplet
 metadata:
   name: demo-droplet
 spec:
-  # choose whatever fits your use‑case
   forProvider:
     name: demo-droplet
     region: ams3

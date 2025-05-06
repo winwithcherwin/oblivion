@@ -8,4 +8,3 @@ resources:
   - database.yaml
   - r2r.yaml
   - yopass.yaml
-  - droplet.yaml
