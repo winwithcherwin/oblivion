@@ -93,7 +93,6 @@ spec:
   sshKeyRef:
     name: oblivion-ssh-key
 ---
----
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: K0sWorkerConfig
 metadata:
