@@ -1,16 +1,17 @@
+---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: K0smotronControlPlane          # <- CAPI flavoured CRD
 metadata:
   name: do-lab
   namespace: oblivion
 spec:
+  externalAddress: https://91.99.2.195:30443
   replicas: 1
   version: v1.32.4-k0s.0             # <-- pick any k0s you like
   persistence:
     type: emptyDir                   # demo – no HA ETCD/Kine
   service:                           # expose the API so the Droplet can see it
     type: NodePort
-    apiPort: 6443
 ---
 # cluster-do-lab.yaml
 apiVersion: cluster.x-k8s.io/v1beta1
@@ -87,7 +88,7 @@ metadata:
   name: do-lab-droplet
   namespace: oblivion
 spec:
-  address: 209.38.101.35
+  address: 164.90.202.128
   port: 22
   user: root
   sshKeyRef:
