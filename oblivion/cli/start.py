@@ -50,3 +50,4 @@ def run_mcp():
         return subprocess.check_output(["kubectl", "delete", "pod", "-n", namespace, name])
 
     mcp.run(transport="sse")
+
