@@ -7,6 +7,7 @@ metadata:
 spec:
   externalAddress: 91.99.2.195
   k0sConfig:
+    kind: ClusterConfig
     api:
       address: 91.99.2.195
   replicas: 1
