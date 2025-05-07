@@ -99,7 +99,7 @@ metadata:
   name: do-lab-droplet
   namespace: oblivion
 spec:
-  version: v1.32.4-k0s.0
+  version: v1.32.4+k0s.0
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Machine
