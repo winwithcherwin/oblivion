@@ -7,7 +7,7 @@ spec:
     name: demo-droplet
     region: ams3
     size: s-1vcpu-1gb
-    image: ubuntu-20-04-x64
+    image: ubuntu-22-04-x64
     sshKeys:
       - "d8:57:d3:22:fc:e8:98:0c:d7:64:07:bd:0e:28:f2:84"
   providerConfigRef:
