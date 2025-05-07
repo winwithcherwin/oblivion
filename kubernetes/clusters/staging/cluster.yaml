@@ -8,8 +8,11 @@ spec:
   externalAddress: 91.99.2.195
   k0sConfig:
     kind: ClusterConfig
-    api:
-      address: 91.99.2.195
+    metadata:
+      name: k0s
+    spec:
+      api:
+        address: 91.99.2.195
   replicas: 1
   version: v1.32.4-k0s.0             # <-- pick any k0s you like
   persistence:
