@@ -5,6 +5,7 @@ resources:
   - apps/
   - n8n/
   - crossplane/
+  - kyverno/
   - database.yaml
   - r2r.yaml
   - yopass.yaml
