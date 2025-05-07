@@ -3,7 +3,6 @@ kind: Kustomization
 resources:
   - flux-system/
   - apps/
-  - n8n/
   - crossplane/
   - kyverno/
   - database.yaml
