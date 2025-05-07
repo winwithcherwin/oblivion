@@ -5,9 +5,39 @@ metadata:
   namespace: oblivion
 spec:
   replicas: 1
-  version: v1.29.1+k0s.0             # <-- pick any k0s you like
+  version: v1.32.4-k0s.0             # <-- pick any k0s you like
   persistence:
     type: emptyDir                   # demo – no HA ETCD/Kine
   service:                           # expose the API so the Droplet can see it
     type: ClusterIP
     apiPort: 6443
+---
+# cluster-do-lab.yaml
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: do-lab
+  namespace: oblivion        # ← same ns & name as the K0smotronControlPlane
+spec:
+  clusterNetwork:
+    pods:       { cidrBlocks: ["192.168.0.0/16"] }
+    services:   { cidrBlocks: ["10.128.0.0/12"] }
+    serviceDomain: cluster.local
+  controlPlaneRef:           # tell CAPI which CP object is ours
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: K0smotronControlPlane
+    name: do-lab
+  infrastructureRef:         # a no‑op placeholder that satisfies the CAPI contract
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: RemoteCluster
+    name: do-lab
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: RemoteCluster
+metadata:
+  name: do-lab
+  namespace: oblivion
+spec:                      # nothing to configure – it’s just a stub
+  controlPlaneEndpoint:
+    host: k8s.example.com
+    port: 6443
