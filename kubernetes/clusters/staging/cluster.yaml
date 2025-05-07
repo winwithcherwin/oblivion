@@ -5,7 +5,7 @@ metadata:
   name: do-lab
   namespace: oblivion
 spec:
-  externalAddress: https://91.99.2.195:30443
+  externalAddress: 91.99.2.195
   replicas: 1
   version: v1.32.4-k0s.0             # <-- pick any k0s you like
   persistence:
