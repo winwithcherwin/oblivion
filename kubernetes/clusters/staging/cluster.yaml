@@ -9,7 +9,7 @@ spec:
   persistence:
     type: emptyDir                   # demo – no HA ETCD/Kine
   service:                           # expose the API so the Droplet can see it
-    type: ClusterIP
+    type: NodePort
     apiPort: 6443
 ---
 # cluster-do-lab.yaml
