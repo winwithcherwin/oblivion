@@ -39,8 +39,8 @@ metadata:
   namespace: oblivion
 spec:
   controlPlaneEndpoint:
-    host: k8s.example.com
-    port: 6443
+    host: 91.99.2.195
+    port: 30132
 ---
 apiVersion: secrets.hashicorp.com/v1beta1
 kind: VaultStaticSecret
