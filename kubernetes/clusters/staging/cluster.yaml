@@ -6,10 +6,10 @@ metadata:
   namespace: oblivion
 spec:
   externalAddress: 91.99.2.195
+  tunneling:
+    enabled: true
   k0sConfig:
     kind: ClusterConfig
-    tunneling:
-      enabled: true
     metadata:
       name: k0s
     spec:
