@@ -1,4 +1,38 @@
 ---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: RemoteMachine
+metadata:
+  name: do-lab-droplet
+  namespace: oblivion
+spec:
+  address: 142.93.237.167
+  port: 22
+  user: root
+  sshKeyRef:
+    name: oblivion-ssh-key
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: do-lab
+  namespace: oblivion        # ← same ns & name as the K0smotronControlPlane
+spec:
+  controlPlaneEndpoint:
+    host: 91.99.2.195
+    port: 30443
+  clusterNetwork:
+    pods:       { cidrBlocks: ["192.168.0.0/16"] }
+    services:   { cidrBlocks: ["10.128.0.0/12"] }
+    serviceDomain: cluster.local
+  controlPlaneRef:           # tell CAPI which CP object is ours
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: K0smotronControlPlane
+    name: do-lab
+  infrastructureRef:         # a no‑op placeholder that satisfies the CAPI contract
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: RemoteCluster
+    name: do-lab
+---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: K0smotronControlPlane          # <- CAPI flavoured CRD
 metadata:
@@ -36,29 +70,6 @@ spec:
   service:                           # expose the API so the Droplet can see it
     type: NodePort
 ---
-# cluster-do-lab.yaml
-apiVersion: cluster.x-k8s.io/v1beta1
-kind: Cluster
-metadata:
-  name: do-lab
-  namespace: oblivion        # ← same ns & name as the K0smotronControlPlane
-spec:
-  controlPlaneEndpoint:
-    host: 91.99.2.195
-    port: 30443
-  clusterNetwork:
-    pods:       { cidrBlocks: ["192.168.0.0/16"] }
-    services:   { cidrBlocks: ["10.128.0.0/12"] }
-    serviceDomain: cluster.local
-  controlPlaneRef:           # tell CAPI which CP object is ours
-    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
-    kind: K0smotronControlPlane
-    name: do-lab
-  infrastructureRef:         # a no‑op placeholder that satisfies the CAPI contract
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-    kind: RemoteCluster
-    name: do-lab
----
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: RemoteCluster
 metadata:
@@ -68,6 +79,31 @@ spec:
   controlPlaneEndpoint:
     host: 91.99.2.195
     port: 30443
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: K0sWorkerConfig
+metadata:
+  name: do-lab-droplet
+  namespace: oblivion
+spec:
+  version: v1.32.4+k0s.0
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Machine
+metadata:
+  name: do-lab-droplet
+  namespace: oblivion
+spec:
+  clusterName: do-lab
+  bootstrap:
+    configRef:
+      apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+      kind: K0sWorkerConfig
+      name: do-lab-droplet
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: RemoteMachine
+    name: do-lab-droplet
 ---
 apiVersion: secrets.hashicorp.com/v1beta1
 kind: VaultStaticSecret
@@ -107,40 +143,3 @@ spec:
     serviceAccount: default
     audiences:
       - vault
----
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-kind: RemoteMachine
-metadata:
-  name: do-lab-droplet
-  namespace: oblivion
-spec:
-  address: 142.93.237.167
-  port: 22
-  user: root
-  sshKeyRef:
-    name: oblivion-ssh-key
----
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
-kind: K0sWorkerConfig
-metadata:
-  name: do-lab-droplet
-  namespace: oblivion
-spec:
-  version: v1.32.4+k0s.0
----
-apiVersion: cluster.x-k8s.io/v1beta1
-kind: Machine
-metadata:
-  name: do-lab-droplet
-  namespace: oblivion
-spec:
-  clusterName: do-lab
-  bootstrap:
-    configRef:
-      apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
-      kind: K0sWorkerConfig
-      name: do-lab-droplet
-  infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-    kind: RemoteMachine
-    name: do-lab-droplet
