@@ -23,6 +23,10 @@ spec:
         serviceCIDR: "10.128.0.0/12"
         kuberouter:
           ipMasq: true
+          extraArgs:
+            - --enable-cni=true
+            - --run-service-proxy=true
+            - --enable-pod-egress=true
         kubeProxy:
           disabled: true
   replicas: 1
