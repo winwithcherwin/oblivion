@@ -53,7 +53,7 @@ metadata:
 spec:
   controlPlaneEndpoint:
     host: 91.99.2.195
-    port: 30132
+    port: 30443
 ---
 apiVersion: secrets.hashicorp.com/v1beta1
 kind: VaultStaticSecret
