@@ -33,6 +33,9 @@ metadata:
   name: do-lab
   namespace: oblivion        # ← same ns & name as the K0smotronControlPlane
 spec:
+  controlPlaneEndpoint:
+    host: 91.99.2.195
+    port: 30443
   clusterNetwork:
     pods:       { cidrBlocks: ["192.168.0.0/16"] }
     services:   { cidrBlocks: ["10.128.0.0/12"] }
