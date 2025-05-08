@@ -9,5 +9,5 @@ resources:
   - r2r.yaml
   - yopass.yaml
   - droplet.yaml
-  #- cluster.yaml
-  #- k0smotron.yaml
+  - k0smotron.yaml
+  - cluster.yaml
