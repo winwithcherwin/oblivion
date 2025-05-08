@@ -24,9 +24,9 @@ spec:
         kuberouter:
           ipMasq: true
           extraArgs:
-            - --enable-cni=true
-            - --run-service-proxy=true
-            - --enable-pod-egress=true
+            "enable-cni": "true"
+            "run-service-proxy": "true"
+            "enable-pod-egress": "true"
         kubeProxy:
           disabled: true
   replicas: 1
