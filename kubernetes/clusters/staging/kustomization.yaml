@@ -8,6 +8,6 @@ resources:
   - database.yaml
   - r2r.yaml
   - yopass.yaml
-  - k0smotron.yaml
   - droplet.yaml
-  - cluster.yaml
+  #- cluster.yaml
+  #- k0smotron.yaml
