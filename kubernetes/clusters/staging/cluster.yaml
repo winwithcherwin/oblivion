@@ -22,6 +22,8 @@ spec:
         serviceCIDR: "10.128.0.0/12"
         kuberouter:
           ipMasq: true
+        kubeProxy:
+          mode: ipvs
   replicas: 1
   version: v1.32.4-k0s.0             # <-- pick any k0s you like
   persistence:
