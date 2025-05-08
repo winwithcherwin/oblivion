@@ -5,6 +5,7 @@ metadata:
   name: do-lab
   namespace: oblivion
 spec:
+  externalAddress: 91.99.2.195
   k0sConfig:
     kind: ClusterConfig
     metadata:
