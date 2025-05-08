@@ -23,7 +23,7 @@ spec:
         kuberouter:
           ipMasq: true
         kubeProxy:
-          mode: ipvs
+          disabled: true
   replicas: 1
   version: v1.32.4-k0s.0             # <-- pick any k0s you like
   persistence:
