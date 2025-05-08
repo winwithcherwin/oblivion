@@ -5,14 +5,19 @@ metadata:
   name: do-lab
   namespace: oblivion
 spec:
-  externalAddress: 91.99.2.195
   k0sConfig:
     kind: ClusterConfig
     metadata:
       name: k0s
     spec:
       api:
-        address: 91.99.2.195
+        externalAddress: 91.99.2.195
+        sans:
+          - 10.8.0.4
+          - 91.99.2.195
+      network:
+        kuberouter:
+          ipMasq: true
   replicas: 1
   version: v1.32.4-k0s.0             # <-- pick any k0s you like
   persistence:
