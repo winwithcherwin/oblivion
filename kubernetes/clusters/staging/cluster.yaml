@@ -5,7 +5,7 @@ metadata:
   name: do-lab-droplet
   namespace: oblivion
 spec:
-  address: 167.172.39.116
+  address: 68.183.9.191
   port: 22
   user: root
   sshKeyRef:
@@ -61,10 +61,11 @@ spec:
             "enable-cni": "true"
             "run-service-proxy": "true"
             "enable-pod-egress": "true"
+            "anonymous-auth": "true"
         kubeProxy:
           disabled: true
   replicas: 1
-  version: v1.32.4-k0s.0             # <-- pick any k0s you like
+  version: v1.30.4-k0s.0             # <-- pick any k0s you like
   persistence:
     type: emptyDir                   # demo – no HA ETCD/Kine
   service:                           # expose the API so the Droplet can see it
@@ -86,7 +87,7 @@ metadata:
   name: do-lab-droplet
   namespace: oblivion
 spec:
-  version: v1.32.4+k0s.0
+  version: v1.30.4+k0s.0
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Machine
