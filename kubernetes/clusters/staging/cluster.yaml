@@ -5,7 +5,7 @@ metadata:
   name: do-lab-droplet
   namespace: oblivion
 spec:
-  address: 68.183.9.191
+  address: 142.93.131.224
   port: 22
   user: root
   sshKeyRef:
@@ -55,13 +55,14 @@ spec:
         provider: kuberouter
         podCIDR: "192.168.0.0/16"
         serviceCIDR: "10.128.0.0/12"
+        calico:
+          mode: vxlan
         kuberouter:
           ipMasq: true
           extraArgs:
             "enable-cni": "true"
             "run-service-proxy": "true"
             "enable-pod-egress": "true"
-            "anonymous-auth": "true"
         kubeProxy:
           disabled: true
   replicas: 1
