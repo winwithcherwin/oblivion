@@ -5,7 +5,7 @@ metadata:
   name: do-lab-droplet
   namespace: oblivion
 spec:
-  address: 142.93.131.224
+  address: 64.227.73.246
   port: 22
   user: root
   sshKeyRef:
@@ -40,6 +40,10 @@ metadata:
   namespace: oblivion
 spec:
   externalAddress: 91.99.2.195
+  etcd:
+    autoDeletePVCs: true
+  persistence:
+    autoDeletePVCs: true
   k0sConfig:
     apiVersion: k0s.k0sproject.io/v1beta1
     kind: ClusterConfig
@@ -67,8 +71,6 @@ spec:
           disabled: true
   replicas: 1
   version: v1.30.4-k0s.0             # <-- pick any k0s you like
-  persistence:
-    type: emptyDir                   # demo – no HA ETCD/Kine
   service:                           # expose the API so the Droplet can see it
     type: NodePort
 ---
