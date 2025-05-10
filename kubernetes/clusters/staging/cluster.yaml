@@ -50,6 +50,7 @@ spec:
     kind: ClusterConfig
     spec:
       api:
+        externalAddress: 91.99.2.195
         sans:
           - 10.8.0.4
           - 91.99.2.195
