@@ -5,7 +5,6 @@ metadata:
   name: do-lab-droplet
   namespace: oblivion
 spec:
-  providerID: remote://64.227.73.246
   address: 64.227.73.246
   port: 22
   user: root
@@ -66,7 +65,6 @@ spec:
         kubeProxy:
           disabled: true
   replicas: 1
-  version: v1.30.4-k0s.0             # <-- pick any k0s you like
   service:                           # expose the API so the Droplet can see it
     type: NodePort
 ---
