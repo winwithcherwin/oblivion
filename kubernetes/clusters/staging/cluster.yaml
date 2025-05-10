@@ -5,6 +5,7 @@ metadata:
   name: do-lab-droplet
   namespace: oblivion
 spec:
+  providerID: remote://64.227.73.246
   address: 64.227.73.246
   port: 22
   user: root
