@@ -58,9 +58,8 @@ spec:
       name: "{{ request.object.metadata.name }}"
       namespace: oblivion
       synchronize: false
-      generateExisting: false
+      generateExisting: true
       data:
-        background-scan-interval: 5s
         spec:
           address: "{{ request.object.status.atProvider.ipv4Address }}"
           port: 22
