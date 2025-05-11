@@ -86,6 +86,7 @@ spec:
       kind: K0sWorkerConfig
       name: "{{ request.object.metadata.name }}"
       namespace: oblivion
+      generateExisting: true
       data:
         spec:
           version: v1.30.4+k0s.0
@@ -100,6 +101,7 @@ spec:
       kind: Machine
       name: "{{ request.object.metadata.name }}"
       namespace: oblivion
+      generateExisting: true
       data:
         spec:
           clusterName: do-lab
