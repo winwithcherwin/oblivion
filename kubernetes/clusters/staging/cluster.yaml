@@ -56,16 +56,8 @@ spec:
           - 91.99.2.195
       network:
         provider: kuberouter
-        podCIDR: "192.168.0.0/16"
-        serviceCIDR: "10.128.0.0/12"
         kuberouter:
           ipMasq: true
-          extraArgs:
-            enable-cni: "true"
-            run-service-proxy: "true"
-            enable-pod-egress: "true"
-        kubeProxy:
-          disabled: true
   replicas: 1
   service:                           # expose the API so the Droplet can see it
     type: NodePort
