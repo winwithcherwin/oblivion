@@ -57,9 +57,10 @@ spec:
       kind: RemoteMachine
       name: "{{ request.object.metadata.name }}"
       namespace: oblivion
-      synchronize: true
+      synchronize: false
       generateExisting: false
       data:
+        background-scan-interval: 5s
         spec:
           address: "{{ request.object.status.atProvider.ipv4Address }}"
           port: 22
