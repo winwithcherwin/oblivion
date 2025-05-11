@@ -10,5 +10,5 @@ resources:
   - yopass.yaml
   - k0smotron.yaml
   - cluster.yaml
-  - droplet.yaml
   - kyverno.yaml
+  #- droplet.yaml
