@@ -24966,8 +24966,8 @@ spec:
         env:
         - name: SSH_KNOWN_HOSTS
           value: ""
-        image: quay.io/k0sproject/k0smotron:v1.5.2
-        imagePullPolicy: IfNotPresent
+        image: winwithcherwin/k0smotron:latest
+        imagePullPolicy: Always
         livenessProbe:
           httpGet:
             path: /healthz
