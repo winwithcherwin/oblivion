@@ -10,4 +10,4 @@ resources:
   - yopass.yaml
   - k0smotron.yaml
   - cluster.yaml
-  #- droplet.yaml
+  - droplet.yaml
