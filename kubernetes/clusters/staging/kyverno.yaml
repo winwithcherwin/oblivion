@@ -82,3 +82,28 @@ spec:
       data:
         spec:
           version: v1.30.4+k0s.0
+  - name: generate-machine
+    match:
+      any:
+      - resources:
+          kinds:
+          - Droplet
+    generate:
+      apiVersion: cluster.x-k8s.io/v1beta1
+      kind: Machine
+      name: "{{ request.object.metadata.name }}"
+      namespace: oblivion
+      synchronize: true
+      generateExisting: true
+      data:
+        spec:
+          clusterName: do-lab
+          bootstrap:
+            configRef:
+              apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+              kind: K0sWorkerConfig
+              name: default
+          infrastructureRef:
+            apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+            kind: RemoteMachine
+            name: "{{ request.object.metadata.name }}"
