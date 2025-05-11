@@ -1,0 +1,65 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno-capi-generator
+rules:
+  - apiGroups: ["infrastructure.cluster.x-k8s.io"]
+    resources: ["remotemachines"]
+    verbs: ["get","list","watch","create","update","patch","delete"]
+  - apiGroups: ["cluster.x-k8s.io"]
+    resources: ["machines"]
+    verbs: ["get","list","watch","create","update","patch","delete"]
+  - apiGroups: ["droplet.digitalocean.crossplane.io"]
+    resources: ["droplets"]
+    verbs: ["get","list","watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kyverno-capi-generator-binding
+subjects:
+  - kind: ServiceAccount
+    name: kyverno-background-controller
+    namespace: kyverno
+  - kind: ServiceAccount
+    name: kyverno-admission-controller
+    namespace: kyverno
+roleRef:
+  kind: ClusterRole
+  name: kyverno-capi-generator
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: generate-capi-resources-for-droplet
+  namespace: oblivion
+spec:
+  background: true
+  rules:
+  - name: generate-remote-machine-for-droplet
+    match:
+      any:
+      - resources:
+          kinds:
+          - Droplet
+    preconditions:
+      all:
+      - key: "{{ request.object.status.atProvider.ipv4Address }}"
+        operator: NotEquals
+        value: ""
+    generate:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: RemoteMachine
+      name: "{{ request.object.metadata.name }}"
+      namespace: oblivion
+      synchronize: true
+      generateExisting: true
+      data:
+        spec:
+          address: "{{ request.object.status.atProvider.ipv4Address }}"
+          port: 22
+          user: root
+          sshKeyRef:
+            name: oblivion-ssh-key

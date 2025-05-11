@@ -11,3 +11,4 @@ resources:
   - k0smotron.yaml
   - cluster.yaml
   - droplet.yaml
+  - kyverno.yaml
