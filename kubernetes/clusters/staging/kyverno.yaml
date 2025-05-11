@@ -57,8 +57,6 @@ spec:
       kind: RemoteMachine
       name: "{{ request.object.metadata.name }}"
       namespace: oblivion
-      synchronize: true
-      generateExisting: true
       data:
         spec:
           address: "{{ request.object.status.atProvider.ipv4Address }}"
@@ -77,8 +75,6 @@ spec:
       kind: K0sWorkerConfig
       name: default
       namespace: oblivion
-      synchronize: true
-      generateExisting: true
       data:
         spec:
           version: v1.30.4+k0s.0
@@ -93,8 +89,6 @@ spec:
       kind: Machine
       name: "{{ request.object.metadata.name }}"
       namespace: oblivion
-      synchronize: true
-      generateExisting: true
       data:
         spec:
           clusterName: do-lab
