@@ -42,6 +42,12 @@ spec:
   background: true
   rules:
   - name: generate-remote-machine-for-droplet
+    context:
+      - name: remoteMachineAddress
+        apiCall:
+          urlPath: "/apis/infrastructure.cluster.x-k8s.io/v1beta1/namespaces/oblivion/remotemachines/{{ request.object.metadata.name }}"
+          jmesPath: "spec.address"
+          default: ""
     match:
       any:
       - resources:
@@ -52,12 +58,15 @@ spec:
       - key: "{{ request.object.status.atProvider.ipv4Address }}"
         operator: NotEquals
         value: ""
+      - key: "{{ request.object.status.atProvider.ipv4Address }}"
+        operator: NotEquals
+        value: "{{ remoteMachineAddress }}"
     generate:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: RemoteMachine
       name: "{{ request.object.metadata.name }}"
       namespace: oblivion
-      synchronize: false
+      synchronize: true
       generateExisting: true
       data:
         spec:
