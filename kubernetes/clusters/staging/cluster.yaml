@@ -5,7 +5,7 @@ metadata:
   name: do-lab-droplet
   namespace: oblivion
 spec:
-  address: 188.166.53.17
+  address: 161.35.147.94
   port: 22
   user: root
   sshKeyRef:
