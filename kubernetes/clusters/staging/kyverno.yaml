@@ -75,7 +75,7 @@ spec:
     generate:
       apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
       kind: K0sWorkerConfig
-      name: default
+      name: "{{ request.object.metadata.name }}"
       namespace: oblivion
       data:
         spec:
@@ -98,7 +98,7 @@ spec:
             configRef:
               apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
               kind: K0sWorkerConfig
-              name: default
+              name: "{{ request.object.metadata.name }}"
           infrastructureRef:
             apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
             kind: RemoteMachine
