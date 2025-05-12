@@ -4,6 +4,9 @@ kind: ClusterRole
 metadata:
   name: kyverno-capi-generator
 rules:
+  - apiGroups: ["controlplane.cluster.x-k8s.io"]
+    resources: ["k0smotroncontrolplanes"]
+    verbs: ["get","list","watch","create","update","patch","delete"]
   - apiGroups: ["infrastructure.cluster.x-k8s.io"]
     resources: ["remotemachines"]
     verbs: ["get","list","watch","create","update","patch","delete"]
@@ -37,7 +40,6 @@ apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
   name: generate-capi-resources-for-droplet
-  namespace: oblivion
 spec:
   background: true
   rules:
