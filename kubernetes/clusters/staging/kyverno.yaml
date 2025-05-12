@@ -8,7 +8,7 @@ rules:
     resources: ["k0smotroncontrolplanes"]
     verbs: ["get","list","watch","create","update","patch","delete"]
   - apiGroups: ["infrastructure.cluster.x-k8s.io"]
-    resources: ["remotemachines"]
+    resources: ["remotemachines", "remoteclusters"]
     verbs: ["get","list","watch","create","update","patch","delete"]
   - apiGroups: ["bootstrap.cluster.x-k8s.io"]
     resources: ["k0sworkerconfigs"]
