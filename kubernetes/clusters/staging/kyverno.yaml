@@ -14,7 +14,7 @@ rules:
     resources: ["k0sworkerconfigs"]
     verbs: ["get","list","watch","create","update","patch","delete"]
   - apiGroups: ["cluster.x-k8s.io"]
-    resources: ["machines"]
+    resources: ["machines", "clusters"]
     verbs: ["get","list","watch","create","update","patch","delete"]
   - apiGroups: ["droplet.digitalocean.crossplane.io"]
     resources: ["droplets"]
