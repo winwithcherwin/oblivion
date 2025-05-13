@@ -12,4 +12,5 @@ resources:
   - cluster.yaml
   - kyverno.yaml
   - argo/
+  - nats/
   #- droplet.yaml
