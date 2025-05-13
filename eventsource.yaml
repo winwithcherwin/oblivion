@@ -37,34 +37,40 @@ spec:
       group: droplet.digitalocean.crossplane.io
       resource: droplets  # Watch the 'pods' resource
       eventTypes: [UPDATE]  # Listen for 'UPDATE' events (Pod status changes)
-      #filter:
-      #  fields:
-      #    expression: "(body.status.atProvider.ipv4Address != \"\")"
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor
 metadata:
-  name: droplet-update-sensor-2
+  name: droplet-update-sensor
   namespace: argo-events  # The namespace where the Sensor is created
 spec:
   dependencies:
     - name: droplet-update-dependency
       eventSourceName: droplet-event-source  # Name of the EventSource
       eventName: droplet-update  # The event triggered by the EventSource
+      filters:
+        script: |-
+          if event.body.status
+            and event.body.status.atProvider
+            and event.body.status.atProvider.ipv4Address
+            and event.body.status.atProvider.ipv4Address ~= ""
+            and not event.body.metadata.deletionTimestamp
+          then
+            return true
+          else
+            return false
+          end
   triggers:
     - template:
         name: create-configmap
         k8s:
           operation: create
+          dest: operation
           parameters:
           - src:
               dependencyName: droplet-update-dependency
               dataKey: body.status.atProvider.ipv4Address
             dest: data.ipv4Address
-          - src:
-              dependencyName: droplet-update-dependency
-              dataKey: operation
-            dest: operation
           source:
             resource:
               apiVersion: v1
