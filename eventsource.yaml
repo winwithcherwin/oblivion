@@ -39,29 +39,20 @@ spec:
       eventTypes: [UPDATE]  # Listen for 'UPDATE' events (Pod status changes)
       #filter:
       #  fields:
-      #    - key: status.atProvider.ipv4Address  # Example of filtering for Pod status change
-      #      operation: "!="
-      #      value: ""  # Only trigger when Pod status is "Running"
+      #    expression: "(body.status.atProvider.ipv4Address != \"\")"
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor
 metadata:
-  name: droplet-update-sensor
+  name: droplet-update-sensor-2
   namespace: argo-events  # The namespace where the Sensor is created
 spec:
   dependencies:
     - name: droplet-update-dependency
       eventSourceName: droplet-event-source  # Name of the EventSource
       eventName: droplet-update  # The event triggered by the EventSource
-      transform:
-        jq: '.operation += if .type == "ADD" then "create" else if .type == "DELETE" then "delete" else "update" end end'
   triggers:
-    - parameters:
-      - src:
-          dependencyName: droplet-update-dependency
-          dataKey: operation
-        dest: k8s.operation
-      template:
+    - template:
         name: create-configmap
         k8s:
           operation: create
@@ -70,7 +61,11 @@ spec:
               dependencyName: droplet-update-dependency
               dataKey: body.status.atProvider.ipv4Address
             dest: data.ipv4Address
-          source: configmaps
+          - src:
+              dependencyName: droplet-update-dependency
+              dataKey: operation
+            dest: operation
+          source:
             resource:
               apiVersion: v1
               kind: ConfigMap
