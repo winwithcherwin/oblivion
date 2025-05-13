@@ -1,0 +1,132 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: create-event-trigger
+spec:
+  background: true
+  rules:
+  - name: create-event-bus
+    match:
+      any:
+      - resources:
+          kinds:
+          - ConfigMap
+          annotations:
+            create-cluster/enable: "true"
+          selector:
+            matchLabels:
+              provider: digitalocean
+    context:
+    - name: config
+      configMap:
+        name: "{{ request.object.metadata.name }}"
+        namespace: "{{ request.namespace }}"
+    - name: context
+      variable:
+        jmesPath: "config.data.context | parse_yaml(@)"              
+    generate:
+      apiVersion: argoproj.io/v1alpha1
+      kind: EventBus
+      name: default
+      namespace: "{{ request.namespace }}"
+      generateExisting: true
+      data:
+        spec:
+          nats:
+            native: {}
+  - name: create-event-source
+    match:
+      any:
+      - resources:
+          kinds:
+          - ConfigMap
+          annotations:
+            create-cluster/enable: "true"
+          selector:
+            matchLabels:
+              provider: digitalocean
+    context:
+    - name: config
+      configMap:
+        name: "{{ request.object.metadata.name }}"
+        namespace: "{{ request.namespace }}"
+    - name: context
+      variable:
+        jmesPath: "config.data.context | parse_yaml(@)"              
+    generate:
+      apiVersion: argoproj.io/v1alpha1
+      kind: EventSource
+      name: "{{ context.clusterName }}-event-source"
+      namespace: "{{ request.namespace }}"
+      generateExisting: true
+      data:
+        spec:
+          resource:
+            droplet-update:
+              version: v1alpha1
+              group: droplet.digitalocean.crossplane.io
+              resource: droplets
+              eventTypes: [UPDATE]
+  - name: create-sensor
+    match:
+      any:
+      - resources:
+          kinds:
+          - ConfigMap
+          annotations:
+            create-cluster/enable: "true"
+          selector:
+            matchLabels:
+              provider: digitalocean
+    context:
+    - name: config
+      configMap:
+        name: "{{ request.object.metadata.name }}"
+        namespace: "{{ request.namespace }}"
+    - name: context
+      variable:
+        jmesPath: "config.data.context | parse_yaml(@)"   
+    generate:
+      apiVersion: argoproj.io/v1alpha1
+      kind: Sensor
+      name: "{{ context.clusterName }}-droplet-sensor"
+      namespace: "{{ request.namespace }}"
+      data:
+        spec:
+          dependencies:
+            - name: droplet-update-dependency
+              eventSourceName: droplet-event-source  # Name of the EventSource
+              eventName: droplet-update  # The event triggered by the EventSource
+              filters:
+                script: |-
+                  if event.body.status
+                    and event.body.status.atProvider
+                    and event.body.status.atProvider.ipv4Address
+                    and event.body.status.atProvider.ipv4Address ~= ""
+                    and not event.body.metadata.deletionTimestamp
+                  then
+                    return true
+                  else
+                    return false
+                  end
+          triggers:
+            - template:
+                name: create-configmap
+                k8s:
+                  operation: create
+                  dest: operation
+                  parameters:
+                  - src:
+                      dependencyName: droplet-update-dependency
+                      dataKey: body.status.atProvider.ipv4Address
+                    dest: data.ipv4Address
+                  source:
+                    resource:
+                      apiVersion: v1
+                      kind: ConfigMap
+                      annotations:
+                        create-cluster/name: "{{ context.clusterName }}"
+                      metadata:
+                        namespace: "{{ request.namespace }}"
+                      data:
+                        ipv4Address: __WILL_BE_REPLACED__

@@ -1,0 +1,48 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno-capi-generator
+rules:
+  - apiGroups: ["controlplane.cluster.x-k8s.io"]
+    resources: ["k0smotroncontrolplanes"]
+    verbs: ["get","list","watch","create","update","patch","delete"]
+  - apiGroups: ["infrastructure.cluster.x-k8s.io"]
+    resources: ["remotemachines", "remoteclusters"]
+    verbs: ["get","list","watch","create","update","patch","delete"]
+  - apiGroups: ["bootstrap.cluster.x-k8s.io"]
+    resources: ["k0sworkerconfigs"]
+    verbs: ["get","list","watch","create","update","patch","delete"]
+  - apiGroups: ["cluster.x-k8s.io"]
+    resources: ["machines", "clusters"]
+    verbs: ["get","list","watch","create","update","patch","delete"]
+  - apiGroups: ["droplet.digitalocean.crossplane.io"]
+    resources: ["droplets"]
+    verbs: ["get","list","watch"]
+  - apiGroups: ["argoproj.io"]
+    resources: ["eventbus", "eventsources", "sensors"]
+    verbs: ["get","list","watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["roles", "rolebindings", "rolebinding", "role"]
+    verbs: ["escalate", "bind", "get","list","watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get","list", "create", "update", "delete"]
+
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kyverno-capi-generator-binding
+subjects:
+  - kind: ServiceAccount
+    name: kyverno-background-controller
+    namespace: kyverno
+  - kind: ServiceAccount
+    name: kyverno-admission-controller
+    namespace: kyverno
+roleRef:
+  kind: ClusterRole
+  name: kyverno-capi-generator
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,76 @@
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kubernetes-create-digitalocean-cluster
+spec:
+  background: true
+  rules:
+  - name: create-remote-cluster
+    match:
+      any:
+      - resources:
+          kinds:
+          - ConfigMap
+          annotations:
+            create-cluster/enable: "true"
+          selector:
+            matchLabels:
+              provider: digitalocean
+    context:
+    - name: config
+      configMap:
+        name: "{{ request.object.metadata.name }}"
+        namespace: "{{ request.namespace }}"
+    - name: context
+      variable:
+        jmesPath: "config.data.context | parse_yaml(@)"              
+    generate:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: RemoteCluster
+      name: "{{ context.clusterName }}"
+      namespace: "{{ request.namespace }}"
+      generateExisting: true
+      data:
+        spec:
+          controlPlaneEndpoint: "{{ context.controlPlaneEndpoint }}" 
+  - name: create-cluster-object
+    match:
+      any:
+      - resources:
+          kinds:
+          - ConfigMap
+          annotations:
+            create-cluster/enable: "true"
+          selector:
+            matchLabels:
+              provider: digitalocean
+    context:
+    - name: config
+      configMap:
+        name: "{{ request.object.metadata.name }}"
+        namespace: "{{ request.namespace }}"
+    - name: context
+      variable:
+        jmesPath: "config.data.context | parse_yaml(@)"              
+    generate:
+      apiVersion: cluster.x-k8s.io/v1beta1
+      kind: Cluster
+      name: "{{ context.clusterName }}"
+      namespace: "{{ request.namespace }}"
+      generateExisting: true
+      data:
+        spec:
+          controlPlaneEndpoint: "{{ context.controlPlaneEndpoint }}"
+          clusterNetwork:
+            pods:       { cidrBlocks: ["192.168.0.0/16"] }
+            services:   { cidrBlocks: ["10.128.0.0/12"] }
+            serviceDomain: cluster.local
+          controlPlaneRef:
+            apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+            kind: K0smotronControlPlane
+            name: "{{ context.clusterName }}"
+          infrastructureRef:
+            apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+            kind: RemoteCluster
+            name: "{{ context.clusterName }}"

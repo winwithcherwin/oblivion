@@ -1,0 +1,75 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: kubernetes-create-rbac
+spec:
+  background: true
+  rules:
+  - name: create-role
+    match:
+      any:
+      - resources:
+          kinds:
+          - ConfigMap
+          annotations:
+            create-cluster/enable: "true"
+          selector:
+            matchLabels:
+              provider: digitalocean
+    context:
+    - name: config
+      configMap:
+        name: "{{ request.object.metadata.name }}"
+        namespace: "{{ request.namespace }}"
+    - name: context
+      variable:
+        jmesPath: "config.data.context | parse_yaml(@)"   
+    generate:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: Role
+      name: "{{ context.clusterName }}-argo-events"
+      namespace: "{{ request.namespace }}"
+      generateExisting: true
+      data:
+        rules:
+          - apiGroups: [""]
+            resources: ["configmaps", "pods"]
+            verbs: ["list", "watch", "create", "update", "delete"]
+          - apiGroups: ["droplet.digitalocean.crossplane.io"]
+            resources: ["droplets"]
+            verbs: ["list", "watch", "create", "update", "delete"]
+
+  - name: create-role-binding
+    match:
+      any:
+      - resources:
+          kinds:
+          - ConfigMap
+          annotations:
+            create-cluster/enable: "true"
+          selector:
+            matchLabels:
+              provider: digitalocean
+    context:
+    - name: config
+      configMap:
+        name: "{{ request.object.metadata.name }}"
+        namespace: "{{ request.namespace }}"
+    - name: context
+      variable:
+        jmesPath: "config.data.context | parse_yaml(@)"   
+    generate:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      name: "{{ context.clusterName }}-argo-events"
+      namespace: "{{ request.namespace }}"
+      generateExisting: true
+      data:
+        subjects:
+          - kind: ServiceAccount
+            name: default
+            namespace: "{{ request.namespace }}"
+        roleRef:
+          kind: Role
+          name: "{{ context.clusterName }}-argo-events"
+          apiGroup: rbac.authorization.k8s.io

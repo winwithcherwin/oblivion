@@ -10,6 +10,7 @@ resources:
   - yopass.yaml
   - k0smotron.yaml
   - cluster.yaml
-  - kyverno.yaml
   - argo/
+  - provcannon/
   #- droplet.yaml
+  #- kyverno.yaml
