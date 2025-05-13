@@ -5,7 +5,10 @@ metadata:
   name: configmap-reader
 rules:
   - apiGroups: [""]
-    resources: ["configmaps"]
+    resources: ["configmaps", "pods"]
+    verbs: ["list", "watch", "create", "update", "delete"]
+  - apiGroups: ["droplet.digitalocean.crossplane.io"]
+    resources: ["droplets"]
     verbs: ["list", "watch", "create", "update", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -25,51 +28,54 @@ roleRef:
 apiVersion: argoproj.io/v1alpha1
 kind: EventSource
 metadata:
-  name: configmap-event-source
+  name: droplet-event-source
   namespace: argo-events
 spec:
   resource:
-    # change to listen to droplet ip address status update
-    configmap-update:
-      namespace: argo-events
-      version: v1
-      group: ""
-      resource: configmaps
-      eventTypes: [ ADD, DELETE, UPDATE ]
-      filter:
-        fields:
-        - key: metadata.name
-          operation: =
-          value: "my-config"
+    droplet-update:
+      version: v1alpha1
+      group: droplet.digitalocean.crossplane.io
+      resource: droplets  # Watch the 'pods' resource
+      eventTypes: [UPDATE]  # Listen for 'UPDATE' events (Pod status changes)
+      #filter:
+      #  fields:
+      #    - key: status.atProvider.ipv4Address  # Example of filtering for Pod status change
+      #      operation: "!="
+      #      value: ""  # Only trigger when Pod status is "Running"
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Sensor
 metadata:
-  name: configmap-update-sensor
+  name: droplet-update-sensor
   namespace: argo-events  # The namespace where the Sensor is created
 spec:
   dependencies:
-    - name: configmap-update-dependency
-      eventSourceName: configmap-event-source  # Name of the EventSource
-      eventName: configmap-update  # The event triggered by the EventSource
+    - name: droplet-update-dependency
+      eventSourceName: droplet-event-source  # Name of the EventSource
+      eventName: droplet-update  # The event triggered by the EventSource
+      transform:
+        jq: '.operation += if .type == "ADD" then "create" else if .type == "DELETE" then "delete" else "update" end end'
   triggers:
-    - template:
+    - parameters:
+      - src:
+          dependencyName: droplet-update-dependency
+          dataKey: operation
+        dest: k8s.operation
+      template:
         name: create-configmap
         k8s:
-          group: ""
-          version: v1
-          resource: configmaps
           operation: create
-          source:
+          parameters:
+          - src:
+              dependencyName: droplet-update-dependency
+              dataKey: body.status.atProvider.ipv4Address
+            dest: data.ipv4Address
+          source: configmaps
             resource:
               apiVersion: v1
               kind: ConfigMap
               metadata:
                 name: droplet-ip-address
-                namespace: oblivion
+                namespace: argo-events
               data:
-                foo: "bariscool"
-                #ipAddress: "{{ .Event.Data.status.ip }}"  # Example: Use IP from the event
-                #annotationValue: "{{ .Event.Data.annotations['example.com/namespace'] }}"  # Use annotation from the event
-
-
+                ipv4Address: __WILL_BE_REPLACED__
