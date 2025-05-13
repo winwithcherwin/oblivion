@@ -1,0 +1,75 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  namespace: argo-events
+  name: configmap-reader
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["list", "watch", "create", "update", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: configmap-reader-binding
+  namespace: argo-events
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: argo-events
+roleRef:
+  kind: ClusterRole
+  name: configmap-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: configmap-event-source
+  namespace: argo-events
+spec:
+  resource:
+    # change to listen to droplet ip address status update
+    configmap-update:
+      namespace: argo-events
+      version: v1
+      group: ""
+      resource: configmaps
+      eventTypes: [ ADD, DELETE, UPDATE ]
+      filter:
+        fields:
+        - key: metadata.name
+          operation: =
+          value: "my-config"
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: configmap-update-sensor
+  namespace: argo-events  # The namespace where the Sensor is created
+spec:
+  dependencies:
+    - name: configmap-update-dependency
+      eventSourceName: configmap-event-source  # Name of the EventSource
+      eventName: configmap-update  # The event triggered by the EventSource
+  triggers:
+    - template:
+        name: create-configmap
+        k8s:
+          group: ""
+          version: v1
+          resource: configmaps
+          operation: create
+          source:
+            resource:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: droplet-ip-address
+                namespace: oblivion
+              data:
+                foo: "bariscool"
+                #ipAddress: "{{ .Event.Data.status.ip }}"  # Example: Use IP from the event
+                #annotationValue: "{{ .Event.Data.annotations['example.com/namespace'] }}"  # Use annotation from the event
+
+
