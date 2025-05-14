@@ -36,7 +36,7 @@ spec:
         spec:
           forProvider:
             name: "{{ context.clusterName }}-droplet"
-            region: "nyc3"
+            region: "ams3"
             size: "{{ context.instanceType }}"
             image: "ubuntu-22-04-x64"
             sshKeys: ["{{ context.sshKeyId }}"]
