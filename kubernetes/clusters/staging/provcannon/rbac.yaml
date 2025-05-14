@@ -26,9 +26,8 @@ spec:
         jmesPath: "config.data.context | parse_yaml(@)"   
     generate:
       apiVersion: rbac.authorization.k8s.io/v1
-      kind: Role
+      kind: ClusterRole
       name: "{{ context.clusterName }}-argo-events"
-      namespace: "{{ request.namespace }}"
       generateExisting: true
       data:
         rules:
@@ -60,9 +59,8 @@ spec:
         jmesPath: "config.data.context | parse_yaml(@)"   
     generate:
       apiVersion: rbac.authorization.k8s.io/v1
-      kind: RoleBinding
+      kind: ClusterRoleBinding
       name: "{{ context.clusterName }}-argo-events"
-      namespace: "{{ request.namespace }}"
       generateExisting: true
       data:
         subjects:
@@ -70,6 +68,6 @@ spec:
             name: default
             namespace: "{{ request.namespace }}"
         roleRef:
-          kind: Role
+          kind: ClusterRole
           name: "{{ context.clusterName }}-argo-events"
           apiGroup: rbac.authorization.k8s.io

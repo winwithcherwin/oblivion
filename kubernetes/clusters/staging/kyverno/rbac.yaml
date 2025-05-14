@@ -23,7 +23,7 @@ rules:
     resources: ["eventbus", "eventsources", "sensors"]
     verbs: ["get","list","watch", "create", "update", "patch", "delete"]
   - apiGroups: ["rbac.authorization.k8s.io"]
-    resources: ["roles", "rolebindings", "rolebinding", "role"]
+    resources: ["roles", "rolebindings", "rolebinding", "role", "clusterroles", "clusterrolebindings"]
     verbs: ["escalate", "bind", "get","list","watch", "create", "update", "patch", "delete"]
   - apiGroups: [""]
     resources: ["secrets"]
