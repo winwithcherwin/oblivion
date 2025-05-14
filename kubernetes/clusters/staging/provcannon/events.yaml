@@ -131,11 +131,11 @@ spec:
                     resource:
                       apiVersion: v1
                       kind: ConfigMap
-                      annotations:
-                        create-remote-machine: "true"
                       metadata:
                         name: "{{ context.clusterName }}-machine"
                         namespace: "{{ request.namespace }}"
+                        annotations:
+                          create-remote-machine: "true"
                       data:
                         ipv4Address: __WILL_BE_REPLACED__
                         clusterName: "{{ context.clusterName }}"
