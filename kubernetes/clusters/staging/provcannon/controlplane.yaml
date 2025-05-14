@@ -45,7 +45,7 @@ spec:
             spec:
               extensions:
                 helm:
-                  concurrenyLevel: 5
+                  concurrencyLevel: 5
                   repositories:
                     - name: jetstack
                       url: https://charts.jetstack.io
@@ -53,17 +53,17 @@ spec:
                       url: https://kubernetes.github.io/ingress-nginx
                   charts:
                     - name: cert-manager
-                      repository: jetstack
+                      chartname: jetstack/cert-manager
                       namespace: cert-manager
-                      values:
+                      values: |
                         installCRDs: true
                         serviceAccount:
                           create: true
                           name: cert-manager
                     - name: ingress-nginx
-                      repository: ingress-nginx
+                      chartname: ingress-nginx/ingress-nginx
                       namespace: ingress-nginx
-                      values:
+                      values: |
                         controller:
                           ingressClassResource:
                             name: nginx
