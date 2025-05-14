@@ -1,0 +1,39 @@
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultStaticSecret
+metadata:
+  name: oblivion-ssh-key
+  namespace: oblivion
+spec:
+  type: kv-v2
+
+  # mount path
+  mount: kubernetes-staging
+
+  # path of the secret
+  path: apps/oblivion/ssh
+
+  # dest k8s secret
+  destination:
+    name: oblivion-ssh-key
+    create: true
+
+  # static secret refresh interval
+  refreshAfter: 30s
+
+  # Name of the CRD to authenticate to Vault
+  vaultAuthRef: oblivion
+---
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: oblivion
+  namespace: oblivion
+spec:
+  method: kubernetes
+  mount: kubernetes-staging
+  kubernetes:
+    role: vault-secrets-operator-controller-manager
+    serviceAccount: default
+    audiences:
+      - vault
