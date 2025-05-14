@@ -32,9 +32,9 @@ spec:
       generateExisting: true
       data:
         spec:
-          replicas: 1
           nats:
-            native: {}
+            native:
+              replicas: 1
   - name: create-event-source
     match:
       any:
@@ -68,6 +68,11 @@ spec:
               group: droplet.digitalocean.crossplane.io
               resource: droplets
               eventTypes: [UPDATE]
+              filter:
+                labels:
+                  - key: namespace
+                    operation: "=="
+                    value: "{{ request.namespace }}"
   - name: create-sensor
     match:
       any:
@@ -92,6 +97,7 @@ spec:
       kind: Sensor
       name: "{{ context.clusterName }}-droplet-sensor"
       namespace: "{{ request.namespace }}"
+      generateExisting: true
       data:
         spec:
           dependencies:
@@ -121,13 +127,19 @@ spec:
                       dependencyName: droplet-update-dependency
                       dataKey: body.status.atProvider.ipv4Address
                     dest: data.ipv4Address
+                  - src:
+                      dependencyName: droplet-update-dependency
+                      dataKey: body.metadata.name
+                      dest: metadata.name
                   source:
                     resource:
                       apiVersion: v1
                       kind: ConfigMap
                       annotations:
-                        create-cluster/name: "{{ context.clusterName }}"
+                        create-remote-machine: "true"
                       metadata:
+                        name: __WILL_BE_REPLACED__
                         namespace: "{{ request.namespace }}"
                       data:
                         ipv4Address: __WILL_BE_REPLACED__
+                        clusterName: "{{ context.clusterName }}"

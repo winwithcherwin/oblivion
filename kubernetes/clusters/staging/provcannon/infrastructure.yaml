@@ -1,0 +1,86 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: create-kubernetes-infrastructure
+spec:
+  background: true
+  rules:
+  - name: create-remote-machine
+    match:
+      any:
+      - resources:
+          kinds:
+          - ConfigMap
+          annotations:
+            create-remote-machine: "true"
+    context:
+    - name: context
+      configMap:
+        name: "{{ request.object.metadata.name }}"
+        namespace: "{{ request.namespace }}"
+    generate:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: RemoteMachine
+      name: "{{ context.metadata.name }}"
+      namespace: "{{ request.namespace }}"
+      generateExisting: true
+      data:
+        spec:
+          address: "{{ context.data.ipv4Address }}"
+          port: 22
+          user: root
+          sshKeyRef:
+            name: oblivion-ssh-key
+  - name: create-k0sworkerconfig
+    match:
+      any:
+      - resources:
+          kinds:
+          - ConfigMap
+          annotations:
+            create-remote-machine: "true"
+    context:
+    - name: context
+      configMap:
+        name: "{{ request.object.metadata.name }}"
+        namespace: "{{ request.namespace }}"
+    generate:
+      apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+      kind: K0sWorkerConfig
+      name: "{{ context.metadata.name }}"
+      namespace: "{{ request.namespace }}"
+      generateExisting: true
+      data:
+        spec:
+          version: v1.30.4+k0s.0
+  - name: create-machine
+    match:
+      any:
+      - resources:
+          kinds:
+          - ConfigMap
+          annotations:
+            create-remote-machine: "true"
+    context:
+    - name: context
+      configMap:
+        name: "{{ request.object.metadata.name }}"
+        namespace: "{{ request.namespace }}"
+    generate:
+      apiVersion: cluster.x-k8s.io/v1beta1
+      kind: Machine
+      name: "{{ context.metadata.name }}"
+      namespace: "{{ request.namespace }}"
+      generateExisting: true
+      data:
+        spec:
+          clusterName: "{{ context.data.clusterName }}"
+          bootstrap:
+            configRef:
+              apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+              kind: K0sWorkerConfig
+              name: "{{ context.metadata.name }}"
+          infrastructureRef:
+            apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+            kind: RemoteMachine
+            name: "{{ context.metadata.name }}"

@@ -1,0 +1,44 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: create-crossplane-droplet
+spec:
+  background: true
+  rules:
+  - name: create-droplet
+    match:
+      any:
+      - resources:
+          kinds:
+          - ConfigMap
+          annotations:
+            create-cluster/enable: "true"
+          selector:
+            matchLabels:
+              provider: digitalocean
+    context:
+    - name: config
+      configMap:
+        name: "{{ request.object.metadata.name }}"
+        namespace: "{{ request.namespace }}"
+    - name: context
+      variable:
+        jmesPath: "config.data.context | parse_yaml(@)"              
+    generate:
+      apiVersion: droplet.digitalocean.crossplane.io/v1alpha1
+      kind: Droplet
+      name: "{{ context.clusterName }}-droplet"
+      generateExisting: true
+      data:
+        metadata: 
+          labels:
+            namespace: "{{ request.namespace }}"
+        spec:
+          forProvider:
+            name: "{{ context.clusterName }}-droplet"
+            region: "nyc3"
+            size: "{{ context.instanceType }}"
+            image: "ubuntu-22-04-x64"
+            sshKeys: ["{{ context.sshKeyId }}"]
+            providerConfigRef:
+              name: "default"

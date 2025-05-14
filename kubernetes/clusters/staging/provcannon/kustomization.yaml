@@ -7,5 +7,6 @@ resources:
   - controlplane.yaml
   - cluster.yaml
   - events.yaml
-  - machine.yaml
   - secrets.yaml
+  - droplet.yaml
+  - infrastructure.yaml
