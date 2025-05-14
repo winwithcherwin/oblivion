@@ -102,7 +102,7 @@ spec:
         spec:
           dependencies:
             - name: droplet-update-dependency
-              eventSourceName: droplet-event-source  # Name of the EventSource
+              eventSourceName: "{{ context.clusterName }}-event-source"
               eventName: droplet-update  # The event triggered by the EventSource
               filters:
                 script: |-
