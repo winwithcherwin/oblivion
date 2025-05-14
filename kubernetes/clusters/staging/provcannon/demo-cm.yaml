@@ -13,6 +13,7 @@ data:
     nodeCount: 1
     instanceType: "s-1vcpu-1gb"
     sshKeyId: "d8:57:d3:22:fc:e8:98:0c:d7:64:07:bd:0e:28:f2:84"
+    konnectivityPort: 30133
     controlPlaneEndpoint:
       host: "91.99.2.195"
       port: 30444

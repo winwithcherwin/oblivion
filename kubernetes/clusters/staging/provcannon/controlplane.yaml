@@ -52,3 +52,5 @@ spec:
           replicas: 1
           service:
             type: NodePort
+            apiPort: "{{ context.controlPlaneEndpoint.port }}"
+            konnectivityPort: "{{ context.konnectivityPort }}"
