@@ -32,6 +32,7 @@ spec:
       generateExisting: true
       data:
         spec:
+          replicas: 1
           nats:
             native: {}
   - name: create-event-source
