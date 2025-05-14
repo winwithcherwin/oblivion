@@ -6,6 +6,13 @@
   };
   dotenv.enable = true;
   packages = [
+    pkgs.k8sgpt
+    pkgs.kyverno
+    pkgs.stern
+    pkgs.clusterctl
+    pkgs.trivy
+    pkgs.kubie
+    pkgs.kustomize
     pkgs.direnv
     pkgs.dnsutils
     pkgs.yq
@@ -38,6 +45,9 @@
   '';
   scripts.kns.exec = ''
     kubens "$@";
+  '';
+  scripts.get-ip.exec = ''
+    kubectl describe droplet demo-droplet | grep -i ipv4address | head -n1 | cut -d: -f2 | xargs
   '';
   scripts.ob.exec = ''
     python -m oblivion "$@";
