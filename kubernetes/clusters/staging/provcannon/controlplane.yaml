@@ -43,6 +43,38 @@ spec:
             apiVersion: k0s.k0sproject.io/v1beta1
             kind: ClusterConfig
             spec:
+              extensions:
+                helm:
+                  concurrenyLevel: 5
+                  repositories:
+                    - name: jetstack
+                      url: https://charts.jetstack.io
+                    - name: ingress-nginx
+                      url: https://kubernetes.github.io/ingress-nginx
+                  charts:
+                    - name: cert-manager
+                      repository: jetstack
+                      namespace: cert-manager
+                      values:
+                        installCRDs: true
+                        serviceAccount:
+                          create: true
+                          name: cert-manager
+                    - name: ingress-nginx
+                      repository: ingress-nginx
+                      namespace: ingress-nginx
+                      values:
+                        controller:
+                          ingressClassResource:
+                            name: nginx
+                            enabled: true
+                            default: true
+                          ingressClass: nginx
+                          hostNetwork: true
+                          daemonset:
+                            useHostPort: true
+                          service:
+                            type: ClusterIP
               api:
                 externalAddress: "{{ context.controlPlaneEndpoint.host }}"
               network:
