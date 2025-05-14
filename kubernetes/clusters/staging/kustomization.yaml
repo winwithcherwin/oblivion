@@ -9,9 +9,10 @@ resources:
   - r2r.yaml
   - yopass.yaml
   - k0smotron.yaml
-  - k8sgpt.yaml
+  - k8sgpt-core.yaml
   - sshkey.yaml
   - argo/
   - provcannon/
+  #- k8sgpt.yaml
   #- droplet.yaml
   #- kyverno.yaml
