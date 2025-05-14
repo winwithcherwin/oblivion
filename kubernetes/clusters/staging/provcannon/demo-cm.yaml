@@ -2,15 +2,15 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: michelle-cluster
-  namespace: harmony
+  name: optimus-cluster
+  namespace: megatron
   labels:
     provider: digitalocean
   annotations:
     create-cluster/enable: "true"
 data:
   context: |
-    clusterName: "michelle-cluster"
+    clusterName: "optimus-cluster"
     nodeCount: 1
     instanceType: "s-1vcpu-1gb"
     sshKeyId: "d8:57:d3:22:fc:e8:98:0c:d7:64:07:bd:0e:28:f2:84"
