@@ -127,10 +127,6 @@ spec:
                       dependencyName: droplet-update-dependency
                       dataKey: body.status.atProvider.ipv4Address
                     dest: data.ipv4Address
-                  - src:
-                      dependencyName: droplet-update-dependency
-                      dataKey: body.metadata.name
-                      dest: metadata.name
                   source:
                     resource:
                       apiVersion: v1
@@ -138,7 +134,7 @@ spec:
                       annotations:
                         create-remote-machine: "true"
                       metadata:
-                        name: __WILL_BE_REPLACED__
+                        name: "{{ context.clusterName }}-machine"
                         namespace: "{{ request.namespace }}"
                       data:
                         ipv4Address: __WILL_BE_REPLACED__
