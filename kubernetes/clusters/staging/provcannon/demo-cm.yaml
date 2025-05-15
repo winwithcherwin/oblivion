@@ -2,24 +2,24 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: shield
+  name: cool
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: kubernetes-cluster
-  namespace: shield
+  namespace: cool
   labels:
     provider: digitalocean
   annotations:
     create-cluster/enable: "true"
 data:
   context: |
-    clusterName: "shield-cluster"
+    clusterName: "cool"
     nodeCount: 1
     instanceType: "s-1vcpu-1gb"
     sshKeyId: "d8:57:d3:22:fc:e8:98:0c:d7:64:07:bd:0e:28:f2:84"
-    konnectivityPort: 30140
+    konnectivityPort: 30141
     controlPlaneEndpoint:
       host: "91.99.2.195"
-      port: 30450
+      port: 30451
