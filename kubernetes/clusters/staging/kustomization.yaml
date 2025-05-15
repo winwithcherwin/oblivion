@@ -6,13 +6,13 @@ resources:
   - crossplane/
   - kyverno/
   - database.yaml
-  - r2r.yaml
-  - yopass.yaml
   - k0smotron.yaml
   - k8sgpt-core.yaml
   - sshkey.yaml
   - argo/
-  - provcannon/
   - k8sgpt.yaml
+  - provcannon/
   #- droplet.yaml
   #- kyverno.yaml
+  #- r2r.yaml
+  #- yopass.yaml

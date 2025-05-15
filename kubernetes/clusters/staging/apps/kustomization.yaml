@@ -5,10 +5,10 @@ resources:
   - external-dns.yaml
   - ingress-nginx.yaml
   - oblivion.yaml
-  - open-webui.yaml
   - cert-manager.yaml
   - reflector.yaml
   - localhost.yaml
   - cnpg.yaml
-  - victoria.yaml
+  #- victoria.yaml
+  #- open-webui.yaml
 
