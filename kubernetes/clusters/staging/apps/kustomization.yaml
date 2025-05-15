@@ -9,6 +9,6 @@ resources:
   - reflector.yaml
   - localhost.yaml
   - cnpg.yaml
+  - open-webui.yaml
   #- victoria.yaml
-  #- open-webui.yaml
 
