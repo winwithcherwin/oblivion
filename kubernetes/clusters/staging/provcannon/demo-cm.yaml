@@ -2,24 +2,24 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: superman
+  name: wonderwoman
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: superman-cluster
-  namespace: superman
+  name: wonderwoman-cluster
+  namespace: wonderwoman
   labels:
     provider: digitalocean
   annotations:
     create-cluster/enable: "true"
 data:
   context: |
-    clusterName: "superman-cluster"
+    clusterName: "wonderwoman-cluster"
     nodeCount: 1
     instanceType: "s-1vcpu-1gb"
     sshKeyId: "d8:57:d3:22:fc:e8:98:0c:d7:64:07:bd:0e:28:f2:84"
-    konnectivityPort: 30136
+    konnectivityPort: 30137
     controlPlaneEndpoint:
       host: "91.99.2.195"
-      port: 30447
+      port: 30448
