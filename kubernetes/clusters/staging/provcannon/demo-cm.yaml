@@ -2,13 +2,13 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: wonderwoman
+  name: ironman
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: wonderwoman-cluster
-  namespace: wonderwoman
+  name: ironman-cluster
+  namespace: ironman
   labels:
     provider: digitalocean
   annotations:
