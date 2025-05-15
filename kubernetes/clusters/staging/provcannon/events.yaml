@@ -35,7 +35,7 @@ spec:
           nats:
             native:
               replicas: 1
-  - name: create-event-source
+  - name: create-bootstrap-droplet-event-source
     match:
       any:
       - resources:
@@ -57,7 +57,7 @@ spec:
     generate:
       apiVersion: argoproj.io/v1alpha1
       kind: EventSource
-      name: "{{ context.clusterName }}-event-source"
+      name: bootstrap-droplet-event-source
       namespace: "{{ request.namespace }}"
       generateExisting: true
       data:
@@ -73,7 +73,7 @@ spec:
                   - key: namespace
                     operation: "=="
                     value: "{{ request.namespace }}"
-  - name: create-sensor
+  - name: create-watch-droplet-sensor
     match:
       any:
       - resources:
@@ -95,7 +95,7 @@ spec:
     generate:
       apiVersion: argoproj.io/v1alpha1
       kind: Sensor
-      name: "{{ context.clusterName }}-droplet-sensor"
+      name: "watch-{{ context.clusterName }}-droplet-status-sensor"
       namespace: "{{ request.namespace }}"
       generateExisting: true
       data:
@@ -107,9 +107,9 @@ spec:
             cluster: "{{ context.clusterName }}"
         spec:
           dependencies:
-            - name: droplet-update-dependency
+            - name: droplet-ipv4address-available
               eventSourceName: "{{ context.clusterName }}-event-source"
-              eventName: droplet-update  # The event triggered by the EventSource
+              eventName: droplet-ipv4address-seen
               filters:
                 script: |-
                   if event.body.status
@@ -124,13 +124,13 @@ spec:
                   end
           triggers:
             - template:
-                name: create-configmap
+                name: create-droplet-ipv4address-configmap
                 k8s:
                   operation: create
                   dest: operation
                   parameters:
                   - src:
-                      dependencyName: droplet-update-dependency
+                      dependencyName: droplet-ipv4address-available
                       dataKey: body.status.atProvider.ipv4Address
                     dest: data.ipv4Address
                   source:

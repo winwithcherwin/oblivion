@@ -63,6 +63,7 @@ spec:
       kind: ClusterRoleBinding
       name: "argo-droplet-bootstrap-{{ context.clusterName }}"
       generateExisting: true
+      synchronize: true
       data:
         metadata:
           labels:

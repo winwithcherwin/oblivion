@@ -2,49 +2,24 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: venom
+  name: shield
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: kubernetes-cluster
-  namespace: venom
+  namespace: shield
   labels:
     provider: digitalocean
   annotations:
     create-cluster/enable: "true"
 data:
   context: |
-    clusterName: "venom-cluster"
+    clusterName: "shield-cluster"
     nodeCount: 1
     instanceType: "s-1vcpu-1gb"
     sshKeyId: "d8:57:d3:22:fc:e8:98:0c:d7:64:07:bd:0e:28:f2:84"
-    konnectivityPort: 30137
+    konnectivityPort: 30140
     controlPlaneEndpoint:
       host: "91.99.2.195"
-      port: 30448
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: hulk
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: hulk-cluster
-  namespace: hulk
-  labels:
-    provider: digitalocean
-  annotations:
-    create-cluster/enable: "true"
-data:
-  context: |
-    clusterName: "hulk-cluster"
-    nodeCount: 1
-    instanceType: "s-1vcpu-1gb"
-    sshKeyId: "d8:57:d3:22:fc:e8:98:0c:d7:64:07:bd:0e:28:f2:84"
-    konnectivityPort: 30138
-    controlPlaneEndpoint:
-      host: "91.99.2.195"
-      port: 30449
+      port: 30450
