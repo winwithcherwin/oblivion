@@ -19,7 +19,7 @@ spec:
     context:
     - name: config
       configMap:
-        name: "{{ request.object.metadata.labels.cluster }}"
+        name: "{{ request.object.metadata.labels.owner }}"
         namespace: "{{ request.namespace }}"
     - name: context
       variable:

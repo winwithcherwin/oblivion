@@ -103,6 +103,7 @@ spec:
           annotations:
             create-remote-machine: "true"
           labels:
+            owner: "{{ request.object.metadata.name }}"
             provider: digitalocean
             cluster: "{{ context.clusterName }}"
         spec:
