@@ -27,8 +27,9 @@ spec:
     generate:
       apiVersion: rbac.authorization.k8s.io/v1
       kind: ClusterRole
-      name: "{{ context.clusterName }}-argo-events"
+      name: argo-droplet-bootstrap
       generateExisting: true
+      synchronize: true
       data:
         rules:
           - apiGroups: [""]
@@ -60,14 +61,18 @@ spec:
     generate:
       apiVersion: rbac.authorization.k8s.io/v1
       kind: ClusterRoleBinding
-      name: "{{ context.clusterName }}-argo-events"
+      name: "argo-droplet-bootstrap-{{ context.clusterName }}"
       generateExisting: true
       data:
+        metadata:
+          labels:
+            cluster: "{{ context.clusterName }}"
+            bootstrap: "true"
         subjects:
           - kind: ServiceAccount
             name: default
             namespace: "{{ request.namespace }}"
         roleRef:
           kind: ClusterRole
-          name: "{{ context.clusterName }}-argo-events"
+          name: argo-droplet-bootstrap
           apiGroup: rbac.authorization.k8s.io

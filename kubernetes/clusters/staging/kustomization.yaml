@@ -13,6 +13,5 @@ resources:
   - k8sgpt.yaml
   - provcannon/
   #- droplet.yaml
-  #- kyverno.yaml
   #- r2r.yaml
   #- yopass.yaml

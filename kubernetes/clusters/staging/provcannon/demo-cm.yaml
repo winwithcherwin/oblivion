@@ -7,7 +7,7 @@ metadata:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: venom-cluster
+  name: kubernetes-cluster
   namespace: venom
   labels:
     provider: digitalocean
