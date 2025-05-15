@@ -1,11 +1,11 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: kubernetes-create-rbac
+  name: create-kubernetes-bootstrap-argo-events-rbac
 spec:
   background: true
   rules:
-  - name: create-role
+  - name: create-clusterrole
     match:
       any:
       - resources:
@@ -39,7 +39,7 @@ spec:
             resources: ["droplets"]
             verbs: ["list", "watch", "create", "update", "delete"]
 
-  - name: create-role-binding
+  - name: create-clusterrole-binding
     match:
       any:
       - resources:

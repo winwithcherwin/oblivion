@@ -57,7 +57,7 @@ spec:
     generate:
       apiVersion: argoproj.io/v1alpha1
       kind: EventSource
-      name: bootstrap-droplet-event-source
+      name: droplet-update
       namespace: "{{ request.namespace }}"
       generateExisting: true
       data:
@@ -73,7 +73,7 @@ spec:
                   - key: namespace
                     operation: "=="
                     value: "{{ request.namespace }}"
-  - name: create-watch-droplet-sensor
+  - name: create-watch-droplet-status-sensor
     match:
       any:
       - resources:
@@ -95,7 +95,7 @@ spec:
     generate:
       apiVersion: argoproj.io/v1alpha1
       kind: Sensor
-      name: "watch-{{ context.clusterName }}-droplet-status-sensor"
+      name: "watch-{{ context.clusterName }}-droplet-status"
       namespace: "{{ request.namespace }}"
       generateExisting: true
       data:
@@ -108,8 +108,8 @@ spec:
         spec:
           dependencies:
             - name: droplet-ipv4address-available
-              eventSourceName: "{{ context.clusterName }}-event-source"
-              eventName: droplet-ipv4address-seen
+              eventSourceName: droplet-update
+              eventName: droplet-update
               filters:
                 script: |-
                   if event.body.status
