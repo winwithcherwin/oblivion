@@ -10,16 +10,16 @@ spec:
       any:
       - resources:
           kinds:
-          - ConfigMap
+          - Sensor
           annotations:
-            create-cluster/enable: "true"
+            create-remote-machine: "true"
           selector:
             matchLabels:
               provider: digitalocean
     context:
     - name: config
       configMap:
-        name: "{{ request.object.metadata.name }}"
+        name: "{{ request.object.metadata.labels.cluster }}"
         namespace: "{{ request.namespace }}"
     - name: context
       variable:

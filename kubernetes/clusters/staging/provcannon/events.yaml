@@ -99,6 +99,12 @@ spec:
       namespace: "{{ request.namespace }}"
       generateExisting: true
       data:
+        metadata:
+          annotations:
+            create-remote-machine: "true"
+          labels:
+            provider: digitalocean
+            cluster: "{{ context.clusterName }}"
         spec:
           dependencies:
             - name: droplet-update-dependency
