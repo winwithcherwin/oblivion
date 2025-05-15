@@ -2,20 +2,20 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: ironman
+  name: venom
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: ironman-cluster
-  namespace: ironman
+  name: venom-cluster
+  namespace: venom
   labels:
     provider: digitalocean
   annotations:
     create-cluster/enable: "true"
 data:
   context: |
-    clusterName: "wonderwoman-cluster"
+    clusterName: "venom-cluster"
     nodeCount: 1
     instanceType: "s-1vcpu-1gb"
     sshKeyId: "d8:57:d3:22:fc:e8:98:0c:d7:64:07:bd:0e:28:f2:84"
