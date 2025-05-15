@@ -30,3 +30,10 @@ spec:
         kind: HelmRepository
         name: k8sgpt
         namespace: flux-system
+  values:
+    controllerManager:
+      manager:
+        image:
+          repository: winwithcherwin/k8sgpt-operator-mcp
+          tag: latest
+          pullPolicy: Always

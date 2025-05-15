@@ -10,8 +10,8 @@ resources:
   - k8sgpt-core.yaml
   - sshkey.yaml
   - argo/
-  - k8sgpt.yaml
   - provcannon/
+  - k8sgpt.yaml
   #- droplet.yaml
   #- r2r.yaml
   #- yopass.yaml
