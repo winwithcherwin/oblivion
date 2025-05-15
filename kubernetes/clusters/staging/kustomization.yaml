@@ -13,6 +13,6 @@ resources:
   - sshkey.yaml
   - argo/
   - provcannon/
-  #- k8sgpt.yaml
+  - k8sgpt.yaml
   #- droplet.yaml
   #- kyverno.yaml

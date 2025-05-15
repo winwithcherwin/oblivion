@@ -30,20 +30,3 @@ spec:
         kind: HelmRepository
         name: k8sgpt
         namespace: flux-system
----
-apiVersion: core.k8sgpt.ai/v1alpha1
-kind: K8sGPT
-metadata:
-  name: k8sgpt
-  namespace: k8sgpt-operator-system
-spec:
-  ai:
-    enabled: true
-    backend: openai
-    model: gpt-4o-mini
-    secret:
-      name: openai
-      key: token
-  noCache: false
-  repository: ghcr.io/k8sgpt-ai/k8sgpt
-  version: v0.4.17
