@@ -12,5 +12,5 @@ spec:
       name: openai
       key: token
   noCache: false
-  repository: ghcr.io/k8sgpt-ai/k8sgpt
-  version: v0.4.17
+  repository: winwithcherwin/k8sgpt
+  version: latest
