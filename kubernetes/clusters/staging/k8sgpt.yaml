@@ -12,5 +12,5 @@ spec:
       name: openai
       key: token
   noCache: false
-  repository: winwithcherwin/k8sgpt
+  repository: winwithcherwin/k8sgpt-mcpo
   version: latest

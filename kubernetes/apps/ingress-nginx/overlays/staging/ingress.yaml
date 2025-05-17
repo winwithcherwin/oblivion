@@ -10,17 +10,12 @@ metadata:
 spec:
   ingressClassName: nginx
   tls:
-    - secretName: wildcard-winwithcherwin-com
-      hosts:
-        - staging.winwithcherwin.com
-  rules:
-    - host: staging.winwithcherwin.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: dummy
-                port:
-                  number: 80
+  - hosts:
+    - "*.staging.winwithcherwin.com"
+    - "staging.winwithcherwin.com"
+    secretName: wildcard-winwithcherwin-com
+  defaultBackend:
+    service:
+      name: default-service
+      port:
+        number: 80

@@ -6,4 +6,5 @@ resources:
   - helmrelease.yaml
   - ingress.yaml
   - certificate.yaml
+  - deployment-default-website.yaml
 
