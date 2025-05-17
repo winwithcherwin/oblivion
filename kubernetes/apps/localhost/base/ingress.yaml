@@ -10,9 +10,9 @@ spec:
   tls:
     - secretName: wildcard-winwithcherwin-com
       hosts:
-        - "*.lab.winwithcherwin.com"
+        - "*.staging.winwithcherwin.com"
   rules:
-    - host: localhost.lab.winwithcherwin.com
+    - host: localhost.staging.winwithcherwin.com
       http:
         paths:
           - path: /

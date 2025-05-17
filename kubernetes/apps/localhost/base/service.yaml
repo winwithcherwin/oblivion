@@ -6,7 +6,7 @@ metadata:
 spec:
   ports:
     - port: 80
-      targetPort: 8080
+      targetPort: 8000
   clusterIP: None
 ---
 apiVersion: v1
@@ -18,5 +18,5 @@ subsets:
   - addresses:
       - ip: 10.8.0.2
     ports:
-      - port: 8001
+      - port: 8000
 
