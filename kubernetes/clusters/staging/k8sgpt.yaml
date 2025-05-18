@@ -14,3 +14,23 @@ spec:
   noCache: false
   repository: winwithcherwin/k8sgpt-mcpo
   version: latest
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mcpo-config
+  namespace: k8sgpt-operator-system
+data:
+  config.json: |
+    {
+      "mcpServers": {
+        "k8sgpt": {
+          "command": "/k8sgpt",
+          "args": ["serve", "--mcp"]
+        },
+        "git": {
+          "command": "mcp-server-git",
+          "args": ["--repository", "/workspace", "-v", "-v"]
+        }
+      }
+    }
