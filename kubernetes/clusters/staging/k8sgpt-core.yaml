@@ -37,3 +37,29 @@ spec:
           repository: winwithcherwin/k8sgpt-operator-mcp
           tag: latest
           pullPolicy: Always
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: k8sgpt-mcpo
+  namespace: k8sgpt-operator-system
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  tls:
+    - secretName: wildcard-winwithcherwin-com
+      hosts:
+        - "*.staging.winwithcherwin.com"
+  rules:
+    - host: cc96231f-2914-4a6e-b369-6173f5a3fd0e.staging.winwithcherwin.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: k8sgpt
+                port:
+                  number: 8000
+
